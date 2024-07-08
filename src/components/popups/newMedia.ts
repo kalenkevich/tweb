@@ -54,6 +54,8 @@ import {ChatType} from '../chat/chat';
 import pause from '../../helpers/schedulers/pause';
 import {Accessor, createRoot, createSignal, Setter} from 'solid-js';
 import SelectedEffect from '../chat/selectedEffect';
+import ButtonIcon from '../buttonIcon';
+import Icon from '../icon';
 
 type SendFileParams = SendFileDetails & {
   file?: File,
@@ -826,6 +828,47 @@ export default class PopupNewMedia extends PopupElement {
           })
         ]).then(() => {});
       }
+
+      const buttonsContainer = document.createElement('div');
+      buttonsContainer.classList.add('image-edit-menu-buttons')
+      const buttons = [{
+        icon: 'enhance_media',
+        asImgIcon: true, // TODO remove and use icons from font once it available.
+        onClick: () => {
+          console.log('click enhance');
+        }
+      }, {
+        icon: 'mediaspoiler',
+        onClick: () => {
+          if(!params.mediaSpoiler) {
+            this.applyMediaSpoiler(params);
+          } else if(params.mediaSpoiler) {
+            this.removeMediaSpoiler(params);
+          }
+        }
+      }, {
+        asImgIcon: true, // TODO remove and use icons from font once it available.
+        icon: 'binempty',
+        onClick: () => {
+          console.log('click bin');
+        }
+      }];
+      for(const button of buttons) {
+        const btnEl = ButtonIcon(button.icon, {asImgIcon: button.asImgIcon});
+        buttonsContainer.appendChild(btnEl);
+        btnEl.addEventListener('click', button.onClick);
+      }
+      const imageEditMenu = document.createElement('div');
+      imageEditMenu.classList.add('image-edit-menu');
+      imageEditMenu.appendChild(buttonsContainer);
+      itemDiv.style.cursor = 'pointer';
+      itemDiv.appendChild(imageEditMenu);
+      itemDiv.addEventListener('mouseenter', () => {
+        imageEditMenu.style.opacity = '1';
+      });
+      itemDiv.addEventListener('mouseleave', () => {
+        imageEditMenu.style.opacity = '0';
+      });
     }
   }
 

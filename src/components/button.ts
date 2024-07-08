@@ -6,6 +6,7 @@
 
 import {FormatterArguments, i18n, LangPackKey} from '../lib/langPack';
 import Icon from './icon';
+import ImgIcon from './iconImg';
 import ripple from './ripple';
 
 export type ButtonOptions = Partial<{
@@ -13,6 +14,8 @@ export type ButtonOptions = Partial<{
   onlyMobile: true,
   icon: Icon,
   rippleSquare: true,
+  imgIcon: string;
+  asImgIcon: boolean;
   text: LangPackKey,
   textArgs?: FormatterArguments,
   disabled: boolean,
@@ -36,6 +39,10 @@ export default function Button<T extends ButtonOptions>(className: string, optio
     replaceButtonIcon(button, options.icon, false);
   }
 
+  if(options.asImgIcon) {
+    addImgIcon(button, options.imgIcon);
+  }
+
   if(options.onlyMobile) {
     button.classList.add('only-handhelds');
   }
@@ -55,5 +62,14 @@ export function replaceButtonIcon(element: HTMLElement, icon: Icon, oldIcon: Ele
   const newIcon = Icon(icon, 'button-icon');
   if(oldIcon) oldIcon.replaceWith(newIcon);
   else element.append(newIcon);
+  return newIcon;
+}
+
+export function addImgIcon(element: HTMLElement, iconName: string, oldIcon: Element | false = element.querySelector('.button-icon')) {
+  const newIcon = ImgIcon(iconName, 'button-icon');
+
+  if(oldIcon) oldIcon.replaceWith(newIcon);
+  else element.append(newIcon);
+
   return newIcon;
 }
