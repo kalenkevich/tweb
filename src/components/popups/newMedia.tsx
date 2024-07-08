@@ -56,6 +56,9 @@ import {Accessor, createRoot, createSignal, Setter} from 'solid-js';
 import SelectedEffect from '../chat/selectedEffect';
 import ButtonIcon from '../buttonIcon';
 import Icon from '../icon';
+import readBlobAsUint8Array from '../../helpers/blob/readBlobAsUint8Array';
+import {ImageEditor} from '../mediaEditor/imageEditor';
+import {WholeDialogManagerTsx, ContentRenderProps} from '../wholeDialogManager';
 
 type SendFileParams = SendFileDetails & {
   file?: File,
@@ -829,16 +832,30 @@ export default class PopupNewMedia extends PopupElement {
         ]).then(() => {});
       }
 
+      const wholeDialogManager = WholeDialogManagerTsx.getInstance();
       const buttonsContainer = document.createElement('div');
       buttonsContainer.classList.add('image-edit-menu-buttons')
       const buttons = [{
         icon: 'enhance_media',
-        asImgIcon: true, // TODO remove and use icons from font once it available.
-        onClick: () => {
-          console.log('click enhance');
+        // TODO remove and use icons from font once it available.
+        asImgIcon: true,
+        onClick: async() => {
+          const imageSource = await readBlobAsUint8Array(params.file);
+
+          wholeDialogManager.show(({hide}: ContentRenderProps) => (
+            <ImageEditor
+              imgSource={imageSource}
+              onSave={(resultImage) => {
+                // apply image instead.
+                hide();
+              }}
+              onClose={() => hide()}
+            />
+          ));
         }
       }, {
         icon: 'mediaspoiler',
+        // TODO remove and use icons from font once it available.
         asImgIcon: true,
         onClick: () => {
           if(!params.mediaSpoiler) {
@@ -848,8 +865,9 @@ export default class PopupNewMedia extends PopupElement {
           }
         }
       }, {
-        asImgIcon: true, // TODO remove and use icons from font once it available.
         icon: 'binempty',
+        // TODO remove and use icons from font once it available.
+        asImgIcon: true,
         onClick: () => {
           this.removeAttachment(params);
         }
@@ -862,14 +880,7 @@ export default class PopupNewMedia extends PopupElement {
       const imageEditMenu = document.createElement('div');
       imageEditMenu.classList.add('image-edit-menu');
       imageEditMenu.appendChild(buttonsContainer);
-      itemDiv.style.cursor = 'pointer';
       itemDiv.appendChild(imageEditMenu);
-      itemDiv.addEventListener('mouseenter', () => {
-        imageEditMenu.style.opacity = '1';
-      });
-      itemDiv.addEventListener('mouseleave', () => {
-        imageEditMenu.style.opacity = '0';
-      });
     }
   }
 

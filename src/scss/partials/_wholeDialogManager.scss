@@ -1,0 +1,28 @@
+.whole-dialog-manager {
+  &__overlay {
+    position: fixed;
+    inset: 0;
+    background: #000000e0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 5;
+  }
+
+  &__content {
+    transition: width var(--open-duration), height var(--open-duration), transform var(--open-duration), border-radius var(--open-duration);
+    width: 100%;
+    height: 100%;
+    transform: scaleZ(1);
+    position: absolute;
+    border-radius: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  &__content-wrapper {
+    flex-grow: 1;
+    background: #ffffff;
+  }
+}
