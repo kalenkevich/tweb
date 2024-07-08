@@ -839,6 +839,7 @@ export default class PopupNewMedia extends PopupElement {
         }
       }, {
         icon: 'mediaspoiler',
+        asImgIcon: true,
         onClick: () => {
           if(!params.mediaSpoiler) {
             this.applyMediaSpoiler(params);
@@ -850,7 +851,7 @@ export default class PopupNewMedia extends PopupElement {
         asImgIcon: true, // TODO remove and use icons from font once it available.
         icon: 'binempty',
         onClick: () => {
-          console.log('click bin');
+          this.removeAttachment(params);
         }
       }];
       for(const button of buttons) {
@@ -1133,6 +1134,18 @@ export default class PopupNewMedia extends PopupElement {
     }).then(() => {
       this.onRender();
       this.onScroll();
+    });
+  }
+
+  private removeAttachment(attachmentToRemove: SendFileParams) {
+    this.iterate((sendFileDetails) => {
+      this.willAttach.sendFileDetails = sendFileDetails.filter(item => item !== attachmentToRemove);
+      this.files = [...this.files].filter(f => f!== attachmentToRemove.file);
+      if(this.files.length === 0) {
+        this.hide();
+      } else {
+        this.attachFiles();
+      }
     });
   }
 }

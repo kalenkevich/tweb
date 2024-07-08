@@ -87,7 +87,7 @@
   .image-edit-menu {
     opacity: 0;
     position: absolute;
-    bottom: 0px;
+    bottom: 6px;
     width: 100%;
     transition: opacity var(--transition-standard-in);
     display: flex;
@@ -95,7 +95,7 @@
 
     .image-edit-menu-buttons {
       border-radius: 2rem;
-      background: rgba(0, 0, 0, 0.2);
+      background: rgba(0, 0, 0, 0.5);
       display: flex;
       flex-flow: row nowrap;
       padding: .5rem .75rem;
