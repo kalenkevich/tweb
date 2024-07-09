@@ -12,6 +12,7 @@ export enum ImageChangeType {
   vignette,
   grain,
   sharpen,
+  aspectRatio,
   rotate,
   scale,
   crop,
@@ -31,7 +32,14 @@ export type ImageChangeEvent = EnhanceImageChangeEvent
   | VignetteImageChangeEvent
   | GrainImageChangeEvent
   | SharpenImageChangeEvent
-  | RotateImageChangeEvent;
+  | RotateImageChangeEvent
+  | AspectRatioChangeEvent;
+
+export enum ImageAspectRatio {
+  custom = 'custom',
+  original = 'original',
+  square = 'square'
+}
 
 export interface ImageState {
   source: ImageSource;
@@ -52,6 +60,10 @@ export interface ImageState {
   vignette: number;
   grain: number;
   sharpen: number;
+
+  // resize props
+  aspectRatio: number | ImageAspectRatio;
+  rotateAngle: number;
 }
 
 export interface EnhanceImageChangeEvent {
@@ -107,6 +119,11 @@ export interface GrainImageChangeEvent  {
 export interface SharpenImageChangeEvent  {
   type: ImageChangeType.sharpen;
   value: number;
+}
+
+export interface AspectRatioChangeEvent {
+  type: ImageChangeType.aspectRatio;
+  value: number | ImageAspectRatio;
 }
 
 export interface RotateImageChangeEvent {

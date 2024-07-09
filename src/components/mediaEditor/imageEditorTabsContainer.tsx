@@ -2,7 +2,7 @@ import {For, createSignal} from 'solid-js';
 import {i18n} from '../../lib/langPack';
 import {ImageControlProps} from './controls/imageControl';
 import {ImageFilterControl} from './controls/imageFilterControl';
-import {ImageEditControl} from './controls/imageEditControl';
+import {ImageResizeControl} from './controls/imageResizeControl';
 import {ImageTextControl} from './controls/imageTextControl';
 import {ImagePaintControl} from './controls/imagePaintControl';
 import {ImageStickerControl} from './controls/imageStickerControl';
@@ -23,7 +23,7 @@ export const TABS_CONFIG = [{
   icon: 'crop',
   asImgeIcon: true,
   component: (props: ImageControlProps) => (
-    <ImageEditControl
+    <ImageResizeControl
       imageState={props.imageState}
       onImageChange={props.onImageChange}
     />
@@ -100,13 +100,13 @@ export function ImageEditorTabsContainer(props: ImageEditorTabsContainerProps) {
       <div class="tab-icons">
         <For each={TABS_CONFIG}>
           {(tabConfig) => (
-            <div class="tab-icon__container">
+            <div class="tab-icon__container" classList={{'tab-icon__selected': tabConfig === selectedTab()}}>
               <ButtonIconTsx
                 icon={tabConfig.icon}
                 asImgIcon={tabConfig.asImgeIcon}
                 onClick={() => setSelectedTab(tabConfig)}
               />
-              {tabConfig === selectedTab() && <div class="selected-highlight"></div>}
+              <div class="tab-icon__highlight"></div>
             </div>
           )}
         </For>

@@ -35,25 +35,7 @@ const lang = {
   'PhoneNumber.Code.Fragment.Info': 'Get the code in the Anonymous Numbers section on [Fragment](%1$@)',
   'PHONE_CODE_INVALID': 'Invalid code',
   'PHONE_CODE_EXPIRED': 'Code expired',
-  'PASSWORD_HASH_INVALID': 'Incorrect password',
-
-  // * ImageEditor
-  'ImageEditor.Enhance': 'Enhance',
-  'ImageEditor.Edit': 'Edit',
-  'ImageEditor.Text': 'Text',
-  'ImageEditor.Paint': 'Draw',
-  'ImageEditor.Stickers': 'Stickers',
-  'ImageEditor.EnhanceControl.Enhance': 'Enhance',
-  'ImageEditor.EnhanceControl.Brightness': 'Brightness',
-  'ImageEditor.EnhanceControl.Contrast': 'Contrast',
-  'ImageEditor.EnhanceControl.Saturation': 'Saturation',
-  'ImageEditor.EnhanceControl.Warmth': 'Warmth',
-  'ImageEditor.EnhanceControl.Fade': 'Fade',
-  'ImageEditor.EnhanceControl.Highlights': 'Highlights',
-  'ImageEditor.EnhanceControl.Shadows': 'Shadows',
-  'ImageEditor.EnhanceControl.Vignette': 'Vignette',
-  'ImageEditor.EnhanceControl.Grain': 'Grain',
-  'ImageEditor.EnhanceControl.Sharpen': 'Sharpen'
+  'PASSWORD_HASH_INVALID': 'Incorrect password'
 };
 
 export default lang;

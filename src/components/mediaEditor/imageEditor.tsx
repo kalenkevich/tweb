@@ -79,6 +79,9 @@ export function ImageEditor(props: MediaEditorProps) {
       case ImageChangeType.sharpen: {
         return imageEditorManager().sharpen(event.value);
       }
+      case ImageChangeType.aspectRatio: {
+        return imageEditorManager().aspectRatio(event.value);
+      }
       case ImageChangeType.rotate: {
         return imageEditorManager().rotate(event.value);
       }

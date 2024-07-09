@@ -2844,7 +2844,27 @@ const lang = {
   'Chat.UploadLimit.Text': {
     'one_value': 'Subscribe to [Telegram Premium]() to increase upload speeds %d time.',
     'other_value': 'Subscribe to [Telegram Premium]() to increase upload speeds %d times.'
-  }
+  },
+  'ImageEditor.Enhance': 'Enhance',
+  'ImageEditor.Edit': 'Edit',
+  'ImageEditor.Text': 'Text',
+  'ImageEditor.Paint': 'Draw',
+  'ImageEditor.Stickers': 'Stickers',
+  'ImageEditor.EnhanceControl.Enhance': 'Enhance',
+  'ImageEditor.EnhanceControl.Brightness': 'Brightness',
+  'ImageEditor.EnhanceControl.Contrast': 'Contrast',
+  'ImageEditor.EnhanceControl.Saturation': 'Saturation',
+  'ImageEditor.EnhanceControl.Warmth': 'Warmth',
+  'ImageEditor.EnhanceControl.Fade': 'Fade',
+  'ImageEditor.EnhanceControl.Highlights': 'Highlights',
+  'ImageEditor.EnhanceControl.Shadows': 'Shadows',
+  'ImageEditor.EnhanceControl.Vignette': 'Vignette',
+  'ImageEditor.EnhanceControl.Grain': 'Grain',
+  'ImageEditor.EnhanceControl.Sharpen': 'Sharpen',
+  'ImageEditor.ResizeControl.Free': 'Free',
+  'ImageEditor.ResizeControl.Original': 'Original',
+  'ImageEditor.ResizeControl.Square': 'Square',
+  'ImageEditor.ResizeControl.AspectRatio': 'Aspect Ratio'
 };
 
 export default lang;

@@ -1,4 +1,4 @@
-import {ImageState} from './types';
+import {ImageAspectRatio, ImageState} from './types';
 import {DEFAULT_IMAGE_STATE} from './consts';
 import {ImageRenderer} from './imageRenderer';
 import {WebglImageRenderer} from './webgl/webglImageRenderer';
@@ -172,8 +172,24 @@ export class ImageEditorManager {
   }
   // ------------------ END: FILTER API ------------------
 
-  rotate(angle: number): ImageState {
-    return this.createNewImageState({});
+  aspectRatio(aspectRatio: number | ImageAspectRatio): ImageState {
+    const newImageState = this.createNewImageState({aspectRatio});
+
+    if(this.ready) {
+      this.renderer.render(newImageState);
+    }
+
+    return newImageState;
+  }
+
+  rotate(rotateAngle: number): ImageState {
+    const newImageState = this.createNewImageState({rotateAngle});
+
+    if(this.ready) {
+      this.renderer.render(newImageState);
+    }
+
+    return newImageState;
   }
 
   crop(): ImageState {

@@ -1,4 +1,4 @@
-import {ImageState} from './types';
+import {ImageAspectRatio, ImageState} from './types';
 
 export const DEFAULT_IMAGE_STATE: ImageState = {
   source: new Uint8Array([]),
@@ -16,5 +16,8 @@ export const DEFAULT_IMAGE_STATE: ImageState = {
   shadows: 0,
   vignette: 0,
   grain: 0,
-  sharpen: 0
+  sharpen: 0,
+
+  aspectRatio: ImageAspectRatio.original,
+  rotateAngle: 0
 };
