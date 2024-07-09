@@ -2864,7 +2864,9 @@ const lang = {
   'ImageEditor.ResizeControl.Free': 'Free',
   'ImageEditor.ResizeControl.Original': 'Original',
   'ImageEditor.ResizeControl.Square': 'Square',
-  'ImageEditor.ResizeControl.AspectRatio': 'Aspect Ratio'
+  'ImageEditor.ResizeControl.AspectRatio': 'Aspect Ratio',
+  'ImageEditor.TextControl.Size': 'Size',
+  'ImageEditor.TextControl.Font': 'Font'
 };
 
 export default lang;

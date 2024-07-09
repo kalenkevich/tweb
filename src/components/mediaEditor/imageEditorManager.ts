@@ -197,7 +197,7 @@ export class ImageEditorManager {
   }
 
   // -----------------------------------------------------
-  private getCurrentImageState(): ImageState {
+  public getCurrentImageState(): ImageState {
     return this.imageStates[this.currentStateIndex];
   }
 

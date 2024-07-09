@@ -3,8 +3,8 @@
   display: flex;
   width: 100%;
   height: 100%;
-  background-color: #212121;
-  color: #ffffff;
+  background-color: var(--surface-color);
+  color: var(--primary-text-color);
 
   font-family: Roboto;
   font-size: 16px;
@@ -68,7 +68,7 @@
       }
 
       .tab-icon__selected .tab-icon__highlight{
-        background: #4E8EE5;
+        background: var(--primary-color);
       }
     }
 
@@ -99,14 +99,14 @@
       }
 
       &__value {
-        color: #4E8EE5;
+        color: var(--primary-color);
       }
     }
   }
 
   .resize-image-control {
-    display: flex;
-    flex-wrap: wrap;
+    // display: flex;
+    // flex-wrap: wrap;
           
     &__name {
       height: 48px;
@@ -115,16 +115,20 @@
       padding: 0px 16px;
     }
 
-    .aspect-row {
-      cursor: pointer;
-      border-radius: 10px;
-      width: 100%;
+    &__options {
       display: flex;
-      align-items: center;
-      line-height: 0px;
-      height: 48px;
-      text-align: center;
-      padding: 0px 16px;
+      flex-wrap: wrap;
+    }
+
+    .aspect-row {
+      // cursor: pointer;
+      // border-radius: 10px;
+      // display: flex;
+      // align-items: center;
+      // line-height: 0px;
+      // height: 48px;
+      // text-align: center;
+      // padding: 0px 16px;
       margin: 4px 0;
 
       &-full {
@@ -139,8 +143,67 @@
         margin-right: 32px;
       }
 
-      &-selected, &:hover, &:focus, &:active {
-        background: #2B2B2B;
+      // &-selected, &:hover, &:focus, &:active {
+      //   background: #2B2B2B;
+      // }
+    }
+  }
+
+  .text-image-control {
+    padding: 0 8px;
+
+    .alignment-and-style-control {
+      display: flex;
+      justify-content: space-between;
+
+      .text-property-icon-container {
+        cursor: pointer;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 54px;
+        height: 48px;
+        border-radius: 10px;
+        margin-right: 8px;
+
+        &:hover, &:active, &:focus, &.selected {
+          background: #2B2B2B;
+        }
+      }
+
+      &__alignment-icons {
+        display: flex;
+      }
+
+      &__style-icons {
+        display: flex;
+      }
+    }
+
+    .font-size-control {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      margin-top: 22px;
+      padding: 0 16px;
+
+      &__label {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 15px;
+      }
+    }
+
+    .font-name-control {
+      &__label {
+        height: 48px;
+        display: flex;
+        align-items: center;
+        padding: 0px 16px;
+      }
+
+      &__row {
+        margin: 4px 0;
       }
     }
   }

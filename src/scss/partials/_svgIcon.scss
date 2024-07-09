@@ -1,0 +1,12 @@
+.svg-icon {
+  width: 24px;
+  height: 24px;
+
+  svg > path {
+    fill: var(--secondary-text-color);
+  }
+
+  svg > rect {
+    stroke: var(--secondary-text-color);
+  }
+}

@@ -1,10 +1,12 @@
 import {JSX, onMount, createSignal} from 'solid-js';
 import {ImageControlProps} from './controls/imageControl';
 import {ImageRotationControl} from './controls/imageRotationControl';
+import {ImageAttachment} from './types';
 
 export interface ImagePreviewProps extends ImageControlProps {
   showRotationControl: boolean;
   onCanvasMounted: (canvas: HTMLCanvasElement) => void;
+  onAttachmentClick: (attachment: ImageAttachment, index: number) => void;
 }
 
 export function ImageEditorPreview(props: ImagePreviewProps): JSX.Element {
@@ -12,6 +14,7 @@ export function ImageEditorPreview(props: ImagePreviewProps): JSX.Element {
     imageState,
     onImageChange,
     onCanvasMounted,
+    currentAttachmentIndex,
     showRotationControl
   } = props;
 
@@ -27,7 +30,11 @@ export function ImageEditorPreview(props: ImagePreviewProps): JSX.Element {
         class="preview-container-canvas"
         ref={(el) => setCanvasRef(el)}>
       </canvas>
-      {showRotationControl && <ImageRotationControl imageState={imageState} onImageChange={onImageChange}/>}
+      {showRotationControl && <ImageRotationControl
+        imageState={imageState}
+        onImageChange={onImageChange}
+        currentAttachmentIndex={currentAttachmentIndex}
+      />}
     </div>
   )
 }

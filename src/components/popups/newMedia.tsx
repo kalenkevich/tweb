@@ -838,7 +838,7 @@ export default class PopupNewMedia extends PopupElement {
       const buttons = [{
         icon: 'enhance_media',
         // TODO remove and use icons from font once it available.
-        asImgIcon: true,
+        asSvgIcon: true,
         onClick: async() => {
           const imageSource = await readBlobAsUint8Array(params.file);
 
@@ -858,7 +858,7 @@ export default class PopupNewMedia extends PopupElement {
       }, {
         icon: 'mediaspoiler',
         // TODO remove and use icons from font once it available.
-        asImgIcon: true,
+        asSvgIcon: true,
         onClick: () => {
           if(!params.mediaSpoiler) {
             this.applyMediaSpoiler(params);
@@ -869,13 +869,13 @@ export default class PopupNewMedia extends PopupElement {
       }, {
         icon: 'binempty',
         // TODO remove and use icons from font once it available.
-        asImgIcon: true,
+        asSvgIcon: true,
         onClick: () => {
           this.removeAttachment(params);
         }
       }];
       for(const button of buttons) {
-        const btnEl = ButtonIcon(button.icon, {asImgIcon: button.asImgIcon});
+        const btnEl = ButtonIcon(button.icon, {asSvgIcon: button.asSvgIcon});
         buttonsContainer.appendChild(btnEl);
         btnEl.addEventListener('click', button.onClick);
       }

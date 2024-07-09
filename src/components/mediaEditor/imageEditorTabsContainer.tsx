@@ -11,51 +11,56 @@ import {ButtonIconTsx} from '../buttonIconTsx';
 export const TABS_CONFIG = [{
   name: i18n('ImageEditor.Enhance'),
   icon: 'enhance_media',
-  asImgeIcon: true,
+  asSvgIcon: true,
   component: (props: ImageControlProps) => (
     <ImageFilterControl
       imageState={props.imageState}
       onImageChange={props.onImageChange}
+      currentAttachmentIndex={props.currentAttachmentIndex}
     />
   )
 }, {
   name: i18n('ImageEditor.Edit'),
   icon: 'crop',
-  asImgeIcon: true,
+  asSvgIcon: true,
   component: (props: ImageControlProps) => (
     <ImageResizeControl
       imageState={props.imageState}
       onImageChange={props.onImageChange}
+      currentAttachmentIndex={props.currentAttachmentIndex}
     />
   )
 }, {
   name: i18n('ImageEditor.Text'),
   icon: 'text',
-  asImgeIcon: true,
+  asSvgIcon: true,
   component: (props: ImageControlProps) => (
     <ImageTextControl
       imageState={props.imageState}
       onImageChange={props.onImageChange}
+      currentAttachmentIndex={props.currentAttachmentIndex}
     />
   )
 }, {
   name: i18n('ImageEditor.Paint'),
   icon: 'brush',
-  asImgeIcon: true,
+  asSvgIcon: true,
   component: (props: ImageControlProps) => (
     <ImagePaintControl
       imageState={props.imageState}
       onImageChange={props.onImageChange}
+      currentAttachmentIndex={props.currentAttachmentIndex}
     />
   )
 }, {
   name: i18n('ImageEditor.Stickers'),
   icon: 'smile',
-  asImgeIcon: true,
+  asSvgIcon: true,
   component: (props: ImageControlProps) => (
     <ImageStickerControl
       imageState={props.imageState}
       onImageChange={props.onImageChange}
+      currentAttachmentIndex={props.currentAttachmentIndex}
     />
   )
 }];
@@ -86,13 +91,13 @@ export function ImageEditorTabsContainer(props: ImageEditorTabsContainerProps) {
           <ButtonIconTsx
             icon="undo"
             disabled={!props.canUndo}
-            asImgIcon={true}
+            asSvgIcon={true}
             onClick={() => props.onUndo()}
           />
           <ButtonIconTsx
             icon="redo"
             disabled={!props.canRedo}
-            asImgIcon={true}
+            asSvgIcon={true}
             onClick={() => props.onRedo()}
           />
         </div>
@@ -103,7 +108,7 @@ export function ImageEditorTabsContainer(props: ImageEditorTabsContainerProps) {
             <div class="tab-icon__container" classList={{'tab-icon__selected': tabConfig === selectedTab()}}>
               <ButtonIconTsx
                 icon={tabConfig.icon}
-                asImgIcon={tabConfig.asImgeIcon}
+                asSvgIcon={tabConfig.asSvgIcon}
                 onClick={() => setSelectedTab(tabConfig)}
               />
               <div class="tab-icon__highlight"></div>

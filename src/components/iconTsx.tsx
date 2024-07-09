@@ -1,14 +1,14 @@
 import {JSX, splitProps} from 'solid-js';
 import classNames from '../helpers/string/classNames';
 import {getIconContent} from './icon';
-import ImgIcon from './iconImg';
+import SvgIcon, {SvgIconType} from './iconSvg';
 
-export const IconTsx = (props: {icon: Icon | string, asImgIcon?: boolean} & JSX.HTMLAttributes<HTMLSpanElement>) => {
-  const [, rest] = splitProps(props, ['icon', 'asImgIcon']);
+export const IconTsx = (props: {icon: Icon | SvgIconType, asSvgIcon?: boolean} & JSX.HTMLAttributes<HTMLSpanElement>) => {
+  const [, rest] = splitProps(props, ['icon', 'asSvgIcon']);
 
   return (
     <span {...rest} class={classNames('tgico', props.class)}>
-      {props.asImgIcon ? ImgIcon(props.icon) : getIconContent(props.icon as Icon)}
+      {props.asSvgIcon ? SvgIcon(props.icon as SvgIconType) : getIconContent(props.icon as Icon)}
     </span>
   );
 };

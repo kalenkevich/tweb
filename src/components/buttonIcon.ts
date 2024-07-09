@@ -6,11 +6,11 @@
 
 import Button from './button';
 
-const ButtonIcon = (className?: string, options: Partial<{noRipple: true, onlyMobile: true, asDiv: boolean, asImgIcon: boolean}> = {}) => {
+const ButtonIcon = (className?: string, options: Partial<{noRipple: true, onlyMobile: true, asDiv: boolean, asSvgIcon: boolean}> = {}) => {
   const splitted = className?.split(' ');
   const button = Button('btn-icon' + (splitted?.length > 1 ? ' ' + splitted.slice(1).join(' ') : ''), {
-    icon: !options.asImgIcon ? splitted?.[0] as Icon || undefined : undefined,
-    imgIcon: options.asImgIcon ? splitted?.[0] : undefined,
+    icon: !options.asSvgIcon ? splitted?.[0] as Icon || undefined : undefined,
+    svgIcon: options.asSvgIcon ? splitted?.[0] : undefined,
     ...options
   });
 

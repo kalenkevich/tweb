@@ -33,12 +33,55 @@ export type ImageChangeEvent = EnhanceImageChangeEvent
   | GrainImageChangeEvent
   | SharpenImageChangeEvent
   | RotateImageChangeEvent
-  | AspectRatioChangeEvent;
+  | AspectRatioChangeEvent
+  | TextAttachmentChangeEvent;
 
 export enum ImageAspectRatio {
   custom = 'custom',
   original = 'original',
   square = 'square'
+}
+
+export enum ImageAttachmentType {
+  text = 'text',
+  sticker = 'sticker',
+  draw = 'draw'
+}
+
+export type ImageAttachment = TextImageAttachment;
+
+export interface ImageAttachmentBox {
+  // from left top corner of image
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  rotation: number;
+}
+
+export enum TextAlignment {
+  left = 'left',
+  right = 'right',
+  center = 'center',
+}
+
+export enum TextStyle {
+  fill = 'fill',
+  fill_inverse = 'fill_inverse',
+  stroke = 'stroke',
+}
+
+export interface TextImageAttachment {
+  type: ImageAttachmentType.text;
+  zIndex: number;
+  box: ImageAttachmentBox;
+
+  text: string;
+  fontName: string;
+  fontSize: number;
+  colorHsla: string
+  alignment: TextAlignment;
+  style: TextStyle;
 }
 
 export interface ImageState {
@@ -64,6 +107,8 @@ export interface ImageState {
   // resize props
   aspectRatio: number | ImageAspectRatio;
   rotateAngle: number;
+
+  attachments: TextImageAttachment[];
 }
 
 export interface EnhanceImageChangeEvent {
@@ -129,4 +174,10 @@ export interface AspectRatioChangeEvent {
 export interface RotateImageChangeEvent {
   type: ImageChangeType.rotate;
   value: number; // angle in radians;
+}
+
+export interface TextAttachmentChangeEvent {
+  type: ImageChangeType.text;
+  attachment: TextImageAttachment;
+  attachmentIndex: number;
 }

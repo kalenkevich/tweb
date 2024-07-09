@@ -6,7 +6,7 @@
 
 import {FormatterArguments, i18n, LangPackKey} from '../lib/langPack';
 import Icon from './icon';
-import ImgIcon from './iconImg';
+import SvgIcon, {SvgIconType} from './iconSvg';
 import ripple from './ripple';
 
 export type ButtonOptions = Partial<{
@@ -14,8 +14,8 @@ export type ButtonOptions = Partial<{
   onlyMobile: true,
   icon: Icon,
   rippleSquare: true,
-  imgIcon: string;
-  asImgIcon: boolean;
+  svgIcon: string;
+  asSvgIcon: boolean;
   text: LangPackKey,
   textArgs?: FormatterArguments,
   disabled: boolean,
@@ -35,12 +35,10 @@ export default function Button<T extends ButtonOptions>(className: string, optio
     ripple(button);
   }
 
-  if(options.icon) {
+  if(options.asSvgIcon) {
+    addSvgIcon(button, options.svgIcon);
+  } else if(options.icon) {
     replaceButtonIcon(button, options.icon, false);
-  }
-
-  if(options.asImgIcon) {
-    addImgIcon(button, options.imgIcon);
   }
 
   if(options.onlyMobile) {
@@ -65,8 +63,8 @@ export function replaceButtonIcon(element: HTMLElement, icon: Icon, oldIcon: Ele
   return newIcon;
 }
 
-export function addImgIcon(element: HTMLElement, iconName: string, oldIcon: Element | false = element.querySelector('.button-icon')) {
-  const newIcon = ImgIcon(iconName, 'button-icon');
+export function addSvgIcon(element: HTMLElement, iconName: string, oldIcon: Element | false = element.querySelector('.button-icon')) {
+  const newIcon = SvgIcon(iconName as SvgIconType, 'button-icon');
 
   if(oldIcon) oldIcon.replaceWith(newIcon);
   else element.append(newIcon);

@@ -1,6 +1,6 @@
 import {createEffect, createSignal} from 'solid-js';
 
-import {ImageChangeType, ImageChangeEvent, ImageSource, ImageState} from './types';
+import {ImageChangeType, ImageChangeEvent, ImageSource, ImageState, ImageAttachment} from './types';
 import {DEFAULT_IMAGE_STATE} from './consts';
 import {ImageEditorPreview} from './imageEditorPreview';
 import {ImageEditorTabsContainer} from './imageEditorTabsContainer';
@@ -29,6 +29,7 @@ export function ImageEditor(props: MediaEditorProps) {
   const [imageState, setImageState] = createSignal(createImageState(props.imgSource, props.imgWidth, props.imgHeight));
   const [canRedo, setCanRedu] = createSignal(false);
   const [canUndo, setCanUndo] = createSignal(false);
+  const [currentAttachmentIndex, setCurrentAttachmentIndex] = createSignal(0);
   const [showRotationControl, setShowRotationControl] = createSignal(false);
 
   createEffect(() => {
@@ -85,6 +86,18 @@ export function ImageEditor(props: MediaEditorProps) {
       case ImageChangeType.rotate: {
         return imageEditorManager().rotate(event.value);
       }
+      case ImageChangeType.text: {
+        const state = imageEditorManager().getCurrentImageState();
+        const newAttachments = state.attachments.map((at, index) => index === event.attachmentIndex ? event.attachment : at);
+        const newState = {
+          ...state,
+          attachments: newAttachments
+        };
+
+        imageEditorManager().pushState(newState);
+
+        return newState;
+      }
     }
   };
 
@@ -121,13 +134,19 @@ export function ImageEditor(props: MediaEditorProps) {
     setCanRedu(imageEditorManager().canRedo());
   };
 
+  const onAttachmentClick = (attachment: ImageAttachment, attachmentIndex: number) => {
+    setCurrentAttachmentIndex(attachmentIndex);
+  };
+
   return (
     <div class="image-editor">
       <ImageEditorPreview
         imageState={imageState()}
+        currentAttachmentIndex={currentAttachmentIndex()}
         showRotationControl={showRotationControl()}
         onCanvasMounted={onCanvasMounted}
         onImageChange={onImageChange}
+        onAttachmentClick={onAttachmentClick}
       />
       <ImageEditorTabsContainer
         canUndo={canUndo()}
@@ -136,6 +155,7 @@ export function ImageEditor(props: MediaEditorProps) {
         onRedo={handleRedo}
         onClose={handleClose}
         imageState={imageState()}
+        currentAttachmentIndex={currentAttachmentIndex()}
         onImageChange={onImageChange}
       />
       <div class="image-editor__save-button">

@@ -3,6 +3,7 @@ import {Dynamic} from 'solid-js/web';
 import setInnerHTML from '../helpers/dom/setInnerHTML';
 import classNames from '../helpers/string/classNames';
 import {IconTsx} from './iconTsx';
+import {SvgIconType} from './iconSvg';
 import {Ripple} from './rippleTsx';
 
 type K = string | HTMLElement | DocumentFragment | true;
@@ -25,7 +26,11 @@ type ConstructorP<T> = T extends {
 
 export default function RowTsx(props: Partial<{
   ref: Ref<HTMLElement>,
-  icon: Icon,
+  icon: Icon | SvgIconType,
+  asSvgIcon: boolean,
+  classList: {
+    [k: string]: boolean | undefined;
+  },
   iconClasses: string[],
   subtitle: JSX.Element,
   subtitleRight: JSX.Element,
@@ -120,7 +125,8 @@ export default function RowTsx(props: Partial<{
         'is-disabled': props.disabled,
         'is-fake-disabled': props.fakeDisabled,
         'row-grid': !!props.rightContent,
-        'with-midtitle': !!props.midtitle
+        'with-midtitle': !!props.midtitle,
+        ...(props.classList || {})
       }}
       onClick={typeof(props.clickable) !== 'boolean' && props.clickable}
     >
@@ -128,7 +134,7 @@ export default function RowTsx(props: Partial<{
       {props.midtitle && <RowRow class="midtitle" left={props.midtitle} />}
       {subtitleRow}
       {props.icon && (
-        <IconTsx icon={props.icon} class={classNames('row-icon', ...(props.iconClasses || []))} />
+        <IconTsx icon={props.icon} asSvgIcon={props.asSvgIcon} class={classNames('row-icon', ...(props.iconClasses || []))} />
       )}
       {props.checkboxField || props.radioField}
       {props.rightContent && (<div class="row-right">{props.rightContent}</div>)}
