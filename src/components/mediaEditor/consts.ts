@@ -24,6 +24,7 @@ export const DEFAULT_IMAGE_STATE: ImageState = {
   attachments: []
 };
 
+const isDarkMode = !!document.documentElement.classList.contains('dark');
 export const DEFAULT_TEXT_ATTACHMENT: TextImageAttachment = {
   type: ImageAttachmentType.text,
   zIndex: 0,
@@ -37,7 +38,7 @@ export const DEFAULT_TEXT_ATTACHMENT: TextImageAttachment = {
   text: '',
   fontName: 'Roboto',
   fontSize: 24,
-  colorHsla: 'hsla(0, 0%, 100%, 1)',
+  colorHsla: isDarkMode ? 'hsla(0, 0%, 100%, 1)' : 'hsla(0, 0%, 0%, 1)',
   alignment: TextAlignment.left,
   style: TextStyle.fill
 }

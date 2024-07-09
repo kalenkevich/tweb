@@ -50,6 +50,10 @@ $btn-menu-z-index: 4;
   &.active {
     color: var(--primary-color);
   }
+
+  &.btn-square {
+    border-radius: 10px !important;
+  }
 }
 
 .btn-corner {

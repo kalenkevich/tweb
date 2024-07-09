@@ -1,4 +1,5 @@
 import {JSX, For, createSignal, createEffect, on} from 'solid-js';
+import {Dynamic} from 'solid-js/web';
 import {i18n} from '../../../lib/langPack';
 import {ImageState, ImageChangeType, TextAlignment, TextStyle} from '../types';
 import {DEFAULT_TEXT_ATTACHMENT} from '../consts';
@@ -9,6 +10,7 @@ import {IconTsx} from '../../iconTsx';
 import {SvgIconType} from '../../iconSvg';
 import RowTsx from '../../rowTsx';
 import {Ripple} from '../../rippleTsx';
+import {ButtonIconTsx} from '../../buttonIconTsx';
 
 export interface ImageTextControlProps extends ImageControlProps {}
 
@@ -146,40 +148,34 @@ export function ImageTextControl(props: ImageTextControlProps): JSX.Element {
         <div class="alignment-and-style-control__alignment-icons">
           <For each={TEXT_ALIGNMENT_CONTROL_CONFIG}>
             {(config) => (
-              <Ripple>
-                <div class="text-property-icon-container"
-                  classList={{'selected': alignment() === config.value}}
-                  onClick={() => onPropertyChange(TextAttachmentProperty.alignment, config.value)}
-                >
-                  <IconTsx
-                    icon={config.icon}
-                    asSvgIcon={config.asSvgIcon}
-                  />
-                </div>
-              </Ripple>
+              <ButtonIconTsx
+                class="text-property-icon-container"
+                classList={{'selected': alignment() === config.value}}
+                square={true}
+                icon={config.icon}
+                asSvgIcon={config.asSvgIcon}
+                onClick={() => onPropertyChange(TextAttachmentProperty.alignment, config.value)}
+              />
             )}
           </For>
         </div>
         <div class="alignment-and-style-control__style-icons">
           <For each={TEXT_STYLE_CONTROL_CONFIG}>
             {(config) => (
-              <Ripple>
-                <div class="text-property-icon-container"
-                  classList={{'selected': style() === config.value}}
-                  onClick={() => onPropertyChange(TextAttachmentProperty.style, config.value)}
-                >
-                  <IconTsx
-                    icon={config.icon}
-                    asSvgIcon={config.asSvgIcon}
-                  />
-                </div>
-              </Ripple>
+              <ButtonIconTsx
+                class="text-property-icon-container"
+                classList={{'selected': style() === config.value}}
+                square={true}
+                icon={config.icon}
+                asSvgIcon={config.asSvgIcon}
+                onClick={() => onPropertyChange(TextAttachmentProperty.style, config.value)}
+              />
             )}
           </For>
         </div>
       </div>
       <div class="font-size-control">
-        <div class="font-size-control__label" style={{'color': color()}}>
+        <div class="font-size-control__label">
           <div class="font-size-control__name">
             {i18n('ImageEditor.TextControl.Size')}
           </div>
@@ -187,13 +183,15 @@ export function ImageTextControl(props: ImageTextControlProps): JSX.Element {
             {fontSize()}
           </div>
         </div>
-        <RangeSelectorTsx
-          step={1}
-          min={0}
-          max={64}
-          value={fontSize()}
-          onScrub={(value: number) => onPropertyChange(TextAttachmentProperty.fontSize, value)}
-        />
+        <div style={{'color': color()}}>
+          <RangeSelectorTsx
+            step={1}
+            min={0}
+            max={64}
+            value={fontSize()}
+            onScrub={(value: number) => onPropertyChange(TextAttachmentProperty.fontSize, value)}
+          />
+        </div>
       </div>
       <div class="font-name-control">
         <div class="font-name-control__label">
