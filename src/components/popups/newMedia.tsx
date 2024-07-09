@@ -845,6 +845,8 @@ export default class PopupNewMedia extends PopupElement {
           wholeDialogManager.show(({hide}: ContentRenderProps) => (
             <ImageEditor
               imgSource={imageSource}
+              imgWidth={params.width}
+              imgHeight={params.height}
               onSave={(resultImage) => {
                 // apply image instead.
                 hide();

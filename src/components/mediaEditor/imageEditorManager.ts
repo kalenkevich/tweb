@@ -1,38 +1,27 @@
-import {ImageState} from '../types';
-import {DEFAULT_IMAGE_STATE} from '../consts';
-
-export class WebglRenderer {
-  private imgSource: Uint8Array;
-
-  constructor() {}
-
-  init(canvas: HTMLCanvasElement, imgSource: Uint8Array) {}
-
-  destroy() {}
-
-  render(imageState: ImageState) {}
-
-  getImageSnapshot(): Uint8Array {
-    return this.imgSource;
-  }
-}
+import {ImageState} from './types';
+import {DEFAULT_IMAGE_STATE} from './consts';
+import {ImageRenderer} from './imageRenderer';
+import {WebglImageRenderer} from './webgl/webglImageRenderer';
 
 export class ImageEditorManager {
   private imageStates: ImageState[] = [];
   private currentStateIndex: number = 0;
-  private renderer: WebglRenderer = new WebglRenderer();
+  private renderer: ImageRenderer = new WebglImageRenderer();
+  private ready: boolean = false;
 
   constructor() {}
 
-  init(canvas: HTMLCanvasElement, imgSource: Uint8Array, initialImageState: ImageState = DEFAULT_IMAGE_STATE) {
-    this.renderer.init(canvas, imgSource);
+  async init(canvas: HTMLCanvasElement, initialImageState: ImageState = DEFAULT_IMAGE_STATE) {
+    await this.renderer.init(canvas);
     this.imageStates.push(initialImageState);
+    this.ready = true;
+    this.renderer.render(initialImageState);
   }
 
   destroy() {}
 
   // ------------------ GENERAL API ------------------
-  getCurrentImageSource(): Uint8Array {
+  getCurrentImageSource(): Promise<Uint8Array> {
     return this.renderer.getImageSnapshot();
   }
 
@@ -59,13 +48,25 @@ export class ImageEditorManager {
 
     return this.getCurrentImageState();
   }
+
+  pushState(state: ImageState): ImageState {
+    this.createNewImageState(state);
+
+    if(this.ready) {
+      this.renderer.render(state);
+    }
+
+    return state;
+  }
   // ------------------ END: GENERAL API -------------
 
   // ------------------ FILTER API ------------------
   enhance(enhance: number): ImageState {
     const newImageState = this.createNewImageState({enhance});
 
-    this.renderer.render(newImageState);
+    if(this.ready) {
+      this.renderer.render(newImageState);
+    }
 
     return newImageState;
   }
@@ -73,7 +74,9 @@ export class ImageEditorManager {
   brightness(brightness: number): ImageState {
     const newImageState = this.createNewImageState({brightness});
 
-    this.renderer.render(newImageState);
+    if(this.ready) {
+      this.renderer.render(newImageState);
+    }
 
     return newImageState;
   }
@@ -81,7 +84,9 @@ export class ImageEditorManager {
   contrast(contrast: number): ImageState {
     const newImageState = this.createNewImageState({contrast});
 
-    this.renderer.render(newImageState);
+    if(this.ready) {
+      this.renderer.render(newImageState);
+    }
 
     return newImageState;
   }
@@ -89,7 +94,9 @@ export class ImageEditorManager {
   saturation(saturation: number): ImageState {
     const newImageState = this.createNewImageState({saturation});
 
-    this.renderer.render(newImageState);
+    if(this.ready) {
+      this.renderer.render(newImageState);
+    }
 
     return newImageState;
   }
@@ -97,7 +104,9 @@ export class ImageEditorManager {
   warmth(warmth: number): ImageState {
     const newImageState = this.createNewImageState({warmth});
 
-    this.renderer.render(newImageState);
+    if(this.ready) {
+      this.renderer.render(newImageState);
+    }
 
     return newImageState;
   }
@@ -105,7 +114,9 @@ export class ImageEditorManager {
   fade(fade: number): ImageState {
     const newImageState = this.createNewImageState({fade});
 
-    this.renderer.render(newImageState);
+    if(this.ready) {
+      this.renderer.render(newImageState);
+    }
 
     return newImageState;
   }
@@ -113,7 +124,9 @@ export class ImageEditorManager {
   highlights(highlights: number): ImageState {
     const newImageState = this.createNewImageState({highlights});
 
-    this.renderer.render(newImageState);
+    if(this.ready) {
+      this.renderer.render(newImageState);
+    }
 
     return newImageState;
   }
@@ -121,7 +134,9 @@ export class ImageEditorManager {
   vignette(vignette: number): ImageState {
     const newImageState = this.createNewImageState({vignette});
 
-    this.renderer.render(newImageState);
+    if(this.ready) {
+      this.renderer.render(newImageState);
+    }
 
     return newImageState;
   }
@@ -129,7 +144,9 @@ export class ImageEditorManager {
   shadows(shadows: number): ImageState {
     const newImageState = this.createNewImageState({shadows});
 
-    this.renderer.render(newImageState);
+    if(this.ready) {
+      this.renderer.render(newImageState);
+    }
 
     return newImageState;
   }
@@ -137,7 +154,9 @@ export class ImageEditorManager {
   grain(grain: number): ImageState {
     const newImageState = this.createNewImageState({grain});
 
-    this.renderer.render(newImageState);
+    if(this.ready) {
+      this.renderer.render(newImageState);
+    }
 
     return newImageState;
   }
@@ -145,7 +164,9 @@ export class ImageEditorManager {
   sharpen(sharpen: number): ImageState {
     const newImageState = this.createNewImageState({sharpen});
 
-    this.renderer.render(newImageState);
+    if(this.ready) {
+      this.renderer.render(newImageState);
+    }
 
     return newImageState;
   }

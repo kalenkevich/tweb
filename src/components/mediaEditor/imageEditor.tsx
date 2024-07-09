@@ -1,27 +1,47 @@
-import {createSignal} from 'solid-js';
+import {createEffect, createSignal} from 'solid-js';
 
 import {ImageChangeType, ImageChangeEvent, ImageSource, ImageState} from './types';
 import {DEFAULT_IMAGE_STATE} from './consts';
 import {ImageEditorPreview} from './imageEditorPreview';
 import {ImageEditorTabsContainer} from './imageEditorTabsContainer';
-import {ImageEditorManager} from './imageEditor/imageEditorManager';
+import {ImageEditorManager} from './imageEditorManager';
 import {ButtonIconTsx} from '../buttonIconTsx';
+
+export function createImageState(source: ImageSource, width: number, height: number): ImageState {
+  return {
+    ...DEFAULT_IMAGE_STATE,
+    source,
+    width,
+    height
+  }
+}
 
 export interface MediaEditorProps {
   imgSource: ImageSource;
+  imgWidth: number;
+  imgHeight: number;
   onClose: () => void;
   onSave: (editedImage: ImageSource) => void;
 }
 
 export function ImageEditor(props: MediaEditorProps) {
   const [imageEditorManager] = createSignal(new ImageEditorManager());
-  const [imageState, setImageState] = createSignal(DEFAULT_IMAGE_STATE);
+  const [imageState, setImageState] = createSignal(createImageState(props.imgSource, props.imgWidth, props.imgHeight));
   const [canRedo, setCanRedu] = createSignal(false);
   const [canUndo, setCanUndo] = createSignal(false);
   const [showRotationControl, setShowRotationControl] = createSignal(false);
 
-  const onCanvasMounted = (canvas: HTMLCanvasElement) => {
-    imageEditorManager().init(canvas, props.imgSource);
+  createEffect(() => {
+    const newImageState = createImageState(props.imgSource, props.imgWidth, props.imgHeight);
+
+    setImageState(newImageState);
+    imageEditorManager().pushState(newImageState);
+  });
+
+  const onCanvasMounted = async(canvas: HTMLCanvasElement) => {
+    const imageEditorManagerInstance = imageEditorManager();
+
+    await imageEditorManagerInstance.init(canvas, imageState());
   };
 
   const handleChangeEvent = (event: ImageChangeEvent): ImageState => {
@@ -78,8 +98,8 @@ export function ImageEditor(props: MediaEditorProps) {
     props.onClose();
   };
 
-  const handleSave = () => {
-    const resultImage = imageEditorManager().getCurrentImageSource();
+  const handleSave = async() => {
+    const resultImage = await imageEditorManager().getCurrentImageSource();
 
     props.onSave(resultImage);
   };

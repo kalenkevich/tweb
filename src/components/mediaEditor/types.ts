@@ -34,6 +34,8 @@ export type ImageChangeEvent = EnhanceImageChangeEvent
   | RotateImageChangeEvent;
 
 export interface ImageState {
+  source: ImageSource;
+
   // image props
   width: number;
   height: number;

@@ -1,6 +1,8 @@
 import {ImageState} from './types';
 
 export const DEFAULT_IMAGE_STATE: ImageState = {
+  source: new Uint8Array([]),
+
   width: 0,
   height: 0,
 
