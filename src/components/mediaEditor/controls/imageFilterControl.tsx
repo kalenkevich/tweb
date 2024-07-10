@@ -8,145 +8,178 @@ export interface ImageFilterControlProps extends ImageControlProps {}
 
 const IMAGE_FILTER_CONTROLS_CONFIG = [{
   label: i18n('ImageEditor.EnhanceControl.Enhance'),
-  value: (props: ImageFilterControlProps) => props.imageState.enhance,
+  value: (props: ImageFilterControlProps) => props.imageState.filter.enhance,
   component: (props: ImageFilterControlProps) => (
     <RangeSelectorTsx
       step={1}
       min={0}
       max={100}
-      value={props.imageState.enhance}
+      value={props.imageState.filter.enhance}
       trumpSize={20}
-      onScrub={(value: number) => props.onImageChange({type: ImageChangeType.enhance, value})}
+      onScrub={(value: number) => props.onImageChange({
+        type: ImageChangeType.filter,
+        value: {...props.imageState.filter, enhance: value}
+      })}
     />
   )
 }, {
   label: i18n('ImageEditor.EnhanceControl.Brightness'),
-  value: (props: ImageFilterControlProps) => props.imageState.brightness,
+  value: (props: ImageFilterControlProps) => props.imageState.filter.brightness,
   component: (props: ImageFilterControlProps) => (
     <RangeSelectorTsx
       step={1}
       min={-100}
       max={100}
-      value={props.imageState.brightness}
+      value={props.imageState.filter.brightness}
       trumpSize={20}
-      onScrub={(value: number) => props.onImageChange({type: ImageChangeType.brightness, value})}
+      onScrub={(value: number) => props.onImageChange({
+        type: ImageChangeType.filter,
+        value: {...props.imageState.filter, brightness: value}
+      })}
     />
   )
 }, {
   label: i18n('ImageEditor.EnhanceControl.Contrast'),
-  value: (props: ImageFilterControlProps) => props.imageState.contrast,
+  value: (props: ImageFilterControlProps) => props.imageState.filter.contrast,
   component: (props: ImageFilterControlProps) => (
     <RangeSelectorTsx
       step={1}
       min={0}
       max={100}
-      value={props.imageState.contrast}
+      value={props.imageState.filter.contrast}
       trumpSize={20}
-      onScrub={(value: number) => props.onImageChange({type: ImageChangeType.contrast, value})}
+      onScrub={(value: number) => props.onImageChange({
+        type: ImageChangeType.filter,
+        value: {...props.imageState.filter, contrast: value}
+      })}
     />
   )
 }, {
   label: i18n('ImageEditor.EnhanceControl.Saturation'),
-  value: (props: ImageFilterControlProps) => props.imageState.saturation,
+  value: (props: ImageFilterControlProps) => props.imageState.filter.saturation,
   component: (props: ImageFilterControlProps) => (
     <RangeSelectorTsx
       step={1}
       min={-100}
       max={100}
-      value={props.imageState.saturation}
+      value={props.imageState.filter.saturation}
       trumpSize={20}
-      onScrub={(value: number) => props.onImageChange({type: ImageChangeType.saturation, value})}
+      onScrub={(value: number) => props.onImageChange({
+        type: ImageChangeType.filter,
+        value: {...props.imageState.filter, saturation: value}
+      })}
     />
   )
 }, {
   label: i18n('ImageEditor.EnhanceControl.Warmth'),
-  value: (props: ImageFilterControlProps) => props.imageState.warmth,
+  value: (props: ImageFilterControlProps) => props.imageState.filter.warmth,
   component: (props: ImageFilterControlProps) => (
     <RangeSelectorTsx
       step={1}
       min={-100}
       max={100}
-      value={props.imageState.warmth}
+      value={props.imageState.filter.warmth}
       trumpSize={20}
-      onScrub={(value: number) => props.onImageChange({type: ImageChangeType.warmth, value})}
+      onScrub={(value: number) => props.onImageChange({
+        type: ImageChangeType.filter,
+        value: {...props.imageState.filter, warmth: value}
+      })}
     />
   )
 }, {
   label: i18n('ImageEditor.EnhanceControl.Fade'),
-  value: (props: ImageFilterControlProps) => props.imageState.fade,
+  value: (props: ImageFilterControlProps) => props.imageState.filter.fade,
   component: (props: ImageFilterControlProps) => (
     <RangeSelectorTsx
       step={1}
       min={0}
       max={100}
-      value={props.imageState.fade}
+      value={props.imageState.filter.fade}
       trumpSize={20}
-      onScrub={(value: number) => props.onImageChange({type: ImageChangeType.fade, value})}
+      onScrub={(value: number) => props.onImageChange({
+        type: ImageChangeType.filter,
+        value: {...props.imageState.filter, fade: value}
+      })}
     />
   )
 }, {
   label: i18n('ImageEditor.EnhanceControl.Highlights'),
-  value: (props: ImageFilterControlProps) => props.imageState.highlights,
+  value: (props: ImageFilterControlProps) => props.imageState.filter.highlights,
   component: (props: ImageFilterControlProps) => (
     <RangeSelectorTsx
       step={1}
       min={-100}
       max={100}
-      value={props.imageState.highlights}
+      value={props.imageState.filter.highlights}
       trumpSize={20}
-      onScrub={(value: number) => props.onImageChange({type: ImageChangeType.highlights, value})}
+      onScrub={(value: number) => props.onImageChange({
+        type: ImageChangeType.filter,
+        value: {...props.imageState.filter, highlights: value}
+      })}
     />
   )
 }, {
   label: i18n('ImageEditor.EnhanceControl.Shadows'),
-  value: (props: ImageFilterControlProps) => props.imageState.shadows,
+  value: (props: ImageFilterControlProps) => props.imageState.filter.shadows,
   component: (props: ImageFilterControlProps) => (
     <RangeSelectorTsx
       step={1}
       min={-100}
       max={100}
-      value={props.imageState.shadows}
+      value={props.imageState.filter.shadows}
       trumpSize={20}
-      onScrub={(value: number) => props.onImageChange({type: ImageChangeType.shadows, value})}
+      onScrub={(value: number) => props.onImageChange({
+        type: ImageChangeType.filter,
+        value: {...props.imageState.filter, shadows: value}
+      })}
     />
   )
 }, {
   label: i18n('ImageEditor.EnhanceControl.Vignette'),
-  value: (props: ImageFilterControlProps) => props.imageState.vignette,
+  value: (props: ImageFilterControlProps) => props.imageState.filter.vignette,
   component: (props: ImageFilterControlProps) => (
     <RangeSelectorTsx
       step={1}
       min={-100}
       max={100}
-      value={props.imageState.vignette}
+      value={props.imageState.filter.vignette}
       trumpSize={20}
-      onScrub={(value: number) => props.onImageChange({type: ImageChangeType.shadows, value})}
+      onScrub={(value: number) => props.onImageChange({
+        type: ImageChangeType.filter,
+        value: {...props.imageState.filter, vignette: value}
+      })}
     />
   )
 }, {
   label: i18n('ImageEditor.EnhanceControl.Grain'),
-  value: (props: ImageFilterControlProps) => props.imageState.grain,
+  value: (props: ImageFilterControlProps) => props.imageState.filter.grain,
   component: (props: ImageFilterControlProps) => (
     <RangeSelectorTsx
       step={1}
       min={0}
       max={100}
-      value={props.imageState.grain}
+      value={props.imageState.filter.grain}
       trumpSize={20}
-      onScrub={(value: number) => props.onImageChange({type: ImageChangeType.grain, value})}
+      onScrub={(value: number) => props.onImageChange({
+        type: ImageChangeType.filter,
+        value: {...props.imageState.filter, grain: value}
+      })}
     />
   )
 }, {
   label: i18n('ImageEditor.EnhanceControl.Sharpen'),
-  value: (props: ImageFilterControlProps) => props.imageState.sharpen,
+  value: (props: ImageFilterControlProps) => props.imageState.filter.sharpen,
   component: (props: ImageFilterControlProps) => (
     <RangeSelectorTsx
       step={1}
       min={0}
       max={100}
-      value={props.imageState.sharpen}
+      value={props.imageState.filter.sharpen}
       trumpSize={20}
-      onScrub={(value: number) => props.onImageChange({type: ImageChangeType.sharpen, value})}
+      onScrub={(value: number) => props.onImageChange({
+        type: ImageChangeType.filter,
+        value: {...props.imageState.filter, sharpen: value}
+      })}
     />
   )
 }]

@@ -1,4 +1,4 @@
-import {ImageAspectRatio, ImageState} from './types';
+import {ImageAspectRatio, ImageState, ImageFilterState} from './types';
 import {DEFAULT_IMAGE_STATE} from './consts';
 import {ImageRenderer} from './imageRenderer';
 import {WebglImageRenderer} from './webgl/webglImageRenderer';
@@ -20,7 +20,6 @@ export class ImageEditorManager {
 
   destroy() {}
 
-  // ------------------ GENERAL API ------------------
   getCurrentImageSource(): Promise<Uint8Array> {
     return this.renderer.getImageSnapshot();
   }
@@ -58,11 +57,9 @@ export class ImageEditorManager {
 
     return state;
   }
-  // ------------------ END: GENERAL API -------------
 
-  // ------------------ FILTER API ------------------
-  enhance(enhance: number): ImageState {
-    const newImageState = this.createNewImageState({enhance});
+  filter(filter: ImageFilterState) {
+    const newImageState = this.createNewImageState({filter});
 
     if(this.ready) {
       this.renderer.render(newImageState);
@@ -70,107 +67,6 @@ export class ImageEditorManager {
 
     return newImageState;
   }
-
-  brightness(brightness: number): ImageState {
-    const newImageState = this.createNewImageState({brightness});
-
-    if(this.ready) {
-      this.renderer.render(newImageState);
-    }
-
-    return newImageState;
-  }
-
-  contrast(contrast: number): ImageState {
-    const newImageState = this.createNewImageState({contrast});
-
-    if(this.ready) {
-      this.renderer.render(newImageState);
-    }
-
-    return newImageState;
-  }
-
-  saturation(saturation: number): ImageState {
-    const newImageState = this.createNewImageState({saturation});
-
-    if(this.ready) {
-      this.renderer.render(newImageState);
-    }
-
-    return newImageState;
-  }
-
-  warmth(warmth: number): ImageState {
-    const newImageState = this.createNewImageState({warmth});
-
-    if(this.ready) {
-      this.renderer.render(newImageState);
-    }
-
-    return newImageState;
-  }
-
-  fade(fade: number): ImageState {
-    const newImageState = this.createNewImageState({fade});
-
-    if(this.ready) {
-      this.renderer.render(newImageState);
-    }
-
-    return newImageState;
-  }
-
-  highlights(highlights: number): ImageState {
-    const newImageState = this.createNewImageState({highlights});
-
-    if(this.ready) {
-      this.renderer.render(newImageState);
-    }
-
-    return newImageState;
-  }
-
-  vignette(vignette: number): ImageState {
-    const newImageState = this.createNewImageState({vignette});
-
-    if(this.ready) {
-      this.renderer.render(newImageState);
-    }
-
-    return newImageState;
-  }
-
-  shadows(shadows: number): ImageState {
-    const newImageState = this.createNewImageState({shadows});
-
-    if(this.ready) {
-      this.renderer.render(newImageState);
-    }
-
-    return newImageState;
-  }
-
-  grain(grain: number): ImageState {
-    const newImageState = this.createNewImageState({grain});
-
-    if(this.ready) {
-      this.renderer.render(newImageState);
-    }
-
-    return newImageState;
-  }
-
-  sharpen(sharpen: number): ImageState {
-    const newImageState = this.createNewImageState({sharpen});
-
-    if(this.ready) {
-      this.renderer.render(newImageState);
-    }
-
-    return newImageState;
-  }
-  // ------------------ END: FILTER API ------------------
 
   aspectRatio(aspectRatio: number | ImageAspectRatio): ImageState {
     const newImageState = this.createNewImageState({aspectRatio});

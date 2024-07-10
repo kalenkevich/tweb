@@ -47,38 +47,8 @@ export function ImageEditor(props: MediaEditorProps) {
 
   const handleChangeEvent = (event: ImageChangeEvent): ImageState => {
     switch(event.type) {
-      case ImageChangeType.enhance: {
-        return imageEditorManager().enhance(event.value);
-      }
-      case ImageChangeType.brightness: {
-        return imageEditorManager().brightness(event.value);
-      }
-      case ImageChangeType.contrast: {
-        return imageEditorManager().contrast(event.value);
-      }
-      case ImageChangeType.saturation: {
-        return imageEditorManager().saturation(event.value);
-      }
-      case ImageChangeType.warmth: {
-        return imageEditorManager().warmth(event.value);
-      }
-      case ImageChangeType.fade: {
-        return imageEditorManager().fade(event.value);
-      }
-      case ImageChangeType.highlights: {
-        return imageEditorManager().highlights(event.value);
-      }
-      case ImageChangeType.shadows: {
-        return imageEditorManager().shadows(event.value);
-      }
-      case ImageChangeType.vignette: {
-        return imageEditorManager().vignette(event.value);
-      }
-      case ImageChangeType.grain: {
-        return imageEditorManager().grain(event.value);
-      }
-      case ImageChangeType.sharpen: {
-        return imageEditorManager().sharpen(event.value);
+      case ImageChangeType.filter: {
+        return imageEditorManager().filter(event.value);
       }
       case ImageChangeType.aspectRatio: {
         return imageEditorManager().aspectRatio(event.value);

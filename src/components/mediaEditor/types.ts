@@ -3,40 +3,16 @@ import {Color} from '../../helpers/color';
 export type ImageSource = Uint8Array;
 
 export enum ImageChangeType {
-  // to be filter
-  enhance,
-  brightness,
-  contrast,
-  saturation,
-  warmth,
-  fade,
-  highlights,
-  shadows,
-  vignette,
-  grain,
-  sharpen,
+  filter,
   aspectRatio,
   rotate,
   scale,
   crop,
 
   attachment,
-  text,
-  draw,
-  sticker,
 }
 
-export type ImageChangeEvent = EnhanceImageChangeEvent
-  | BrightnessImageChangeEvent
-  | ContrastImageChangeEvent
-  | SaturationImageChangeEvent
-  | WarmthImageChangeEvent
-  | FadeImageChangeEvent
-  | HighlightsImageChangeEvent
-  | ShadowsImageChangeEvent
-  | VignetteImageChangeEvent
-  | GrainImageChangeEvent
-  | SharpenImageChangeEvent
+export type ImageChangeEvent = FilterImageChangeEvent
   | RotateImageChangeEvent
   | AspectRatioChangeEvent
   | AttachmentChangeEvent;
@@ -95,7 +71,6 @@ export interface TextImageAttachment {
   type: ImageAttachmentType.text;
   zIndex: number;
   box: ImageAttachmentBox;
-
   text: string;
   fontName: string;
   fontSize: number;
@@ -113,14 +88,7 @@ export interface DrawImageAttachment {
   style: DrawStyle;
 }
 
-export interface ImageState {
-  source: ImageSource;
-
-  // image props
-  width: number;
-  height: number;
-
-  // filter props
+export interface ImageFilterState {
   enhance: number;
   brightness: number;
   contrast: number;
@@ -132,67 +100,21 @@ export interface ImageState {
   vignette: number;
   grain: number;
   sharpen: number;
+}
 
-  // resize props
+export interface ImageState {
+  source: ImageSource;
+  width: number;
+  height: number;
+  filter: ImageFilterState;
   aspectRatio: number | ImageAspectRatio;
   rotateAngle: number;
-
   attachments: ImageAttachment[];
 }
 
-export interface EnhanceImageChangeEvent {
-  type: ImageChangeType.enhance;
-  value: number;
-}
-
-export interface BrightnessImageChangeEvent {
-  type: ImageChangeType.brightness;
-  value: number;
-}
-
-export interface ContrastImageChangeEvent {
-  type: ImageChangeType.contrast;
-  value: number;
-}
-
-export interface SaturationImageChangeEvent  {
-  type: ImageChangeType.saturation;
-  value: number;
-}
-
-export interface WarmthImageChangeEvent  {
-  type: ImageChangeType.warmth;
-  value: number;
-}
-
-export interface FadeImageChangeEvent  {
-  type: ImageChangeType.fade;
-  value: number;
-}
-
-export interface HighlightsImageChangeEvent  {
-  type: ImageChangeType.highlights;
-  value: number;
-}
-
-export interface ShadowsImageChangeEvent  {
-  type: ImageChangeType.shadows;
-  value: number;
-}
-
-export interface VignetteImageChangeEvent  {
-  type: ImageChangeType.vignette;
-  value: number;
-}
-
-export interface GrainImageChangeEvent  {
-  type: ImageChangeType.grain;
-  value: number;
-}
-
-export interface SharpenImageChangeEvent  {
-  type: ImageChangeType.sharpen;
-  value: number;
+export interface FilterImageChangeEvent {
+  type: ImageChangeType.filter;
+  value: ImageFilterState;
 }
 
 export interface AspectRatioChangeEvent {
