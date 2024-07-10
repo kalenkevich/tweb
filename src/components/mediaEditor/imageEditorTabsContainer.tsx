@@ -4,7 +4,7 @@ import {ImageControlProps} from './controls/imageControl';
 import {ImageFilterControl} from './controls/imageFilterControl';
 import {ImageResizeControl} from './controls/imageResizeControl';
 import {ImageTextControl} from './controls/imageTextControl';
-import {ImagePaintControl} from './controls/imagePaintControl';
+import {ImageDrawControl} from './controls/imageDrawControl';
 import {ImageStickerControl} from './controls/imageStickerControl';
 import {ButtonIconTsx} from '../buttonIconTsx';
 
@@ -46,7 +46,7 @@ export const TABS_CONFIG = [{
   icon: 'brush',
   asSvgIcon: true,
   component: (props: ImageControlProps) => (
-    <ImagePaintControl
+    <ImageDrawControl
       imageState={props.imageState}
       onImageChange={props.onImageChange}
       currentAttachmentIndex={props.currentAttachmentIndex}

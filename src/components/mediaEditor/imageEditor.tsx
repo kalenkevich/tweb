@@ -1,6 +1,6 @@
 import {createEffect, createSignal} from 'solid-js';
 
-import {ImageChangeType, ImageChangeEvent, ImageSource, ImageState, ImageAttachment} from './types';
+import {ImageChangeType, ImageChangeEvent, ImageSource, ImageState, ImageAttachment, AttachmentChangeAction} from './types';
 import {DEFAULT_IMAGE_STATE} from './consts';
 import {ImageEditorPreview} from './imageEditorPreview';
 import {ImageEditorTabsContainer} from './imageEditorTabsContainer';
@@ -86,15 +86,33 @@ export function ImageEditor(props: MediaEditorProps) {
       case ImageChangeType.rotate: {
         return imageEditorManager().rotate(event.value);
       }
-      case ImageChangeType.text: {
+      case ImageChangeType.attachment: {
         const state = imageEditorManager().getCurrentImageState();
-        const newAttachments = state.attachments.map((at, index) => index === event.attachmentIndex ? event.attachment : at);
-        const newState = {
-          ...state,
-          attachments: newAttachments
-        };
+        let newState: ImageState;
 
-        imageEditorManager().pushState(newState);
+        if(event.action === AttachmentChangeAction.create) {
+          const newAttachments = [...state.attachments, event.attachment];
+          newState = {
+            ...state,
+            attachments: newAttachments
+          };
+        } else if(event.action === AttachmentChangeAction.update) {
+          const newAttachments = state.attachments.map((at, index) => index === event.attachmentIndex ? event.attachment : at);
+          newState = {
+            ...state,
+            attachments: newAttachments
+          };
+
+          imageEditorManager().pushState(newState);
+        } else if(event.action === AttachmentChangeAction.delete) {
+          const newAttachments = state.attachments.filter((at, index) => index !== event.attachmentIndex);
+          newState = {
+            ...state,
+            attachments: newAttachments
+          };
+
+          imageEditorManager().pushState(newState);
+        }
 
         return newState;
       }

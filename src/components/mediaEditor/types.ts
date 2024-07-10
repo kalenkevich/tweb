@@ -1,6 +1,9 @@
+import {Color} from '../../helpers/color';
+
 export type ImageSource = Uint8Array;
 
 export enum ImageChangeType {
+  // to be filter
   enhance,
   brightness,
   contrast,
@@ -16,8 +19,10 @@ export enum ImageChangeType {
   rotate,
   scale,
   crop,
+
+  attachment,
   text,
-  paint,
+  draw,
   sticker,
 }
 
@@ -34,7 +39,7 @@ export type ImageChangeEvent = EnhanceImageChangeEvent
   | SharpenImageChangeEvent
   | RotateImageChangeEvent
   | AspectRatioChangeEvent
-  | TextAttachmentChangeEvent;
+  | AttachmentChangeEvent;
 
 export enum ImageAspectRatio {
   custom = 'custom',
@@ -48,7 +53,7 @@ export enum ImageAttachmentType {
   draw = 'draw'
 }
 
-export type ImageAttachment = TextImageAttachment;
+export type ImageAttachment = TextImageAttachment | DrawImageAttachment;
 
 export interface ImageAttachmentBox {
   // from left top corner of image
@@ -71,6 +76,21 @@ export enum TextStyle {
   stroke = 'stroke',
 }
 
+export enum DrawStyle {
+  pen = 'pen',
+  arrow = 'arrow',
+  brush = 'brush',
+  neon = 'neon',
+  blur = 'blur',
+  eraser = 'eraser'
+}
+
+export enum AttachmentChangeAction {
+  create = 'create',
+  update = 'update',
+  delete = 'delete',
+}
+
 export interface TextImageAttachment {
   type: ImageAttachmentType.text;
   zIndex: number;
@@ -79,9 +99,18 @@ export interface TextImageAttachment {
   text: string;
   fontName: string;
   fontSize: number;
-  colorHsla: string
+  color: Color;
   alignment: TextAlignment;
   style: TextStyle;
+}
+
+export interface DrawImageAttachment {
+  type: ImageAttachmentType.draw;
+  zIndex: number;
+  box: ImageAttachmentBox;
+  color: Color;
+  size: number;
+  style: DrawStyle;
 }
 
 export interface ImageState {
@@ -108,7 +137,7 @@ export interface ImageState {
   aspectRatio: number | ImageAspectRatio;
   rotateAngle: number;
 
-  attachments: TextImageAttachment[];
+  attachments: ImageAttachment[];
 }
 
 export interface EnhanceImageChangeEvent {
@@ -176,8 +205,9 @@ export interface RotateImageChangeEvent {
   value: number; // angle in radians;
 }
 
-export interface TextAttachmentChangeEvent {
-  type: ImageChangeType.text;
-  attachment: TextImageAttachment;
-  attachmentIndex: number;
+export interface AttachmentChangeEvent {
+  type: ImageChangeType.attachment;
+  attachment: ImageAttachment;
+  attachmentIndex?: number;
+  action: AttachmentChangeAction;
 }

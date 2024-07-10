@@ -1,8 +1,9 @@
 import {createEffect, on, onMount, createSignal} from 'solid-js';
+import {ColorHsla} from '../helpers/color';
 import ColorPicker, {ColorPickerColor} from './colorPicker';
 
 export interface ColorPickerTsxProps {
-  color: string; // hsla color
+  color: ColorHsla; // hsla color
   onChange: (color: ColorPickerColor) => void;
 }
 
@@ -15,9 +16,9 @@ export function ColorPickerTsx(props: ColorPickerTsxProps) {
     colorPickerInstance.onChange = props.onChange;
   });
 
-  createEffect(on(() => props.color, (value) => {
-    colorPicker().setColor(value);
-  }));
+  // createEffect(on(() => props.color, (value) => {
+  //   colorPicker().setColor(value);
+  // }));
 
   return <>{colorPicker().container}</>;
 }

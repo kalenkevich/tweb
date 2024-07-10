@@ -1,4 +1,4 @@
-import {ColorHsla, ColorRgba, hexaToHsla, hslaToRgba, rgbaToHexa as rgbaToHexa, rgbaToHsla} from '../helpers/color';
+import {ColorHsla, ColorRgb, ColorRgba, hexaToHsla, hslaToRgba, rgbaToHexa as rgbaToHexa, rgbaToHsla} from '../helpers/color';
 import attachGrabListeners from '../helpers/dom/attachGrabListeners';
 import clamp from '../helpers/number/clamp';
 import InputField, {InputState} from './inputField';

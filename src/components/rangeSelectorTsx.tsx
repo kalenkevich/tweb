@@ -4,7 +4,7 @@ import RangeSelector from './rangeSelector'
 export type RangeSelectorProps =
   ConstructorParameters<typeof RangeSelector>[0] &
   Parameters<RangeSelector['setHandlers']>[0] &
-  {value: number, class?: string};
+  {value: number, class?: string, color?: string, trumpSize?: number};
 
 export const RangeSelectorTsx = (props: RangeSelectorProps) => {
   const [events, options] = splitProps(props, [
@@ -12,13 +12,27 @@ export const RangeSelectorTsx = (props: RangeSelectorProps) => {
     'onMouseUp',
     'onScrub',
     'value',
-    'class'
+    'class',
+    'color',
+    'trumpSize'
   ]);
 
   const selector = new RangeSelector(options);
 
   createEffect(on(() => props.value, (value) => {
     selector.setProgress(value);
+  }));
+
+  createEffect(on(() => props.color, (value) => {
+    if(value) {
+      selector.setColor(value);
+    }
+  }));
+
+  createEffect(on(() => props.trumpSize, (value) => {
+    if(value) {
+      selector.setTrumpSize(value);
+    }
   }));
 
   createEffect(on(() => [options.min, options.max], ([min, max]) => {

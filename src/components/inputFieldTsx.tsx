@@ -1,9 +1,10 @@
 import {createEffect, on, splitProps} from 'solid-js';
-import InputField, {InputFieldOptions} from './inputField';
+import InputField, {InputFieldOptions, InputState} from './inputField';
 
 export interface InputFieldTsxProps extends InputFieldOptions {
   class?: string
   value?: string
+  state?: InputState;
   onRawInput?: (value: string) => void
 }
 
@@ -25,6 +26,13 @@ export const InputFieldTsx = (props: InputFieldTsxProps) => {
       if(value !== obj.value) {
         obj.value = value
       }
+    }
+  ))
+
+  createEffect(on(
+    () => props.state,
+    (newState) => {
+      obj.setState(newState);
     }
   ))
 

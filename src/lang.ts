@@ -2866,7 +2866,14 @@ const lang = {
   'ImageEditor.ResizeControl.Square': 'Square',
   'ImageEditor.ResizeControl.AspectRatio': 'Aspect Ratio',
   'ImageEditor.TextControl.Size': 'Size',
-  'ImageEditor.TextControl.Font': 'Font'
+  'ImageEditor.TextControl.Font': 'Font',
+  'ImageEditor.DrawControl.Tool': 'Tool',
+  'ImageEditor.DrawControl.Pen': 'Pen',
+  'ImageEditor.DrawControl.Arrow': 'Arrow',
+  'ImageEditor.DrawControl.Brush': 'Brush',
+  'ImageEditor.DrawControl.Neon': 'Neon',
+  'ImageEditor.DrawControl.Blur': 'Blur',
+  'ImageEditor.DrawControl.Eraser': 'Eraser'
 };
 
 export default lang;

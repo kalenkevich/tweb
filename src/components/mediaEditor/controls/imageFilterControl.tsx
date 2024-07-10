@@ -15,6 +15,7 @@ const IMAGE_FILTER_CONTROLS_CONFIG = [{
       min={0}
       max={100}
       value={props.imageState.enhance}
+      trumpSize={20}
       onScrub={(value: number) => props.onImageChange({type: ImageChangeType.enhance, value})}
     />
   )
@@ -27,6 +28,7 @@ const IMAGE_FILTER_CONTROLS_CONFIG = [{
       min={-100}
       max={100}
       value={props.imageState.brightness}
+      trumpSize={20}
       onScrub={(value: number) => props.onImageChange({type: ImageChangeType.brightness, value})}
     />
   )
@@ -39,6 +41,7 @@ const IMAGE_FILTER_CONTROLS_CONFIG = [{
       min={0}
       max={100}
       value={props.imageState.contrast}
+      trumpSize={20}
       onScrub={(value: number) => props.onImageChange({type: ImageChangeType.contrast, value})}
     />
   )
@@ -51,6 +54,7 @@ const IMAGE_FILTER_CONTROLS_CONFIG = [{
       min={-100}
       max={100}
       value={props.imageState.saturation}
+      trumpSize={20}
       onScrub={(value: number) => props.onImageChange({type: ImageChangeType.saturation, value})}
     />
   )
@@ -63,6 +67,7 @@ const IMAGE_FILTER_CONTROLS_CONFIG = [{
       min={-100}
       max={100}
       value={props.imageState.warmth}
+      trumpSize={20}
       onScrub={(value: number) => props.onImageChange({type: ImageChangeType.warmth, value})}
     />
   )
@@ -75,6 +80,7 @@ const IMAGE_FILTER_CONTROLS_CONFIG = [{
       min={0}
       max={100}
       value={props.imageState.fade}
+      trumpSize={20}
       onScrub={(value: number) => props.onImageChange({type: ImageChangeType.fade, value})}
     />
   )
@@ -87,6 +93,7 @@ const IMAGE_FILTER_CONTROLS_CONFIG = [{
       min={-100}
       max={100}
       value={props.imageState.highlights}
+      trumpSize={20}
       onScrub={(value: number) => props.onImageChange({type: ImageChangeType.highlights, value})}
     />
   )
@@ -99,6 +106,7 @@ const IMAGE_FILTER_CONTROLS_CONFIG = [{
       min={-100}
       max={100}
       value={props.imageState.shadows}
+      trumpSize={20}
       onScrub={(value: number) => props.onImageChange({type: ImageChangeType.shadows, value})}
     />
   )
@@ -111,6 +119,7 @@ const IMAGE_FILTER_CONTROLS_CONFIG = [{
       min={-100}
       max={100}
       value={props.imageState.vignette}
+      trumpSize={20}
       onScrub={(value: number) => props.onImageChange({type: ImageChangeType.shadows, value})}
     />
   )
@@ -123,6 +132,7 @@ const IMAGE_FILTER_CONTROLS_CONFIG = [{
       min={0}
       max={100}
       value={props.imageState.grain}
+      trumpSize={20}
       onScrub={(value: number) => props.onImageChange({type: ImageChangeType.grain, value})}
     />
   )
@@ -135,6 +145,7 @@ const IMAGE_FILTER_CONTROLS_CONFIG = [{
       min={0}
       max={100}
       value={props.imageState.sharpen}
+      trumpSize={20}
       onScrub={(value: number) => props.onImageChange({type: ImageChangeType.sharpen, value})}
     />
   )

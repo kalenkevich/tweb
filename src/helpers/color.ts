@@ -16,6 +16,146 @@ export type ColorHsla = {
 
 export type ColorRgba = [number, number, number, number];
 export type ColorRgb = [number, number, number];
+export type ColorHsv = [number, number, number];
+export type ColorHsva = [number, number, number, number];
+export type ColorHex = string;
+export type ColorHexa = string;
+
+export enum ColorFormatType {
+  hex = 'hex',
+  hexa = 'hexa',
+  rgb = 'rgb',
+  rgba = 'rgba',
+  hsl = 'hsl',
+  hsla = 'hsla',
+  hsv = 'hsv',
+  hsva = 'hsva',
+}
+
+export interface Color {
+  type: ColorFormatType;
+  value: ColorRgb | ColorRgba | ColorHsla | ColorHsv | ColorHex | ColorHexa;
+};
+
+export function anyColorToHexColor(color: Color): ColorHex {
+  switch(color.type) {
+    case ColorFormatType.hexa: {
+      return color.value as string;
+    }
+    case ColorFormatType.rgba: {
+      return rgbaToHex(color.value as ColorRgba);
+    }
+    case ColorFormatType.rgb: {
+      return rgbaToHex(color.value as ColorRgb);
+    }
+    case ColorFormatType.hsl:
+    case ColorFormatType.hsla: {
+      const hsla = color.value as ColorHsla;
+      return rgbaToHex(hslaToRgba(hsla.h, hsla.s, hsla.l, hsla.a));
+    }
+    case ColorFormatType.hsv: {
+      return rgbaToHex(hsvToRgb(...color.value as ColorHsv));
+    }
+  }
+}
+
+export function anyColorToHexaColor(color: Color): ColorHexa {
+  switch(color.type) {
+    case ColorFormatType.hexa: {
+      return color.value as string;
+    }
+    case ColorFormatType.hex: {
+      return rgbaToHexa(hexToRgb(color.value as ColorHex));
+    }
+    case ColorFormatType.rgba: {
+      return rgbaToHexa(color.value as ColorRgba);
+    }
+    case ColorFormatType.rgb: {
+      return rgbaToHexa(color.value as ColorRgb);
+    }
+    case ColorFormatType.hsl:
+    case ColorFormatType.hsla: {
+      const hsla = color.value as ColorHsla;
+      return rgbaToHexa(hslaToRgba(hsla.h, hsla.s, hsla.l, hsla.a));
+    }
+    case ColorFormatType.hsv: {
+      return rgbaToHexa(hsvToRgb(...color.value as ColorHsv));
+    }
+  }
+}
+
+export function anyColorToRgbaColor(color: Color): ColorRgba {
+  switch(color.type) {
+    case ColorFormatType.rgba: {
+      return color.value as ColorRgba;
+    }
+    case ColorFormatType.rgb: {
+      return [...color.value as ColorRgb, 1];
+    }
+    case ColorFormatType.hsl:
+    case ColorFormatType.hsla: {
+      const hsla = color.value as ColorHsla;
+      return hslaToRgba(hsla.h, hsla.s, hsla.l, hsla.a);
+    }
+    case ColorFormatType.hsv: {
+      return [...hsvToRgb(...color.value as ColorHsv), 1];
+    }
+    case ColorFormatType.hexa: {
+      return hexaToRgba(color.value as ColorHex);
+    }
+  }
+}
+
+export function anyColorToHslaColor(color: Color): ColorHsla {
+  switch(color.type) {
+    case ColorFormatType.rgba: {
+      return rgbaToHsla(...color.value as ColorRgba);
+    }
+    case ColorFormatType.rgb: {
+      return rgbaToHsla(...color.value as ColorRgb);
+    }
+    case ColorFormatType.hsl:
+    case ColorFormatType.hsla: {
+      return color.value as ColorHsla;
+    }
+    case ColorFormatType.hsv: {
+      return rgbaToHsla(...hsvToRgb(...color.value as ColorHsv))
+    }
+    case ColorFormatType.hexa: {
+      return hexaToHsla(color.value as ColorHex);
+    }
+  }
+}
+
+export function anyColorToHsvColor(color: Color): ColorHsva {
+  switch(color.type) {
+    case ColorFormatType.rgba: {
+      return rgbaToHsva(...color.value as ColorRgba);
+    }
+    case ColorFormatType.rgb: {
+      return [...rgbToHsv(...color.value as ColorRgb), 1];
+    }
+    case ColorFormatType.hsl:
+    case ColorFormatType.hsla: {
+      const hsla = color.value as ColorHsla;
+      return rgbaToHsva(...hslaToRgba(hsla.h, hsla.s, hsla.l, hsla.a))
+    }
+    case ColorFormatType.hsv: {
+      return rgbaToHsva(...hsvToRgb(...color.value as ColorHsv), 1)
+    }
+    case ColorFormatType.hexa: {
+      return rgbaToHsva(...hexaToRgba(color.value as ColorHex));
+    }
+  }
+}
+
+export function rbgaToString(r: number, g: number, b: number, a: number, usePrefix: boolean = true): string {
+  return usePrefix ? `rgba(${r},${g},${b},${a})` : `${r},${g},${b}`;
+}
+
+export function rbgToString(r: number, g: number, b: number, a: number = 1, usePrefix: boolean = true): string {
+  return usePrefix ? `rgb(${r},${g},${b})` : `${r},${g},${b}`;
+}
 
 /**
  * https://stackoverflow.com/a/54070620/6758968
@@ -28,6 +168,14 @@ export function rgbToHsv(r: number, g: number, b: number): [number, number, numb
     c = v - Math.min(r, g, b);
   const h = c && ((v === r) ? (g - b ) / c : ((v == g) ? 2 + (b - r) / c : 4 + (r - g) / c));
   return [60 * (h < 0 ? h + 6 : h), v && c / v, v];
+}
+
+export function rgbaToHsva(r: number, g: number, b: number, a: number): [number, number, number, number] {
+  r /= 255, g /= 255, b /= 255;
+  const v = Math.max(r, g, b),
+    c = v - Math.min(r, g, b);
+  const h = c && ((v === r) ? (g - b ) / c : ((v == g) ? 2 + (b - r) / c : 4 + (r - g) / c));
+  return [60 * (h < 0 ? h + 6 : h), v && c / v, v, a];
 }
 
 /**
@@ -170,6 +318,10 @@ export function hexaToHsla(hexa: string) {
 
 export function rgbaToHexa(rgba: ColorRgba | ColorRgb) {
   return '#' + rgba.map((v) => ('0' + v.toString(16)).slice(-2)).join('');
+}
+
+export function rgbaToHex(rgba: ColorRgba | ColorRgb) {
+  return '#' + [rgba[0], rgba[1], rgba[2]].map((v) => ('0' + v.toString(16)).slice(-2)).join('');
 }
 
 export function hslaStringToHexa(hsla: string) {

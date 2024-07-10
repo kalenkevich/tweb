@@ -1,18 +1,15 @@
-import {JSX, For, createSignal, createEffect, on} from 'solid-js';
-import {Dynamic} from 'solid-js/web';
+import {JSX, For} from 'solid-js';
 import {i18n} from '../../../lib/langPack';
-import {ImageState, ImageChangeType, TextAlignment, TextStyle} from '../types';
-import {DEFAULT_TEXT_ATTACHMENT} from '../consts';
+import {ImageChangeType, TextAlignment, TextStyle, TextImageAttachment, AttachmentChangeAction} from '../types';
+import {QUCIK_PALLETE_COLORS, DEFAULT_TEXT_ATTACHMENT} from '../consts';
 import {ImageControlProps} from './imageControl';
+import {Color, ColorFormatType, anyColorToHexColor} from '../../../helpers/color';
 import {ColorPickerTsx} from '../../colorPickerTsx';
+import {ColorPickerV2} from '../../colorPickerV2';
 import {RangeSelectorTsx} from '../../rangeSelectorTsx';
-import {IconTsx} from '../../iconTsx';
 import {SvgIconType} from '../../iconSvg';
 import RowTsx from '../../rowTsx';
-import {Ripple} from '../../rippleTsx';
 import {ButtonIconTsx} from '../../buttonIconTsx';
-
-export interface ImageTextControlProps extends ImageControlProps {}
 
 const TEXT_ALIGNMENT_CONTROL_CONFIG = [{
   icon: 'text_alignment_left' as SvgIconType,
@@ -76,63 +73,45 @@ enum TextAttachmentProperty {
   fontSize = 'fontSize',
 }
 
+export interface ImageTextControlProps extends ImageControlProps {}
 export function ImageTextControl(props: ImageTextControlProps): JSX.Element {
-  const [color, setColor] = createSignal<string>(DEFAULT_TEXT_ATTACHMENT.colorHsla);
-  const [alignment, setAlignment] = createSignal<TextAlignment>(DEFAULT_TEXT_ATTACHMENT.alignment);
-  const [style, setStyle] = createSignal<TextStyle>(DEFAULT_TEXT_ATTACHMENT.style);
-  const [fontName, setFontName] = createSignal<string>(DEFAULT_TEXT_ATTACHMENT.fontName);
-  const [fontSize, setFontSize] = createSignal<number>(DEFAULT_TEXT_ATTACHMENT.fontSize);
+  const textAttachment = props.imageState.attachments[props.currentAttachmentIndex] || DEFAULT_TEXT_ATTACHMENT;
+  const {color, alignment, style, fontName, fontSize} = textAttachment as TextImageAttachment;
 
-  createEffect(on(() => [props.imageState, props.currentAttachmentIndex], (value) => {
-    const [imageState, textAttachmentIndex] = value as [ImageState, number];
-    const textAttachment = imageState.attachments[textAttachmentIndex];
-    if(!textAttachment) {
-      return;
-    }
-
-    setColor(textAttachment.colorHsla);
-    setAlignment(textAttachment.alignment);
-    setStyle(textAttachment.style);
-    setFontName(textAttachment.fontName);
-  }));
-
-  const onPropertyChange = (propertyType: TextAttachmentProperty, value: string | TextAlignment | TextStyle | number) => {
+  const onPropertyChange = (propertyType: TextAttachmentProperty, value: string | TextAlignment | TextStyle | number | Color) => {
+    const isNew = !props.imageState.attachments[props.currentAttachmentIndex];
     const newAttachmentState = {
-      ...props.imageState.attachments[props.currentAttachmentIndex]
-    };
+      ...props.imageState.attachments[props.currentAttachmentIndex] || DEFAULT_TEXT_ATTACHMENT
+    } as TextImageAttachment;
 
     switch(propertyType) {
       case TextAttachmentProperty.color: {
-        setColor(value as string);
-        newAttachmentState.colorHsla = value as string;
+        newAttachmentState.color = value as Color;
         break;
       }
       case TextAttachmentProperty.alignment: {
-        setAlignment(value as TextAlignment);
         newAttachmentState.alignment = value as TextAlignment;
         break;
       }
       case TextAttachmentProperty.style: {
-        setStyle(value as TextStyle);
         newAttachmentState.style = value as TextStyle;
         break;
       }
       case TextAttachmentProperty.fontName: {
-        setFontName(value as string);
         newAttachmentState.fontName = value as string;
         break;
       }
       case TextAttachmentProperty.fontSize: {
-        setFontSize(value as number);
         newAttachmentState.fontSize = value as number;
         break;
       }
     }
 
     props.onImageChange({
-      type: ImageChangeType.text,
+      type: ImageChangeType.attachment,
       attachment: newAttachmentState,
-      attachmentIndex: props.currentAttachmentIndex
+      attachmentIndex: props.currentAttachmentIndex,
+      action: isNew ? AttachmentChangeAction.create : AttachmentChangeAction.update
     });
   };
 
@@ -140,17 +119,25 @@ export function ImageTextControl(props: ImageTextControlProps): JSX.Element {
     <div class="image-editor__image-control text-image-control">
       {/* <div class="color-picker-container">
         <ColorPickerTsx
-          color={color()}
-          onChange={(updateColor) => onPropertyChange(TextAttachmentProperty.color, updateColor.hsla)}
+          color={anyColorToHslaColor(color())}
+          onChange={(updateColor) => onPropertyChange(TextAttachmentProperty.color, ({type: ColorFormatType.hexa, value:updateColor.hexa}))}
         />
       </div> */}
+      <div class="color-picker-container">
+        <ColorPickerV2
+          color={color}
+          quickPallete={QUCIK_PALLETE_COLORS}
+          outputColorFormat={ColorFormatType.hexa}
+          onChange={(selectedColor) => onPropertyChange(TextAttachmentProperty.color, selectedColor)}
+        />
+      </div>
       <div class="alignment-and-style-control">
         <div class="alignment-and-style-control__alignment-icons">
           <For each={TEXT_ALIGNMENT_CONTROL_CONFIG}>
             {(config) => (
               <ButtonIconTsx
                 class="text-property-icon-container"
-                classList={{'selected': alignment() === config.value}}
+                classList={{'selected': alignment === config.value}}
                 square={true}
                 icon={config.icon}
                 asSvgIcon={config.asSvgIcon}
@@ -164,7 +151,7 @@ export function ImageTextControl(props: ImageTextControlProps): JSX.Element {
             {(config) => (
               <ButtonIconTsx
                 class="text-property-icon-container"
-                classList={{'selected': style() === config.value}}
+                classList={{'selected': style === config.value}}
                 square={true}
                 icon={config.icon}
                 asSvgIcon={config.asSvgIcon}
@@ -180,15 +167,17 @@ export function ImageTextControl(props: ImageTextControlProps): JSX.Element {
             {i18n('ImageEditor.TextControl.Size')}
           </div>
           <div class="font-size-control__value">
-            {fontSize()}
+            {fontSize}
           </div>
         </div>
-        <div style={{'color': color()}}>
+        <div>
           <RangeSelectorTsx
+            color={anyColorToHexColor(color)}
             step={1}
             min={0}
             max={64}
-            value={fontSize()}
+            value={fontSize}
+            trumpSize={20}
             onScrub={(value: number) => onPropertyChange(TextAttachmentProperty.fontSize, value)}
           />
         </div>
@@ -202,7 +191,7 @@ export function ImageTextControl(props: ImageTextControlProps): JSX.Element {
             <div class="font-name-control__row" style={{'font-family': config.value}}>
               <RowTsx
                 title={config.label}
-                classList={{'selected': fontName() === config.value}}
+                classList={{'selected': fontName === config.value}}
                 clickable={() => onPropertyChange(TextAttachmentProperty.fontName, config.value)}
               />
             </div>

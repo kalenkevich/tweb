@@ -33,6 +33,7 @@ export default class RangeSelector {
   protected withTransition = false;
   protected useTransform = false;
   protected vertical = false;
+  protected color: string;
 
   constructor(
     options: {
@@ -76,6 +77,21 @@ export default class RangeSelector {
     this.decimals = index === -1 ? 0 : stepStr.length - index - 1;
 
     this.container.append(this.filled, seek);
+
+    if(this.color) {
+      this.setColor(this.color);
+    }
+  }
+
+  public setTrumpSize(size: number) {
+    this.filled.style.setProperty('--thumb-size', `${size}px`);
+  }
+
+  public setColor(color: string) {
+    this.color = color;
+    this.filled.style.setProperty('--color', color);
+    // this.filled.style.backgroundColor = color;
+    // this.seek.style.backgroundColor = color;
   }
 
   public setMinMax(min?: number, max?: number) {
