@@ -235,6 +235,11 @@
 
   .stickers-image-control {
     height: 100%;
+
+    .emoji-dropdown {
+      box-shadow: none;
+      padding: 0 8px;
+    }
   }
 
   &__save-button {

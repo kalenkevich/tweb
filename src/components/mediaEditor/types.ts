@@ -87,6 +87,19 @@ export interface DrawLayer {
   style: DrawStyle;
 }
 
+export const IMAGE_FILTER_NAMES = [
+  'enhance',
+  'brightness',
+  'contrast',
+  'saturation',
+  'warmth',
+  'fade',
+  'highlights',
+  'shadows',
+  'vignette',
+  'grain',
+  'sharpen'
+];
 export interface ImageFilterState {
   enhance: number;
   brightness: number;

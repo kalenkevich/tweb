@@ -22,7 +22,7 @@ export function imageState2ImageDrawObject(imageState: ImageState, canvas: HTMLC
     textcoords: {
       type: DrawObjectAttributeType.FLOAT,
       size: 2,
-      // basic traingle quad
+      // basic quad
       buffer: new Float32Array([0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0])
     },
     texture: createImageElementTextureSource(imageState.source, imageState.width, imageState.height)

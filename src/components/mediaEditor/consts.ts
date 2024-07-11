@@ -5,9 +5,9 @@ export const DEFAULT_IMAGE_STATE: ImageState = {
   width: 0,
   height: 0,
   filter: {
-    enhance: 50,
-    brightness: -50,
-    contrast: 50,
+    enhance: 0,
+    brightness: 0,
+    contrast: 0,
     saturation: 0,
     warmth: 0,
     fade: 0,

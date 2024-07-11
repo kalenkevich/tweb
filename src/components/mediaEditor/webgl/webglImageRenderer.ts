@@ -62,11 +62,11 @@ export class WebglImageRenderer implements ImageRenderer {
       width: imageState.width,
       height: imageState.height
     });
+    const imageDrawObject = imageState2ImageDrawObject(imageState, this.canvas);
 
     this.imageProgram.link();
     this.setProgramGlobalUniforms(this.imageProgram, this.sceneCamera);
-    const imageDrawObject = imageState2ImageDrawObject(imageState, this.canvas);
-
+    this.imageProgram.setFilter(imageState.filter);
     this.imageProgram.draw(imageDrawObject);
   }
 
