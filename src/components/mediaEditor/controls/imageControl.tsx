@@ -1,7 +1,8 @@
+import {Accessor} from 'solid-js';
 import {ImageState, ImageChangeEvent} from '../types';
 
 export interface ImageControlProps {
   imageState: ImageState;
-  currentAttachmentIndex: number;
+  currentLayerIndex: number;
   onImageChange: (imageChangeEvent: ImageChangeEvent) => void;
 }

@@ -1,10 +1,10 @@
 import {JSX, For} from 'solid-js';
-import {DrawImageAttachment, DrawStyle, ImageChangeType, AttachmentChangeAction} from '../types';
+import {DrawLayer, DrawStyle, ImageChangeType, AttachmentChangeAction} from '../types';
 import {Color, ColorFormatType, anyColorToHexColor} from '../../../helpers/color';
 import {ImageControlProps} from './imageControl';
 import {ColorPickerV2} from '../../colorPickerV2';
 import {i18n} from '../../../lib/langPack';
-import {DEFAULT_DRAW_ATTACHMENT, QUCIK_PALLETE_COLORS} from '../consts';
+import {DEFAULT_DRAW_LAYER, QUCIK_PALLETE_COLORS} from '../consts';
 import {PEN_TOOL_SVG, ARROW_TOOL_SVG, BRUSH_TOOL_SVG, NEON_TOOL_SVG, ERASER_TOOL_SVG} from './paintToolsSvgImages';
 import RowTsx from '../../rowTsx';
 import {RangeSelectorTsx} from '../../rangeSelectorTsx';
@@ -45,14 +45,18 @@ enum DrawAttachmentProperty {
 }
 
 export function ImageDrawControl(props: ImageDrawControlProps): JSX.Element {
-  const drawAttachment = props.imageState.attachments[props.currentAttachmentIndex] as DrawImageAttachment || DEFAULT_DRAW_ATTACHMENT;
-  const {color, size, style} = drawAttachment;
+  const currentLayerIndex = () => props.currentLayerIndex;
+  const layer = () => props.imageState.layers[props.currentLayerIndex] as DrawLayer;
+  const color = () => layer()?.color || DEFAULT_DRAW_LAYER.color;
+  const size = () => layer()?.size || DEFAULT_DRAW_LAYER.size;
+  const style = () => layer()?.style || DEFAULT_DRAW_LAYER.style;
+  const hexColor = () => anyColorToHexColor(color())
 
   const onPropertyChange = (propertyType: DrawAttachmentProperty, value: Color | number | DrawStyle) => {
-    const isNew = !props.imageState.attachments[props.currentAttachmentIndex];
+    const isNew = !layer();
     const newAttachmentState = {
-      ...props.imageState.attachments[props.currentAttachmentIndex] || DEFAULT_DRAW_ATTACHMENT
-    } as DrawImageAttachment;
+      ...(layer() || DEFAULT_DRAW_LAYER)
+    } as DrawLayer;
 
     switch(propertyType) {
       case DrawAttachmentProperty.color: {
@@ -70,9 +74,9 @@ export function ImageDrawControl(props: ImageDrawControlProps): JSX.Element {
     }
 
     props.onImageChange({
-      type: ImageChangeType.attachment,
-      attachment: newAttachmentState,
-      attachmentIndex: props.currentAttachmentIndex,
+      type: ImageChangeType.layer,
+      layer: newAttachmentState,
+      layerIndex: currentLayerIndex(),
       action: isNew ? AttachmentChangeAction.create : AttachmentChangeAction.update
     });
   };
@@ -81,14 +85,11 @@ export function ImageDrawControl(props: ImageDrawControlProps): JSX.Element {
     <div class="image-editor__image-control draw-image-control">
       <div class="color-picker-container">
         <ColorPickerV2
-          color={color}
+          color={color()}
           quickPallete={QUCIK_PALLETE_COLORS}
           outputColorFormat={ColorFormatType.hex}
           onChange={(selectedColor) => onPropertyChange(DrawAttachmentProperty.color, selectedColor)}
         />
-      </div>
-      <div class="brush-size-control">
-
       </div>
       <div class="brush-size-control">
         <div class="brush-size-control__label">
@@ -96,16 +97,16 @@ export function ImageDrawControl(props: ImageDrawControlProps): JSX.Element {
             {i18n('ImageEditor.TextControl.Size')}
           </div>
           <div class="brush-size-control__value">
-            {size}
+            {size()}
           </div>
         </div>
         <div>
           <RangeSelectorTsx
-            color={anyColorToHexColor(color)}
+            color={hexColor()}
             step={1}
             min={0}
             max={64}
-            value={size}
+            value={size()}
             trumpSize={20}
             onScrub={(value: number) => onPropertyChange(DrawAttachmentProperty.size, value)}
           />
@@ -125,7 +126,7 @@ export function ImageDrawControl(props: ImageDrawControlProps): JSX.Element {
                     <div class="row-body__label">{config.label}</div>
                   </div>
                 )}
-                classList={{'selected': style === config.value}}
+                classList={{'selected': style() === config.value}}
                 clickable={() => onPropertyChange(DrawAttachmentProperty.style, config.value)}
               />
             </div>

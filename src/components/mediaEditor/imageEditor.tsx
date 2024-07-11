@@ -1,6 +1,5 @@
-import {createEffect, createSignal} from 'solid-js';
-
-import {ImageChangeType, ImageChangeEvent, ImageSource, ImageState, ImageAttachment, AttachmentChangeAction} from './types';
+import {createEffect, createSignal, on} from 'solid-js';
+import {ImageChangeType, ImageChangeEvent, ImageSource, ImageState, ObjectLayer, AttachmentChangeAction} from './types';
 import {DEFAULT_IMAGE_STATE} from './consts';
 import {ImageEditorPreview} from './imageEditorPreview';
 import {ImageEditorTabsContainer} from './imageEditorTabsContainer';
@@ -29,15 +28,15 @@ export function ImageEditor(props: MediaEditorProps) {
   const [imageState, setImageState] = createSignal(createImageState(props.imgSource, props.imgWidth, props.imgHeight));
   const [canRedo, setCanRedu] = createSignal(false);
   const [canUndo, setCanUndo] = createSignal(false);
-  const [currentAttachmentIndex, setCurrentAttachmentIndex] = createSignal(0);
+  const [currentLayerIndex, setCurrentLayerIndex] = createSignal(0);
   const [showRotationControl, setShowRotationControl] = createSignal(false);
 
-  createEffect(() => {
+  createEffect(on(() => [props.imgSource, props.imgWidth, props.imgHeight], () => {
     const newImageState = createImageState(props.imgSource, props.imgWidth, props.imgHeight);
 
     setImageState(newImageState);
     imageEditorManager().pushState(newImageState);
-  });
+  }));
 
   const onCanvasMounted = async(canvas: HTMLCanvasElement) => {
     const imageEditorManagerInstance = imageEditorManager();
@@ -56,33 +55,31 @@ export function ImageEditor(props: MediaEditorProps) {
       case ImageChangeType.rotate: {
         return imageEditorManager().rotate(event.value);
       }
-      case ImageChangeType.attachment: {
+      case ImageChangeType.layer: {
         const state = imageEditorManager().getCurrentImageState();
         let newState: ImageState;
 
         if(event.action === AttachmentChangeAction.create) {
-          const newAttachments = [...state.attachments, event.attachment];
+          const newLayers = [...state.layers, event.layer];
           newState = {
             ...state,
-            attachments: newAttachments
+            layers: newLayers
           };
         } else if(event.action === AttachmentChangeAction.update) {
-          const newAttachments = state.attachments.map((at, index) => index === event.attachmentIndex ? event.attachment : at);
+          const newLayers = state.layers.map((l, index) => index === event.layerIndex ? event.layer : l);
           newState = {
             ...state,
-            attachments: newAttachments
+            layers: newLayers
           };
-
-          imageEditorManager().pushState(newState);
         } else if(event.action === AttachmentChangeAction.delete) {
-          const newAttachments = state.attachments.filter((at, index) => index !== event.attachmentIndex);
+          const newLayers = state.layers.filter((l, index) => index !== event.layerIndex);
           newState = {
             ...state,
-            attachments: newAttachments
+            layers: newLayers
           };
-
-          imageEditorManager().pushState(newState);
         }
+
+        imageEditorManager().pushState(newState);
 
         return newState;
       }
@@ -122,19 +119,19 @@ export function ImageEditor(props: MediaEditorProps) {
     setCanRedu(imageEditorManager().canRedo());
   };
 
-  const onAttachmentClick = (attachment: ImageAttachment, attachmentIndex: number) => {
-    setCurrentAttachmentIndex(attachmentIndex);
+  const onLayerClick = (layer: ObjectLayer, layerIndex: number) => {
+    setCurrentLayerIndex(layerIndex);
   };
 
   return (
     <div class="image-editor">
       <ImageEditorPreview
         imageState={imageState()}
-        currentAttachmentIndex={currentAttachmentIndex()}
+        currentLayerIndex={currentLayerIndex()}
         showRotationControl={showRotationControl()}
         onCanvasMounted={onCanvasMounted}
         onImageChange={onImageChange}
-        onAttachmentClick={onAttachmentClick}
+        onLayerClick={onLayerClick}
       />
       <ImageEditorTabsContainer
         canUndo={canUndo()}
@@ -143,7 +140,7 @@ export function ImageEditor(props: MediaEditorProps) {
         onRedo={handleRedo}
         onClose={handleClose}
         imageState={imageState()}
-        currentAttachmentIndex={currentAttachmentIndex()}
+        currentLayerIndex={currentLayerIndex()}
         onImageChange={onImageChange}
       />
       <div class="image-editor__save-button">

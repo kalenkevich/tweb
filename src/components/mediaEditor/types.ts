@@ -8,8 +8,7 @@ export enum ImageChangeType {
   rotate,
   scale,
   crop,
-
-  attachment,
+  layer,
 }
 
 export type ImageChangeEvent = FilterImageChangeEvent
@@ -29,9 +28,9 @@ export enum ImageAttachmentType {
   draw = 'draw'
 }
 
-export type ImageAttachment = TextImageAttachment | DrawImageAttachment;
+export type ObjectLayer = TextLayer| DrawLayer;
 
-export interface ImageAttachmentBox {
+export interface LayerBox {
   // from left top corner of image
   x: number;
   y: number;
@@ -67,10 +66,10 @@ export enum AttachmentChangeAction {
   delete = 'delete',
 }
 
-export interface TextImageAttachment {
+export interface TextLayer {
   type: ImageAttachmentType.text;
   zIndex: number;
-  box: ImageAttachmentBox;
+  box: LayerBox;
   text: string;
   fontName: string;
   fontSize: number;
@@ -79,10 +78,10 @@ export interface TextImageAttachment {
   style: TextStyle;
 }
 
-export interface DrawImageAttachment {
+export interface DrawLayer {
   type: ImageAttachmentType.draw;
   zIndex: number;
-  box: ImageAttachmentBox;
+  box: LayerBox;
   color: Color;
   size: number;
   style: DrawStyle;
@@ -109,7 +108,7 @@ export interface ImageState {
   filter: ImageFilterState;
   aspectRatio: number | ImageAspectRatio;
   rotateAngle: number;
-  attachments: ImageAttachment[];
+  layers: ObjectLayer[];
 }
 
 export interface FilterImageChangeEvent {
@@ -128,8 +127,8 @@ export interface RotateImageChangeEvent {
 }
 
 export interface AttachmentChangeEvent {
-  type: ImageChangeType.attachment;
-  attachment: ImageAttachment;
-  attachmentIndex?: number;
+  type: ImageChangeType.layer;
+  layer: ObjectLayer;
+  layerIndex?: number;
   action: AttachmentChangeAction;
 }

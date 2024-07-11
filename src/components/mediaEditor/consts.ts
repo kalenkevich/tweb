@@ -1,5 +1,5 @@
 import {Color, ColorFormatType} from '../../helpers/color';
-import {ImageAspectRatio, ImageState, TextImageAttachment, DrawImageAttachment, ImageAttachmentType, TextAlignment, TextStyle, DrawStyle} from './types';
+import {ImageAspectRatio, ImageState, TextLayer, DrawLayer, ImageAttachmentType, TextAlignment, TextStyle, DrawStyle} from './types';
 
 export const DEFAULT_IMAGE_STATE: ImageState = {
   source: new Uint8Array([]),
@@ -20,12 +20,12 @@ export const DEFAULT_IMAGE_STATE: ImageState = {
   },
   aspectRatio: ImageAspectRatio.original,
   rotateAngle: 0,
-  attachments: []
+  layers: []
 };
 
 const isDarkMode = !!document.documentElement.classList.contains('dark');
 
-export const DEFAULT_TEXT_ATTACHMENT: TextImageAttachment = {
+export const DEFAULT_TEXT_LAYER: TextLayer = {
   type: ImageAttachmentType.text,
   zIndex: 0,
   box: {
@@ -46,7 +46,7 @@ export const DEFAULT_TEXT_ATTACHMENT: TextImageAttachment = {
   style: TextStyle.fill
 }
 
-export const DEFAULT_DRAW_ATTACHMENT: DrawImageAttachment = {
+export const DEFAULT_DRAW_LAYER: DrawLayer = {
   type: ImageAttachmentType.draw,
   zIndex: 0,
   box: {

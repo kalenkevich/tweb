@@ -1,4 +1,4 @@
-import {For, createSignal} from 'solid-js';
+import {For, createSignal, splitProps} from 'solid-js';
 import {i18n} from '../../lib/langPack';
 import {ImageControlProps} from './controls/imageControl';
 import {ImageFilterControl} from './controls/imageFilterControl';
@@ -16,7 +16,7 @@ export const TABS_CONFIG = [{
     <ImageFilterControl
       imageState={props.imageState}
       onImageChange={props.onImageChange}
-      currentAttachmentIndex={props.currentAttachmentIndex}
+      currentLayerIndex={props.currentLayerIndex}
     />
   )
 }, {
@@ -27,7 +27,7 @@ export const TABS_CONFIG = [{
     <ImageResizeControl
       imageState={props.imageState}
       onImageChange={props.onImageChange}
-      currentAttachmentIndex={props.currentAttachmentIndex}
+      currentLayerIndex={props.currentLayerIndex}
     />
   )
 }, {
@@ -38,7 +38,7 @@ export const TABS_CONFIG = [{
     <ImageTextControl
       imageState={props.imageState}
       onImageChange={props.onImageChange}
-      currentAttachmentIndex={props.currentAttachmentIndex}
+      currentLayerIndex={props.currentLayerIndex}
     />
   )
 }, {
@@ -49,7 +49,7 @@ export const TABS_CONFIG = [{
     <ImageDrawControl
       imageState={props.imageState}
       onImageChange={props.onImageChange}
-      currentAttachmentIndex={props.currentAttachmentIndex}
+      currentLayerIndex={props.currentLayerIndex}
     />
   )
 }, {
@@ -60,7 +60,7 @@ export const TABS_CONFIG = [{
     <ImageStickerControl
       imageState={props.imageState}
       onImageChange={props.onImageChange}
-      currentAttachmentIndex={props.currentAttachmentIndex}
+      currentLayerIndex={props.currentLayerIndex}
     />
   )
 }];
@@ -116,7 +116,7 @@ export function ImageEditorTabsContainer(props: ImageEditorTabsContainerProps) {
           )}
         </For>
       </div>
-      <div class="tab-body ">
+      <div class="tab-body">
         {selectedTab().component(props)}
       </div>
     </div>
