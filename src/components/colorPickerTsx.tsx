@@ -16,9 +16,14 @@ export function ColorPickerTsx(props: ColorPickerTsxProps) {
     colorPickerInstance.onChange = props.onChange;
   });
 
-  // createEffect(on(() => props.color, (value) => {
-  //   colorPicker().setColor(value);
-  // }));
+  createEffect(on(() => props.color, (value, prev) => {
+    if(value.a === 255) {
+      value.a /= 255;
+    }
+    if(value?.h !== prev?.h || value?.s !== prev?.s || value?.l !== prev?.l || value?.a !== prev?.a) {
+      colorPicker().setColor(value);
+    }
+  }));
 
   return <>{colorPicker().container}</>;
 }

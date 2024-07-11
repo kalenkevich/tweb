@@ -47,11 +47,26 @@ export function ColorSlider(props: ColorSliderProps) {
   const [hueRef, setHueRef] = createSignal<SVGSVGElement>();
   const [hueDraggerRef, setHueDraggerRef] = createSignal<SVGSVGElement>();
 
-  const hslaColor = anyColorToHslaColor(props.color);
-  const [hue, setHue] = createSignal<number>(hslaColor.h);
-  const [saturation, setSaturation] = createSignal<number>(hslaColor.s);
-  const [lightness, setLightness] = createSignal<number>(hslaColor.l);
-  const [alpha, setAlpha] = createSignal<number>(hslaColor.a);
+  const hslaColor = () => anyColorToHslaColor(props.color);
+  const [hue, setHue] = createSignal<number>(hslaColor().h);
+  const [saturation, setSaturation] = createSignal<number>(hslaColor().s);
+  const [lightness, setLightness] = createSignal<number>(hslaColor().l);
+  const [alpha, setAlpha] = createSignal<number>(hslaColor().a);
+
+  onMount(() => {
+    attachGrabListeners(hueRef() as any, () => {
+      onGrabStart();
+    }, (pos) => {
+      hueHandler(pos.x);
+    }, () => {
+      onGrabEnd();
+    });
+
+    const hueRect = hueRef().getBoundingClientRect();
+    const percentHue = hslaColor().h / 360;
+    const hueX = hueRect.left + hueRect.width * percentHue;
+    hueHandler(hueX, false);
+  });
 
   createEffect(on(() => props.color, (val) => {
     const hslaColor = anyColorToHslaColor(val);
@@ -76,21 +91,6 @@ export function ColorSlider(props: ColorSliderProps) {
     document.documentElement.style.cursor = hueDraggerRef().style.cursor = '';
   };
 
-  onMount(() => {
-    attachGrabListeners(hueRef() as any, () => {
-      onGrabStart();
-    }, (pos) => {
-      hueHandler(pos.x);
-    }, () => {
-      onGrabEnd();
-    });
-
-    const hueRect = hueRef().getBoundingClientRect();
-    const percentHue = hslaColor.h / 360;
-    const hueX = hueRect.left + hueRect.width * percentHue;
-    hueHandler(hueX, false);
-  });
-
   const hueHandler = (pageX: number, update = true) => {
     const hueRect = hueRef().getBoundingClientRect();
     const eventX = clamp(pageX - hueRect.left, 0, hueRect.width);
@@ -99,7 +99,7 @@ export function ColorSlider(props: ColorSliderProps) {
 
     setHue(hueValue);
 
-    const hsla = `hsla(${hueValue}, 100%, 50%, ${alpha}())`;
+    const hsla = `hsla(${hueValue}, 100%, 50%, ${alpha()})`;
 
     hueDraggerRef().setAttributeNS(null, 'x', (percents * 100) + '%');
     hueDraggerRef().setAttributeNS(null, 'fill', hsla);
@@ -161,11 +161,27 @@ export function ColorPalleteBox(props: ColorPalleteBoxProps) {
   const [boxDraggerRef, setBoxDraggerRef] = createSignal<SVGSVGElement>();
   const [saturationRef, setSaturationRef] = createSignal<SVGLinearGradientElement>();
 
-  const hslaColor = anyColorToHslaColor(props.color);
-  const [hue, setHue] = createSignal<number>(hslaColor.h);
-  const [saturation, setSaturation] = createSignal<number>(hslaColor.s);
-  const [lightness, setLightness] = createSignal<number>(hslaColor.l);
-  const [alpha, setAlpha] = createSignal<number>(hslaColor.a);
+  const hslaColor = () => anyColorToHslaColor(props.color);
+  const [hue, setHue] = createSignal<number>(hslaColor().h);
+  const [saturation, setSaturation] = createSignal<number>(hslaColor().s);
+  const [lightness, setLightness] = createSignal<number>(hslaColor().l);
+  const [alpha, setAlpha] = createSignal<number>(hslaColor().a);
+
+  onMount(() => {
+    attachGrabListeners(boxRef() as any, () => {
+      onGrabStart();
+    }, (pos) => {
+      saturationHandler(pos.x, pos.y);
+    }, () => {
+      onGrabEnd();
+    });
+
+    const boxRect = boxRef().getBoundingClientRect();
+    const boxX = boxRect.width / 100 * hslaColor().s;
+    const percentY = 100 - (hslaColor().l / (100 - hslaColor().s / 2)) * 100;
+    const boxY = boxRect.height / 100 * percentY;
+    saturationHandler(boxRect.left + boxX, boxRect.top + boxY, false);
+  });
 
   createEffect(on(() => props.color, (val) => {
     const hslaColor = anyColorToHslaColor(val);
@@ -205,8 +221,10 @@ export function ColorPalleteBox(props: ColorPalleteBoxProps) {
     const posY = eventY / maxY * 100;
 
     const boxDragger = boxDraggerRef();
+    const color = getCurrentColor();
     boxDragger.setAttributeNS(null, 'x', posX + '%');
     boxDragger.setAttributeNS(null, 'y', posY + '%');
+    boxDraggerRef().setAttributeNS(null, 'fill', anyColorToHexColor(color));
 
     const saturation = clamp(posX, 0, 100);
 
@@ -242,16 +260,6 @@ export function ColorPalleteBox(props: ColorPalleteBoxProps) {
       }
     };
   }
-
-  onMount(() => {
-    attachGrabListeners(boxRef() as any, () => {
-      onGrabStart();
-    }, (pos) => {
-      saturationHandler(pos.x, pos.y);
-    }, () => {
-      onGrabEnd();
-    });
-  });
 
   return (
     <div class="color-picker-v2__color-pallete color-pallete">

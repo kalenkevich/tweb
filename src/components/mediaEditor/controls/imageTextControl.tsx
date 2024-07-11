@@ -3,8 +3,7 @@ import {i18n} from '../../../lib/langPack';
 import {ImageChangeType, TextAlignment, TextStyle, TextLayer, AttachmentChangeAction} from '../types';
 import {QUCIK_PALLETE_COLORS, DEFAULT_TEXT_LAYER} from '../consts';
 import {ImageControlProps} from './imageControl';
-import {Color, ColorFormatType, anyColorToHexColor} from '../../../helpers/color';
-import {ColorPickerTsx} from '../../colorPickerTsx';
+import {Color, ColorFormatType, anyColorToHexColor, anyColorToHslaColor} from '../../../helpers/color';
 import {ColorPickerV2} from '../../colorPickerV2';
 import {RangeSelectorTsx} from '../../rangeSelectorTsx';
 import {SvgIconType} from '../../iconSvg';
@@ -83,6 +82,7 @@ export function ImageTextControl(props: ImageTextControlProps): JSX.Element {
   const fontName = () => layer()?.fontName || DEFAULT_TEXT_LAYER.fontName;
   const fontSize = () => layer()?.fontSize || DEFAULT_TEXT_LAYER.fontSize;
   const hexColor = () => anyColorToHexColor(color())
+  const hslaColor = () => anyColorToHslaColor(color())
 
   const onPropertyChange = (propertyType: TextAttachmentProperty, value: string | TextAlignment | TextStyle | number | Color) => {
     const isNew = !layer();
@@ -123,12 +123,6 @@ export function ImageTextControl(props: ImageTextControlProps): JSX.Element {
 
   return (
     <div class="image-editor__image-control text-image-control">
-      {/* <div class="color-picker-container">
-        <ColorPickerTsx
-          color={anyColorToHslaColor(color())}
-          onChange={(updateColor) => onPropertyChange(TextAttachmentProperty.color, ({type: ColorFormatType.hexa, value:updateColor.hexa}))}
-        />
-      </div> */}
       <div class="color-picker-container">
         <ColorPickerV2
           color={color()}
