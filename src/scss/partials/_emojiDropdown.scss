@@ -14,11 +14,11 @@ $menu-search-translateY: -#{$menu-height};
 
 .emoji-dropdown {
   --width: 23.875rem;
-  --height: 26.25rem;
+  // --height: 26.25rem;
 	display: flex/*  !important */;
 	flex-direction: column;
 	width: var(--width);
-	height: var(--height);
+	// height: var(--height);
 	background: var(--surface-color);
 	overflow: hidden;
 	flex: 1 1 auto;

@@ -79,6 +79,7 @@
 
     .tab-body {
       width: 100%;
+      height: 100%;
       display: flex;
       flex-direction: column;
       overflow-y: auto;
@@ -230,6 +231,10 @@
         }
       }
     }
+  }
+
+  .stickers-image-control {
+    height: 100%;
   }
 
   &__save-button {
