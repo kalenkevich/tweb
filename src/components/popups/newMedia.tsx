@@ -841,8 +841,6 @@ export default class PopupNewMedia extends PopupElement {
         // TODO remove and use icons from font once it available.
         asSvgIcon: true,
         onClick: async() => {
-          // const imageSource = await params.file.arrayBuffer().then(buf => new Uint8ClampedArray(buf));
-          // const imageData = new ImageData(imageSource, params.width, params.height);
           const image: HTMLImageElement = await new Promise((resolve) => {
             const imageUrl = URL.createObjectURL(params.file);
             const image = new Image();
@@ -850,13 +848,11 @@ export default class PopupNewMedia extends PopupElement {
               resolve(image);
             };
             image.src = imageUrl;
-          })
+          });
 
           wholeDialogManager.show(({hide}: ContentRenderProps) => (
             <ImageEditor
               imgSource={image}
-              imgWidth={params.width}
-              imgHeight={params.height}
               onSave={(resultImage) => {
                 // apply image instead.
                 hide();

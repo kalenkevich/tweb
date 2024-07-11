@@ -6,33 +6,31 @@ import {ImageEditorTabsContainer} from './imageEditorTabsContainer';
 import {ImageEditorManager} from './imageEditorManager';
 import {ButtonIconTsx} from '../buttonIconTsx';
 
-export function createImageState(source: ImageSource, width: number, height: number): ImageState {
+export function createImageState(source: ImageSource): ImageState {
   return {
     ...DEFAULT_IMAGE_STATE,
     source,
-    width,
-    height
+    width: source.width,
+    height: source.height
   }
 }
 
 export interface MediaEditorProps {
   imgSource: ImageSource;
-  imgWidth: number;
-  imgHeight: number;
   onClose: () => void;
   onSave: (editedImage: ImageSource) => void;
 }
 
 export function ImageEditor(props: MediaEditorProps) {
   const [imageEditorManager] = createSignal(new ImageEditorManager());
-  const [imageState, setImageState] = createSignal(createImageState(props.imgSource, props.imgWidth, props.imgHeight));
+  const [imageState, setImageState] = createSignal(createImageState(props.imgSource));
   const [canRedo, setCanRedu] = createSignal(false);
   const [canUndo, setCanUndo] = createSignal(false);
   const [currentLayerIndex, setCurrentLayerIndex] = createSignal(0);
   const [showRotationControl, setShowRotationControl] = createSignal(false);
 
-  createEffect(on(() => [props.imgSource, props.imgWidth, props.imgHeight], () => {
-    const newImageState = createImageState(props.imgSource, props.imgWidth, props.imgHeight);
+  createEffect(on(() => [props.imgSource], () => {
+    const newImageState = createImageState(props.imgSource);
 
     setImageState(newImageState);
     imageEditorManager().pushState(newImageState);
