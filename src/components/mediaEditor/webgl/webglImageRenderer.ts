@@ -2,7 +2,7 @@ import {ImageState} from '../types';
 import {ImageRenderer} from '../imageRenderer';
 import {CompatibleWebGLRenderingContext, makeCompatibleWebGLRenderingContext} from './webglContext';
 import {createWebGlTexture} from './helpers/webglTexture';
-import {WebGlFrameBuffer, createFrameBuffer} from './helpers/webglFramebuffer';
+// import {WebGlFrameBuffer, createFrameBuffer} from './helpers/webglFramebuffer';
 import {WebGlSceneCamera, createWebglSceneCamera} from './helpers/weblgCamera';
 import {BaseWebglProgram} from './programs/baseProgram';
 import {ImageProgram} from './programs/imageProgram';
@@ -12,7 +12,7 @@ import readBlobAsUint8Array from '../../../helpers/blob/readBlobAsUint8Array';
 export class WebglImageRenderer implements ImageRenderer {
   private canvas: HTMLCanvasElement;
   private gl: CompatibleWebGLRenderingContext;
-  private framebuffer: WebGlFrameBuffer;
+  // private framebuffer: WebGlFrameBuffer;
   private imageProgram: ImageProgram;
   private sceneCamera: WebGlSceneCamera;
 
@@ -36,7 +36,7 @@ export class WebglImageRenderer implements ImageRenderer {
       gl = this.gl = makeCompatibleWebGLRenderingContext(gl1);
     }
 
-    gl.viewport(0, 0, this.canvas.width, this.canvas.height);
+    this.resize(this.canvas.width, this.canvas.height);
     gl.clear(gl.COLOR_BUFFER_BIT);
 
     this.sceneCamera = createWebglSceneCamera({
@@ -47,7 +47,7 @@ export class WebglImageRenderer implements ImageRenderer {
       distance: 0,
       rotationInDegree: 0
     });
-    this.framebuffer = this.createFramebuffer();
+    // this.framebuffer = this.createFramebuffer();
     this.imageProgram = new ImageProgram(gl);
     await this.imageProgram.init();
   }
@@ -59,8 +59,8 @@ export class WebglImageRenderer implements ImageRenderer {
     this.canvas.height = height * this.devicePixelRatio;
 
     // we should recreate framebuffer object
-    this.framebuffer.clear();
-    this.framebuffer = this.createFramebuffer();
+    // this.framebuffer.clear();
+    // this.framebuffer = this.createFramebuffer();
     this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
   }
 
@@ -70,10 +70,10 @@ export class WebglImageRenderer implements ImageRenderer {
       height: imageState.height
     });
 
-    this.framebuffer.bind();
+    // this.framebuffer.bind();
     this.imageProgram.link();
     this.setProgramGlobalUniforms(this.imageProgram, this.sceneCamera);
-    const imageDrawObject = imageState2ImageDrawObject(imageState);
+    const imageDrawObject = imageState2ImageDrawObject(imageState, this.canvas);
 
     this.imageProgram.draw(imageDrawObject);
   }
@@ -90,26 +90,26 @@ export class WebglImageRenderer implements ImageRenderer {
     program.setMatrix(camera.getProjectionViewMatrix());
     program.setWidth(this.canvas.width);
     program.setHeight(this.canvas.height);
-    program.setDevicePixelRation(this.devicePixelRatio);
+    program.setDevicePixelRatio(this.devicePixelRatio);
   }
 
-  private createFramebuffer() {
-    const gl = this.gl;
+  // private createFramebuffer() {
+  //   const gl = this.gl;
 
-    const frameBufferTexture = createWebGlTexture(gl, {
-      name: 'framebuffer_texture',
-      // Replace framebuffer with a new instance but use the same texture index
-      textureIndex: this.framebuffer?.getTexture().index,
-      width: this.canvas.width,
-      height: this.canvas.height,
-      pixels: null,
-      unpackPremultiplyAlpha: true,
-      minFilter: gl.LINEAR,
-      magFilter: gl.LINEAR,
-      wrapS: gl.CLAMP_TO_EDGE,
-      wrapT: gl.CLAMP_TO_EDGE
-    });
+  //   const frameBufferTexture = createWebGlTexture(gl, {
+  //     name: 'framebuffer_texture',
+  //     // Replace framebuffer with a new instance but use the same texture index
+  //     textureIndex: this.framebuffer?.getTexture().index,
+  //     width: this.canvas.width,
+  //     height: this.canvas.height,
+  //     pixels: null,
+  //     unpackPremultiplyAlpha: true,
+  //     minFilter: gl.LINEAR,
+  //     magFilter: gl.LINEAR,
+  //     wrapS: gl.CLAMP_TO_EDGE,
+  //     wrapT: gl.CLAMP_TO_EDGE
+  //   });
 
-    return createFrameBuffer(gl, {texture: frameBufferTexture});
-  }
+  //   return createFrameBuffer(gl, {texture: frameBufferTexture});
+  // }
 }

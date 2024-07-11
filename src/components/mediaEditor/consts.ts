@@ -2,7 +2,6 @@ import {Color, ColorFormatType} from '../../helpers/color';
 import {ImageAspectRatio, ImageState, TextLayer, DrawLayer, ImageAttachmentType, TextAlignment, TextStyle, DrawStyle} from './types';
 
 export const DEFAULT_IMAGE_STATE: ImageState = {
-  source: new Uint8Array([]),
   width: 0,
   height: 0,
   filter: {

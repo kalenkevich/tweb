@@ -58,6 +58,7 @@ import ButtonIcon from '../buttonIcon';
 import Icon from '../icon';
 import readBlobAsUint8Array from '../../helpers/blob/readBlobAsUint8Array';
 import {ImageEditor} from '../mediaEditor/imageEditor';
+import {blobToArrayBufferSource} from '../mediaEditor/webgl/helpers/webglTexture';
 import {WholeDialogManagerTsx, ContentRenderProps} from '../wholeDialogManager';
 
 type SendFileParams = SendFileDetails & {
@@ -840,11 +841,20 @@ export default class PopupNewMedia extends PopupElement {
         // TODO remove and use icons from font once it available.
         asSvgIcon: true,
         onClick: async() => {
-          const imageSource = await readBlobAsUint8Array(params.file);
+          // const imageSource = await params.file.arrayBuffer().then(buf => new Uint8ClampedArray(buf));
+          // const imageData = new ImageData(imageSource, params.width, params.height);
+          const image: HTMLImageElement = await new Promise((resolve) => {
+            const imageUrl = URL.createObjectURL(params.file);
+            const image = new Image();
+            image.onload = () => {
+              resolve(image);
+            };
+            image.src = imageUrl;
+          })
 
           wholeDialogManager.show(({hide}: ContentRenderProps) => (
             <ImageEditor
-              imgSource={imageSource}
+              imgSource={image}
               imgWidth={params.width}
               imgHeight={params.height}
               onSave={(resultImage) => {

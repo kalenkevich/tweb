@@ -1,6 +1,6 @@
 import {Color} from '../../helpers/color';
 
-export type ImageSource = Uint8Array;
+export type ImageSource = HTMLImageElement;
 
 export enum ImageChangeType {
   filter,
@@ -102,7 +102,7 @@ export interface ImageFilterState {
 }
 
 export interface ImageState {
-  source: ImageSource;
+  source?: ImageSource;
   width: number;
   height: number;
   filter: ImageFilterState;

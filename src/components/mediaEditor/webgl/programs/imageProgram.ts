@@ -2,7 +2,7 @@ import {BaseWebglProgram, SHADER_CLIP_UTILS, SHADER_MAT_UTILS} from './baseProgr
 import {CompatibleWebGLRenderingContext} from '../webglContext';
 import {WebGlUniform, createWebGlUniform} from '../helpers/webglUniform';
 import {WebGlBuffer, createWebGlBuffer} from '../helpers/webglBuffer';
-import {WebGlTexture, createWebGlTexture} from '../helpers/webglTexture';
+import {WebGlTexture, createWebGlTexture, TextureSourceType} from '../helpers/webglTexture';
 import {ImageDrawObject} from '../drawObject/imageDrawObject';
 
 const ImageShaders = {
@@ -16,7 +16,7 @@ const ImageShaders = {
     uniform float u_width;
     uniform float u_height;
 
-    attribute vec3 a_position;
+    attribute vec2 a_position;
     attribute vec2 a_texCoord;
     attribute vec4 a_color;
 
@@ -27,10 +27,10 @@ const ImageShaders = {
       v_texCoord = a_texCoord;
       v_color = a_color;
 
-      float x = a_position.x;
-      float y = a_position.y;
+      vec2 resolution = vec2(u_width, u_height);
+      vec2 coords = a_position.xy / resolution;
 
-      gl_Position = vec4(applyMatrix(u_matrix, clipSpace(vec2(x, y))), 0, 1);
+      gl_Position = vec4(clipSpace(coords), 0.0, 1.0);
     }
   `,
   fragment: `
@@ -85,7 +85,7 @@ export class ImageProgram extends BaseWebglProgram {
 
     gl.bindVertexArray(this.vao);
 
-    this.positionBuffer = createWebGlBuffer(gl, {location: 0, size: 3});
+    this.positionBuffer = createWebGlBuffer(gl, {location: 0, size: 2});
     this.textcoordBuffer = createWebGlBuffer(gl, {location: 1, size: 2});
 
     gl.bindVertexArray(null);
@@ -101,13 +101,14 @@ export class ImageProgram extends BaseWebglProgram {
 
     this.texture = createWebGlTexture(gl, {
       name: 'image',
-      width: 0,
-      height: 0,
-      flipY: true,
+      // image flipping handled by space clipping inside the shader.
+      // flipY: true,
       wrapS: gl.CLAMP_TO_EDGE,
       wrapT: gl.CLAMP_TO_EDGE,
-      minFilter: gl.LINEAR,
-      magFilter: gl.LINEAR
+      minFilter: gl.NEAREST,
+      magFilter: gl.NEAREST,
+      format: gl.RGB,
+      internalFormat: gl.RGB
     });
   }
 
@@ -117,8 +118,15 @@ export class ImageProgram extends BaseWebglProgram {
     gl.bindVertexArray(this.vao);
 
     this.textureUniform.setInteger(this.texture.index);
-    this.texture.setPixels(imageDrawObject.texture);
     this.texture.bind();
+    if(imageDrawObject.texture.type === TextureSourceType.IMAGE_BITMAP ||
+      imageDrawObject.texture.type === TextureSourceType.IMAGE_DATA ||
+      imageDrawObject.texture.type === TextureSourceType.IMAGE_ELEMENT
+    ) {
+      this.texture.setSource(imageDrawObject.texture);
+    } else {
+      this.texture.setPixels(imageDrawObject.texture);
+    }
 
     this.positionBuffer.bufferData(imageDrawObject.vertecies.buffer);
     this.textcoordBuffer.bufferData(imageDrawObject.textcoords.buffer);

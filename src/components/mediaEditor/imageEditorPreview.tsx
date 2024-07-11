@@ -11,13 +11,18 @@ export interface ImagePreviewProps extends ImageControlProps {
 
 export function ImageEditorPreview(props: ImagePreviewProps): JSX.Element {
   const [canvasRef, setCanvasRef] = createSignal<HTMLCanvasElement>();
+  const [rootRef, setRootRef] = createSignal<HTMLDivElement>();
 
   onMount(() => {
+    const [width, height] = [rootRef().offsetWidth, rootRef().offsetHeight];
+    canvasRef().width = width;
+    canvasRef().height = height;
+
     props.onCanvasMounted(canvasRef());
   });
 
   return (
-    <div class="image-editor__preview-container">
+    <div class="image-editor__preview-container" ref={el => setRootRef(el)}>
       <canvas
         class="preview-container-canvas"
         ref={(el) => setCanvasRef(el)}>

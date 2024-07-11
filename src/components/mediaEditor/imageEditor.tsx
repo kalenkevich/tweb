@@ -100,9 +100,9 @@ export function ImageEditor(props: MediaEditorProps) {
   };
 
   const handleSave = async() => {
-    const resultImage = await imageEditorManager().getCurrentImageSource();
+    // const resultImage = await imageEditorManager().getCurrentImageSource();
 
-    props.onSave(resultImage);
+    // props.onSave(resultImage);
   };
 
   const handleUndo = () => {

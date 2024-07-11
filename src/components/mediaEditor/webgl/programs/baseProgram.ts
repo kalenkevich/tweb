@@ -133,7 +133,7 @@ export abstract class BaseWebglProgram {
     this.heightUniform.setFloat(height);
   }
 
-  setDevicePixelRation(devicePixelRatio: number) {
+  setDevicePixelRatio(devicePixelRatio: number) {
     this.devicePixelRatioUniform.setFloat(devicePixelRatio);
   }
 

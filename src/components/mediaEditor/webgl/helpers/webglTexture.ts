@@ -2,15 +2,17 @@ import {CompatibleWebGLRenderingContext} from '../webglContext';
 
 export enum TextureSourceType {
   IMAGE_BITMAP = 0,
-  UINT8_ARRAY_BUFFER = 2,
-  UINT_8_CLAMPED_ARRAY_BUFFER = 1,
+  IMAGE_DATA = 1,
+  IMAGE_ELEMENT = 2,
+  UINT8_ARRAY_BUFFER = 3,
+  UINT_8_CLAMPED_ARRAY_BUFFER = 4,
 }
 
 let currentTextureId = 0;
 
 export type ArrayBufferTextureSource = Uint8ClampedArrayBufferTextureSource | Uint8ArrayBufferTextureSource;
-
-export type TextureSource = ArrayBufferTextureSource | ImageBitmapTextureSource;
+export type ImageTextureSource = ImageBitmapTextureSource | ImageDataTextureSource | ImageElementTextureSource;
+export type TextureSource = ArrayBufferTextureSource | ImageTextureSource;
 
 // /** Bynary source of the image. */
 export interface Uint8ClampedArrayBufferTextureSource {
@@ -72,6 +74,45 @@ export function toUint8ClampedTextureSource(
   };
 }
 
+export function createImageDataTextureSource(
+  source: Uint8ClampedArray,
+  width: number,
+  height: number,
+  options: CreateTextureSourceOptions = DefaultCreateOptions
+): ImageDataTextureSource {
+  return {
+    id: currentTextureId++,
+    type: TextureSourceType.IMAGE_DATA,
+    width,
+    height,
+    data: new ImageData(source, width, height)
+  };
+}
+
+export function createImageElementTextureSource(
+  source: HTMLImageElement,
+  width: number,
+  height: number,
+  options: CreateTextureSourceOptions = DefaultCreateOptions
+): ImageElementTextureSource {
+  return {
+    id: currentTextureId++,
+    type: TextureSourceType.IMAGE_ELEMENT,
+    width,
+    height,
+    data: source
+  };
+}
+
+export async function blobToArrayBufferSource(sourceBlob: Blob): Promise<Uint8ClampedArrayBufferTextureSource> {
+  const sourceImage = await createImageBitmap(sourceBlob);
+  const canvas = new OffscreenCanvas(sourceImage.width, sourceImage.height);
+  const ctx = canvas.getContext('2d') as OffscreenCanvasRenderingContext2D;
+  const resultData = new Uint8ClampedArray(ctx.getImageData(0, 0, sourceImage.width, sourceImage.height).data.buffer);
+
+  return toUint8ClampedTextureSource(resultData, sourceImage.width, sourceImage.height);
+}
+
 /** Bitmap image source. Ready to be used in canvas by GPU. */
 export interface ImageBitmapTextureSource {
   id: number;
@@ -79,7 +120,25 @@ export interface ImageBitmapTextureSource {
   type: TextureSourceType.IMAGE_BITMAP;
   width: number;
   height: number;
-  data: ImageBitmap;
+  data: ImageBitmap | ImageData;
+}
+
+export interface ImageDataTextureSource {
+  id: number;
+  name?: string;
+  type: TextureSourceType.IMAGE_DATA;
+  width: number;
+  height: number;
+  data: ImageData;
+}
+
+export interface ImageElementTextureSource {
+  id: number;
+  name?: string;
+  type: TextureSourceType.IMAGE_ELEMENT;
+  width: number;
+  height: number;
+  data: HTMLImageElement;
 }
 
 export interface CreateTextureOptions {
@@ -96,7 +155,7 @@ export interface CreateTextureOptions {
   level?: number;
   type?: number;
   pixels?: ArrayBufferView;
-  source?: ImageBitmapTextureSource;
+  source?: ImageBitmapTextureSource | ImageDataTextureSource;
   internalFormat?: number;
   format?: number;
   alignment?: number;
@@ -109,7 +168,7 @@ export interface WebGlTexture {
   width: number;
   height: number;
   level: number;
-  setSource(source: ImageBitmapTextureSource): void;
+  setSource(source: ImageTextureSource): void;
   setPixels(texturePixels: ArrayBufferTextureSource): void;
   bind(): void;
   unbind(): void;
@@ -192,7 +251,7 @@ export function createWebGlTexture(gl: CompatibleWebGLRenderingContext, options:
     width: options.width,
     height: options.height,
     level,
-    setSource(source: ImageBitmapTextureSource) {
+    setSource(source: ImageTextureSource) {
       gl.texImage2D(
         gl.TEXTURE_2D,
         level,
