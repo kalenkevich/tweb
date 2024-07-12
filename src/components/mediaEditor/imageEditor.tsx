@@ -2,7 +2,7 @@ import {createEffect, createSignal, on} from 'solid-js';
 import {ImageChangeType, ImageChangeEvent, ImageSource, ImageState, ObjectLayer, AttachmentChangeAction} from './types';
 import {DEFAULT_IMAGE_STATE} from './consts';
 import {ImageEditorPreview} from './imageEditorPreview';
-import {ImageEditorTabsContainer} from './imageEditorTabsContainer';
+import {ImageEditorTab, ImageEditorTabs, TABS_CONFIG} from './imageEditorTabs';
 import {ImageEditorManager} from './imageEditorManager';
 import {ButtonIconTsx} from '../buttonIconTsx';
 
@@ -11,7 +11,9 @@ export function createImageState(source: ImageSource): ImageState {
     ...DEFAULT_IMAGE_STATE,
     source,
     width: source.width,
-    height: source.height
+    height: source.height,
+    translation: [source.width / 2, source.height / 2],
+    origin: [-(source.width / 2), -(source.height / 2)]
   }
 }
 
@@ -27,7 +29,7 @@ export function ImageEditor(props: MediaEditorProps) {
   const [canRedo, setCanRedu] = createSignal(false);
   const [canUndo, setCanUndo] = createSignal(false);
   const [currentLayerIndex, setCurrentLayerIndex] = createSignal(0);
-  const [showRotationControl, setShowRotationControl] = createSignal(false);
+  const [selectedTab, setSelectedTab] = createSignal(TABS_CONFIG[0]);
 
   createEffect(on(() => [props.imgSource], () => {
     const newImageState = createImageState(props.imgSource);
@@ -42,16 +44,23 @@ export function ImageEditor(props: MediaEditorProps) {
     await imageEditorManagerInstance.init(canvas, imageState());
   };
 
+  const onCanvasResized = (width: number, height: number) => {
+    imageEditorManager().resizeCanvas(width, height);
+  };
+
   const handleChangeEvent = (event: ImageChangeEvent): ImageState => {
     switch(event.type) {
       case ImageChangeType.filter: {
         return imageEditorManager().filter(event.value);
       }
       case ImageChangeType.aspectRatio: {
-        return imageEditorManager().aspectRatio(event.value);
+        return imageEditorManager().aspectRatio(event.value, event.animation);
       }
       case ImageChangeType.rotate: {
-        return imageEditorManager().rotate(event.value);
+        return imageEditorManager().rotate(event.value, event.animation);
+      }
+      case ImageChangeType.flipHorisontaly: {
+        return imageEditorManager().flipHorisontaly();
       }
       case ImageChangeType.layer: {
         const state = imageEditorManager().getCurrentImageState();
@@ -121,17 +130,22 @@ export function ImageEditor(props: MediaEditorProps) {
     setCurrentLayerIndex(layerIndex);
   };
 
+  const handleTabSelection = (tab: ImageEditorTab) => {
+    setSelectedTab(tab);
+  };
+
   return (
     <div class="image-editor">
       <ImageEditorPreview
         imageState={imageState()}
         currentLayerIndex={currentLayerIndex()}
-        showRotationControl={showRotationControl()}
         onCanvasMounted={onCanvasMounted}
+        onCanvasResized={onCanvasResized}
         onImageChange={onImageChange}
         onLayerClick={onLayerClick}
+        selectedTab={selectedTab()}
       />
-      <ImageEditorTabsContainer
+      <ImageEditorTabs
         canUndo={canUndo()}
         canRedo={canRedo()}
         onUndo={handleUndo}
@@ -140,6 +154,7 @@ export function ImageEditor(props: MediaEditorProps) {
         imageState={imageState()}
         currentLayerIndex={currentLayerIndex()}
         onImageChange={onImageChange}
+        onTabSelected={handleTabSelection}
       />
       <div class="image-editor__save-button">
         <ButtonIconTsx
@@ -151,4 +166,3 @@ export function ImageEditor(props: MediaEditorProps) {
     </div>
   )
 }
-

@@ -6,7 +6,7 @@ import {
   rotateMatrix3,
   invertMatrix3,
   multiplyMatrix3
-} from '../math/matrixUtils';
+} from '../../math/matrixUtils';
 
 export interface WebGlSceneCameraState {
   readonly x: number;

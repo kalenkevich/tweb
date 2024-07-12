@@ -8,12 +8,14 @@ export enum ImageChangeType {
   rotate,
   scale,
   crop,
+  flipHorisontaly,
   layer,
 }
 
 export type ImageChangeEvent = FilterImageChangeEvent
   | RotateImageChangeEvent
   | AspectRatioChangeEvent
+  | FlipImageChangeEvent
   | AttachmentChangeEvent;
 
 export enum ImageAspectRatio {
@@ -121,6 +123,9 @@ export interface ImageState {
   filter: ImageFilterState;
   aspectRatio: number | ImageAspectRatio;
   rotateAngle: number;
+  origin: [number, number],
+  translation: [number, number];
+  scale: [number, number];
   layers: ObjectLayer[];
 }
 
@@ -132,11 +137,17 @@ export interface FilterImageChangeEvent {
 export interface AspectRatioChangeEvent {
   type: ImageChangeType.aspectRatio;
   value: number | ImageAspectRatio;
+  animation?: boolean;
 }
 
 export interface RotateImageChangeEvent {
   type: ImageChangeType.rotate;
-  value: number; // angle in radians;
+  value: number; // angle in degree;
+  animation?: boolean;
+}
+
+export interface FlipImageChangeEvent {
+  type: ImageChangeType.flipHorisontaly;
 }
 
 export interface AttachmentChangeEvent {

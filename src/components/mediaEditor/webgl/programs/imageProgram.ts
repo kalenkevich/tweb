@@ -29,9 +29,12 @@ const ImageShaders = {
       v_color = a_color;
 
       vec2 resolution = vec2(u_width, u_height);
-      vec2 coords = a_position.xy / resolution;
+      vec2 coords = (u_matrix * vec3(a_position, 1)).xy;
+      vec2 scaled = coords / resolution;
+      vec2 clipped = clipSpace(scaled);
 
-      gl_Position = vec4(clipSpace(coords), 0.0, 1.0);
+      // gl_Position = vec4(applyMatrix(u_matrix, clipSpace(coords)), 0.0, 1.0);
+      gl_Position = vec4(clipped, 0.0, 1.0);
     }
   `,
   fragment: `

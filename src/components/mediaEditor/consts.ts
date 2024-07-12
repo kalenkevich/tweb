@@ -19,6 +19,9 @@ export const DEFAULT_IMAGE_STATE: ImageState = {
   },
   aspectRatio: ImageAspectRatio.original,
   rotateAngle: 0,
+  translation: [0, 0],
+  origin: [0, 0],
+  scale: [1, 1],
   layers: []
 };
 

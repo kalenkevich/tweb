@@ -1,4 +1,4 @@
-import {For, createSignal, splitProps} from 'solid-js';
+import {For, createSignal, JSX} from 'solid-js';
 import {i18n} from '../../lib/langPack';
 import {ImageControlProps} from './controls/imageControl';
 import {ImageFilterControl} from './controls/imageFilterControl';
@@ -8,7 +8,24 @@ import {ImageDrawControl} from './controls/imageDrawControl';
 import {ImageStickerControl} from './controls/imageStickerControl';
 import {ButtonIconTsx} from '../buttonIconTsx';
 
-export const TABS_CONFIG = [{
+export enum TabType {
+  ENHANCE,
+  RESIZE,
+  TEXT,
+  PAINT,
+  STICKERS
+}
+
+export interface ImageEditorTab {
+  tabId: TabType;
+  name: string | HTMLElement;
+  icon: string;
+  asSvgIcon: boolean;
+  component: (props: ImageControlProps) => JSX.Element,
+};
+
+export const TABS_CONFIG: ImageEditorTab[] = [{
+  tabId: TabType.ENHANCE,
   name: i18n('ImageEditor.Enhance'),
   icon: 'enhance_media',
   asSvgIcon: true,
@@ -20,6 +37,7 @@ export const TABS_CONFIG = [{
     />
   )
 }, {
+  tabId: TabType.RESIZE,
   name: i18n('ImageEditor.Edit'),
   icon: 'crop',
   asSvgIcon: true,
@@ -31,6 +49,7 @@ export const TABS_CONFIG = [{
     />
   )
 }, {
+  tabId: TabType.TEXT,
   name: i18n('ImageEditor.Text'),
   icon: 'text',
   asSvgIcon: true,
@@ -42,6 +61,7 @@ export const TABS_CONFIG = [{
     />
   )
 }, {
+  tabId: TabType.PAINT,
   name: i18n('ImageEditor.Paint'),
   icon: 'brush',
   asSvgIcon: true,
@@ -53,6 +73,7 @@ export const TABS_CONFIG = [{
     />
   )
 }, {
+  tabId: TabType.STICKERS,
   name: i18n('ImageEditor.Stickers'),
   icon: 'smile',
   asSvgIcon: true,
@@ -65,15 +86,16 @@ export const TABS_CONFIG = [{
   )
 }];
 
-export interface ImageEditorTabsContainerProps extends ImageControlProps {
+export interface ImageEditorTabsProps extends ImageControlProps {
   canUndo: boolean;
   canRedo: boolean;
   onUndo: () => void;
   onRedo: () => void;
   onClose: () => void;
+  onTabSelected: (tab: ImageEditorTab) => void;
 }
 
-export function ImageEditorTabsContainer(props: ImageEditorTabsContainerProps) {
+export function ImageEditorTabs(props: ImageEditorTabsProps) {
   const [selectedTab, setSelectedTab] = createSignal(TABS_CONFIG[0]);
 
   return (
@@ -109,7 +131,10 @@ export function ImageEditorTabsContainer(props: ImageEditorTabsContainerProps) {
               <ButtonIconTsx
                 icon={tabConfig.icon}
                 asSvgIcon={tabConfig.asSvgIcon}
-                onClick={() => setSelectedTab(tabConfig)}
+                onClick={() => {
+                  setSelectedTab(tabConfig);
+                  props.onTabSelected(tabConfig);
+                }}
               />
               <div class="tab-icon__highlight"></div>
             </div>

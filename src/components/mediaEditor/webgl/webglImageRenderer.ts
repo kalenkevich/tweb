@@ -2,10 +2,10 @@ import {ImageState} from '../types';
 import {ImageRenderer} from '../imageRenderer';
 import {CompatibleWebGLRenderingContext, makeCompatibleWebGLRenderingContext} from './webglContext';
 import {WebGlSceneCamera, createWebglSceneCamera} from './helpers/weblgCamera';
-import {BaseWebglProgram} from './programs/baseProgram';
 import {ImageProgram} from './programs/imageProgram';
 import {imageState2ImageDrawObject} from './drawObject/imageDrawObject';
 import readBlobAsUint8Array from '../../../helpers/blob/readBlobAsUint8Array';
+import {Matrix3, createMatrix3, multiplyMatrix3, rotateMatrix3, translateMatrix3, scaleMatrix3} from '../math/matrixUtils';
 
 export class WebglImageRenderer implements ImageRenderer {
   private canvas: HTMLCanvasElement;
@@ -20,15 +20,13 @@ export class WebglImageRenderer implements ImageRenderer {
 
     let gl = this.gl = this.canvas.getContext('webgl2', {
       performance: 'high-performance',
-      alpha: true,
-      preserveDrawingBuffer: true
+      alpha: true
     }) as CompatibleWebGLRenderingContext;
     if(!this.gl) {
       // Fallback to webgl 1 rendering context.
       const gl1 = this.canvas.getContext('webgl', {
         performance: 'high-performance',
-        alpha: true,
-        preserveDrawingBuffer: true
+        alpha: true
       }) as WebGLRenderingContext;
       gl = this.gl = makeCompatibleWebGLRenderingContext(gl1);
     }
@@ -62,10 +60,14 @@ export class WebglImageRenderer implements ImageRenderer {
       width: imageState.width,
       height: imageState.height
     });
+    const projectionViewMatrix = getProjectionViewMatrix(imageState);
     const imageDrawObject = imageState2ImageDrawObject(imageState, this.canvas);
 
     this.imageProgram.link();
-    this.setProgramGlobalUniforms(this.imageProgram, this.sceneCamera);
+    this.imageProgram.setMatrix(projectionViewMatrix);
+    this.imageProgram.setWidth(this.canvas.width);
+    this.imageProgram.setHeight(this.canvas.height);
+    this.imageProgram.setDevicePixelRatio(this.devicePixelRatio);
     this.imageProgram.setFilter(imageState.filter);
     this.imageProgram.draw(imageDrawObject);
   }
@@ -77,11 +79,26 @@ export class WebglImageRenderer implements ImageRenderer {
       });
     })
   }
+}
 
-  private setProgramGlobalUniforms(program: BaseWebglProgram, camera: WebGlSceneCamera) {
-    program.setMatrix(camera.getProjectionViewMatrix());
-    program.setWidth(this.canvas.width);
-    program.setHeight(this.canvas.height);
-    program.setDevicePixelRatio(this.devicePixelRatio);
-  }
+export function getProjectionViewMatrix(imageState: ImageState): Matrix3 {
+  const translationMatrix = translateMatrix3(createMatrix3(), imageState.translation);
+  const rotationMatrix = rotateMatrix3(createMatrix3(), degreesToRadians(imageState.rotateAngle));
+  const scaleMatrix = scaleMatrix3(createMatrix3(), imageState.scale);
+  const originMatrix = translateMatrix3(createMatrix3(), imageState.origin);
+
+  return multiplyMatrix3(
+    multiplyMatrix3(
+      multiplyMatrix3(
+        translationMatrix,
+        rotationMatrix
+      ),
+      scaleMatrix
+    ),
+    originMatrix
+  );
+}
+
+function degreesToRadians(degrees: number) {
+  return degrees * (Math.PI/180);
 }

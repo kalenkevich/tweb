@@ -11,6 +11,7 @@
   font-weight: 500;
 
   &__preview-container {
+    position: relative;
     width: 100%;
     background-color: #000000;
 
@@ -58,7 +59,7 @@
       display: flex;
       align-items: flex-end;
       justify-content: space-between;
-      box-shadow: 0px 2px 4px 0px #0000001A;
+      // box-shadow: 0px 2px 4px 0px #0000001A;
       height: 48px;
       flex-shrink: 0;
       padding: 0 8px;
@@ -239,6 +240,82 @@
     .emoji-dropdown {
       box-shadow: none;
       padding: 0 8px;
+    }
+  }
+
+  .rotation-control {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    bottom: 0;
+    cursor: grab;
+    position: absolute;
+
+    .rotation-control__container {
+      width: 100%;
+      flex-shrink: 0;
+      display: flex;
+      justify-content: center;
+      padding-bottom: 20px;
+    }
+
+    .angle-carusel {
+      display: flex;
+      margin: 0 16px;
+      position: relative;
+
+      .center-mark {
+        position: absolute;
+        top: calc(50% - 8px);
+        left: calc(50% - 3px);
+        width: 8px;
+        height: 4px;
+        svg path {
+          fill: #FFFFFF;
+        } 
+      }
+
+      .step {
+        height: 40px;
+        width: 2px;
+        margin: 0 2px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        align-items: center;
+
+        &__label {
+          position: relative;
+
+          .degree-char {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            top: 0;
+            right: -5px;
+          }
+        }
+
+        &__circle {
+          width: 2px;
+          height: 2px;
+          border-radius: 50%;
+          background-color: #FFFFFF;
+          opacity: 0.25;
+
+          .hidden {
+            opacity: 0;
+          }
+
+          &.milestone {
+            opacity: 0.5;
+          }
+          
+          &.center {
+            opacity: 1.0;
+          }
+        }
+      }
     }
   }
 
