@@ -9,19 +9,20 @@ import attachGrabListeners from '../../../helpers/dom/attachGrabListeners';
 const generateStepsFromAngle = (centerAngle: number, range: number = 90, stepMilestone: number = 15) => {
   const result = [];
 
+
   for(let i = centerAngle - range; i <= centerAngle + range; i++) {
     let angle = centerAngle + i;
-    if(angle > 360) {
-      angle = angle % 360;
-    } else if(angle < -360) {
-      angle = angle % 360;
+    if(angle >= 360) {
+      angle = -(angle % 360);
+    } else if(angle <= -360) {
+      angle = -(angle % 360);
     }
 
     result.push({
       value: angle,
       milestole: angle % stepMilestone === 0,
-      center: angle === centerAngle,
-      opacity: 1.1 - Math.abs(i - centerAngle) / 90
+      center: i === centerAngle,
+      opacity: 1.1 - Math.abs(i - centerAngle) / range
     });
   }
 
@@ -35,7 +36,7 @@ export function ImageRotationControl(props: ImageRotationControlProps): JSX.Elem
   const [caruselRef, setCaruselRef] = createSignal<HTMLDivElement>();
   const [startPosX, setStartPos] = createSignal<number | undefined>();
   const [startAngle, setStartAngle] = createSignal<number | undefined>();
-  const steps = () => generateStepsFromAngle(currentAngle());
+  const steps = () => generateStepsFromAngle(currentAngle() / 2);
 
   createEffect(on(() => props.imageState.rotateAngle, (val) => {
     setCurrentAngle(val);
@@ -59,7 +60,8 @@ export function ImageRotationControl(props: ImageRotationControlProps): JSX.Elem
   const caruselRotateHandler = (pageX: number) => {
     const caruselRect = caruselRef().getBoundingClientRect();
     const eventX = clamp(pageX - caruselRect.left, 0, caruselRect.width);
-    const angleDelta = Math.floor(180 * ((eventX - startPosX()) / caruselRect.width));
+    const deltaX = (eventX - startPosX()) / window.devicePixelRatio;
+    const angleDelta = Math.floor(180 * (deltaX / caruselRect.width));
 
     const newAngle = startAngle() - angleDelta;
     setCurrentAngle(newAngle);

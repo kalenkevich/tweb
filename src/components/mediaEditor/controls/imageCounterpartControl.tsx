@@ -228,11 +228,15 @@ export function ImageConunterpartControl(props: ImageConunterpartControlProps) {
     const elRect = elRef().getBoundingClientRect();
     const eventX = clamp(pageX - rootRect.left, 0, rootRect.width);
     const eventY = clamp(pageY - rootRect.top, 0, rootRect.height);
-
     const invertX = [ResizeDirection.topLeft, ResizeDirection.bottomLeft].includes(resizeDirection()) ? 1 : -1;
     const invertY = [ResizeDirection.topLeft, ResizeDirection.topRight].includes(resizeDirection()) ? 1 : -1;
     const deltaX = (eventX - startX) * window.devicePixelRatio;
     const deltaY = (eventY - startY) * window.devicePixelRatio;
+
+    if(deltaX === 0 && deltaY === 0) {
+      return;
+    }
+
     const scaleX = elRect.width / (elRect.width + invertX * deltaX);
     const scaleY = elRect.height / (elRect.height + invertY * deltaY);
 
