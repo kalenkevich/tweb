@@ -12,7 +12,7 @@ export function createImageState(source: ImageSource): ImageState {
     source,
     width: source.width,
     height: source.height,
-    translation: [source.width / 2, source.height / 2],
+    // Set image origin as the center of the image
     origin: [-(source.width / 2), -(source.height / 2)]
   }
 }
@@ -39,9 +39,15 @@ export function ImageEditor(props: MediaEditorProps) {
   }));
 
   const onCanvasMounted = async(canvas: HTMLCanvasElement) => {
-    const imageEditorManagerInstance = imageEditorManager();
+    imageEditorManager().init(canvas, imageState());
 
-    await imageEditorManagerInstance.init(canvas, imageState());
+    // Move image to center
+    const newState = handleChangeEvent({
+      type: ImageChangeType.move,
+      deltaX: canvas.width / 2,
+      deltaY: canvas.height / 2
+    });
+    setImageState(newState);
   };
 
   const onCanvasResized = (width: number, height: number) => {
@@ -58,6 +64,12 @@ export function ImageEditor(props: MediaEditorProps) {
       }
       case ImageChangeType.rotate: {
         return imageEditorManager().rotate(event.value, event.animation);
+      }
+      case ImageChangeType.move: {
+        return imageEditorManager().move(event.deltaX, event.deltaY, event.animation);
+      }
+      case ImageChangeType.scale: {
+        return imageEditorManager().move(event.scaleX, event.scaleY, event.animation);
       }
       case ImageChangeType.flipHorisontaly: {
         return imageEditorManager().flipHorisontaly();

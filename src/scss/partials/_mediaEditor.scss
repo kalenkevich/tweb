@@ -13,6 +13,7 @@
   &__preview-container {
     position: relative;
     width: 100%;
+    height: 100%;
     background-color: #000000;
 
     .preview-container-canvas {
@@ -250,6 +251,7 @@
     bottom: 0;
     cursor: grab;
     position: absolute;
+    z-index: 1;
 
     .rotation-control__container {
       width: 100%;

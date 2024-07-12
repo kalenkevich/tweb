@@ -15,7 +15,7 @@ export class WebglImageRenderer implements ImageRenderer {
 
   constructor(private readonly devicePixelRatio = window.devicePixelRatio) {}
 
-  async init(canvas: HTMLCanvasElement) {
+  init(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
 
     let gl = this.gl = this.canvas.getContext('webgl2', {
@@ -43,7 +43,7 @@ export class WebglImageRenderer implements ImageRenderer {
       rotationInDegree: 0
     });
     this.imageProgram = new ImageProgram(gl);
-    await this.imageProgram.init();
+    this.imageProgram.init();
   }
 
   destroy() {}

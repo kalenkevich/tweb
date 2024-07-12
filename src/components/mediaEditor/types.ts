@@ -2,22 +2,6 @@ import {Color} from '../../helpers/color';
 
 export type ImageSource = HTMLImageElement;
 
-export enum ImageChangeType {
-  filter,
-  aspectRatio,
-  rotate,
-  scale,
-  crop,
-  flipHorisontaly,
-  layer,
-}
-
-export type ImageChangeEvent = FilterImageChangeEvent
-  | RotateImageChangeEvent
-  | AspectRatioChangeEvent
-  | FlipImageChangeEvent
-  | AttachmentChangeEvent;
-
 export enum ImageAspectRatio {
   custom = 'custom',
   original = 'original',
@@ -102,6 +86,7 @@ export const IMAGE_FILTER_NAMES = [
   'grain',
   'sharpen'
 ];
+
 export interface ImageFilterState {
   enhance: number;
   brightness: number;
@@ -129,6 +114,25 @@ export interface ImageState {
   layers: ObjectLayer[];
 }
 
+export enum ImageChangeType {
+  filter,
+  aspectRatio,
+  rotate,
+  scale,
+  crop,
+  move,
+  flipHorisontaly,
+  layer,
+}
+
+export type ImageChangeEvent = FilterImageChangeEvent
+  | RotateImageChangeEvent
+  | AspectRatioChangeEvent
+  | FlipImageChangeEvent
+  | MoveChangeEvent
+  | ScaleChangeEvent
+  | AttachmentChangeEvent;
+
 export interface FilterImageChangeEvent {
   type: ImageChangeType.filter;
   value: ImageFilterState;
@@ -148,6 +152,20 @@ export interface RotateImageChangeEvent {
 
 export interface FlipImageChangeEvent {
   type: ImageChangeType.flipHorisontaly;
+}
+
+export interface MoveChangeEvent {
+  type: ImageChangeType.move;
+  deltaX: number;
+  deltaY: number;
+  animation?: boolean;
+}
+
+export interface ScaleChangeEvent {
+  type: ImageChangeType.scale;
+  scaleX: number;
+  scaleY: number;
+  animation?: boolean;
 }
 
 export interface AttachmentChangeEvent {

@@ -1,8 +1,9 @@
-import {JSX, onMount, createSignal, Show, createEffect} from 'solid-js';
-import {ImageControlProps} from './controls/imageControl';
-import {ImageRotationControl} from './controls/imageRotationControl';
+import {JSX, onMount, createSignal, Show} from 'solid-js';
 import {ObjectLayer} from './types';
 import {ImageEditorTab, TabType} from './imageEditorTabs';
+import {ImageControlProps} from './controls/imageControl';
+import {ImageRotationControl} from './controls/imageRotationControl';
+import {ImageConunterpartControl} from './controls/imageCounterpartControl';
 
 export interface ImagePreviewProps extends ImageControlProps {
   selectedTab: ImageEditorTab;
@@ -26,10 +27,17 @@ export function ImageEditorPreview(props: ImagePreviewProps): JSX.Element {
 
   return (
     <div class="image-editor__preview-container" ref={el => setRootRef(el)}>
-      <canvas
-        class="preview-container-canvas"
-        ref={(el) => setCanvasRef(el)}>
-      </canvas>
+      <ImageConunterpartControl
+        enabled={isSelectedTabResize()}
+        imageState={props.imageState}
+        onImageChange={props.onImageChange}
+        currentLayerIndex={props.currentLayerIndex}
+      >
+        <canvas
+          class="preview-container-canvas"
+          ref={(el) => setCanvasRef(el)}>
+        </canvas>
+      </ImageConunterpartControl>
       <Show when={isSelectedTabResize()}>
         <ImageRotationControl
           imageState={props.imageState}

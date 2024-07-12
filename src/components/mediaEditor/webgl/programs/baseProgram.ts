@@ -64,7 +64,7 @@ export abstract class BaseWebglProgram {
     protected readonly fragmentShaderSource: string
   ) {}
 
-  public async init() {
+  public init() {
     const gl = this.gl;
 
     gl.clear(gl.COLOR_BUFFER_BIT);
@@ -72,7 +72,7 @@ export abstract class BaseWebglProgram {
     this.setupProgram();
     this.setupBuffer();
     this.setupUniforms();
-    await this.setupTextures();
+    this.setupTextures();
     return this.onInit();
   }
 
@@ -102,7 +102,7 @@ export abstract class BaseWebglProgram {
     });
   }
 
-  protected async setupTextures() {}
+  protected setupTextures() {}
 
   link() {
     this.gl.useProgram(this.program);

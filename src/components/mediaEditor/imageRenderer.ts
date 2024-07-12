@@ -4,7 +4,7 @@ import {ImageState} from './types';
  * Base interface for ImageRenderer
  */
 export interface ImageRenderer {
-  init(canvas: HTMLCanvasElement): Promise<void>;
+  init(canvas: HTMLCanvasElement): void;
 
   destroy(): void;
 
