@@ -68,8 +68,8 @@ export function ImageEditor(props: MediaEditorProps) {
       case ImageChangeType.move: {
         return imageEditorManager().move(event.deltaX, event.deltaY, event.animation);
       }
-      case ImageChangeType.scale: {
-        return imageEditorManager().move(event.scaleX, event.scaleY, event.animation);
+      case ImageChangeType.resize: {
+        return imageEditorManager().resize(event.scaleX, event.scaleY, event.animation);
       }
       case ImageChangeType.flipHorisontaly: {
         return imageEditorManager().flipHorisontaly();

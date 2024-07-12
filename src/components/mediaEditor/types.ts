@@ -116,10 +116,10 @@ export interface ImageState {
 
 export enum ImageChangeType {
   filter,
-  aspectRatio,
   rotate,
-  scale,
-  crop,
+  // should be removed and resize used
+  aspectRatio,
+  resize,
   move,
   flipHorisontaly,
   layer,
@@ -130,7 +130,7 @@ export type ImageChangeEvent = FilterImageChangeEvent
   | AspectRatioChangeEvent
   | FlipImageChangeEvent
   | MoveChangeEvent
-  | ScaleChangeEvent
+  | ResizeChangeEvent
   | AttachmentChangeEvent;
 
 export interface FilterImageChangeEvent {
@@ -161,8 +161,8 @@ export interface MoveChangeEvent {
   animation?: boolean;
 }
 
-export interface ScaleChangeEvent {
-  type: ImageChangeType.scale;
+export interface ResizeChangeEvent {
+  type: ImageChangeType.resize;
   scaleX: number;
   scaleY: number;
   animation?: boolean;

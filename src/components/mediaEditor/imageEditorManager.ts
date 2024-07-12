@@ -13,7 +13,7 @@ export class ImageEditorManager {
   private renderer: ImageRenderer = new WebglImageRenderer();
   private ready: boolean = false;
 
-  constructor() {}
+  constructor(private readonly stateSnapshowCounts = 10) {}
 
   init(canvas: HTMLCanvasElement, initialImageState: ImageState = DEFAULT_IMAGE_STATE) {
     this.renderer.init(canvas);
@@ -87,10 +87,10 @@ export class ImageEditorManager {
   }
 
   rotate(rotateAngle: number, animation: boolean = false): ImageState {
+    const state = this.getCurrentImageState();
     const newImageState = this.createNewImageState({rotateAngle});
 
     if(animation) {
-      const state = this.getCurrentImageState();
       const from = state.rotateAngle;
       const to = rotateAngle;
 
@@ -133,7 +133,7 @@ export class ImageEditorManager {
     return newImageState;
   }
 
-  scale(scaleX: number, scaleY: number, animation: boolean = false) {
+  resize(scaleX: number, scaleY: number, animation: boolean = false) {
     const state = this.getCurrentImageState();
     const newImageState = this.createNewImageState({
       scale: [scaleX, scaleY]
@@ -189,6 +189,10 @@ export class ImageEditorManager {
       this.imageStates[this.currentStateIndex] = newState;
     } else {
       this.imageStates.push(newState);
+    }
+
+    if(this.imageStates.length > this.stateSnapshowCounts) {
+      this.imageStates.unshift();
     }
 
     return newState;
