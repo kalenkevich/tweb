@@ -19,23 +19,24 @@ enum ImageEventType {
   resize = 'resize'
 }
 
-enum ResizeType {
-  leftTop = 'left_top',
-  leftRight = 'left_right',
+enum ResizeDirection {
+  topLeft = 'top_left',
+  topRight = 'top_right',
   bottomLeft = 'bottom_left',
   bottomRight = 'bottom_right'
 }
 
-const RESIZE_TYPE_CURSOR_NAME_MAP = {
-  [ResizeType.leftTop]: 'nwse-resize',
-  [ResizeType.leftRight]: 'nesw-resize',
-  [ResizeType.bottomLeft]: 'nesw-resize',
-  [ResizeType.bottomRight]: 'nwse-resize'
+const RESIZE_DIRECTION_CURSOR_NAME_MAP = {
+  [ResizeDirection.topLeft]: 'nwse-resize',
+  [ResizeDirection.topRight]: 'nesw-resize',
+  [ResizeDirection.bottomLeft]: 'nesw-resize',
+  [ResizeDirection.bottomRight]: 'nwse-resize'
 };
 
 export function ImageConunterpartControl(props: ImageConunterpartControlProps) {
   const isEnabled = () => props.enabled;
   const [eventType, setEventType] = createSignal(ImageEventType.none);
+  const [resizeDirection, setResizeDirection] = createSignal<ResizeDirection>()
   const [rootEl, setRootEl] = createSignal<HTMLDivElement>();
   const [elRef, setElRef] = createSignal<HTMLDivElement>();
   const [startPos, setStartPos] = createSignal<[number, number]>();
@@ -105,7 +106,7 @@ export function ImageConunterpartControl(props: ImageConunterpartControlProps) {
     };
 
     return [{
-      resizeType: ResizeType.leftTop,
+      resizeType: ResizeDirection.topLeft,
       style: {
         ...commonStyles,
         'cursor': 'nwse-resize',
@@ -113,7 +114,7 @@ export function ImageConunterpartControl(props: ImageConunterpartControlProps) {
         'left': '-4px'
       }
     }, {
-      resizeType: ResizeType.leftRight,
+      resizeType: ResizeDirection.topRight,
       style: {
         ...commonStyles,
         'cursor': 'nesw-resize',
@@ -121,7 +122,7 @@ export function ImageConunterpartControl(props: ImageConunterpartControlProps) {
         'right': '-4px'
       }
     }, {
-      resizeType: ResizeType.bottomLeft,
+      resizeType: ResizeDirection.bottomLeft,
       style: {
         ...commonStyles,
         'cursor': 'nesw-resize',
@@ -129,7 +130,7 @@ export function ImageConunterpartControl(props: ImageConunterpartControlProps) {
         'left': '-4px'
       }
     }, {
-      resizeType: ResizeType.bottomRight,
+      resizeType: ResizeDirection.bottomRight,
       style: {
         ...commonStyles,
         'cursor': 'nwse-resize',
@@ -153,10 +154,12 @@ export function ImageConunterpartControl(props: ImageConunterpartControlProps) {
       }
 
       const target: HTMLDivElement = pos.event.target as any;
-      if(target.dataset['resize']) {
-        const cursorStyle = RESIZE_TYPE_CURSOR_NAME_MAP[target.dataset['resize'] as ResizeType];
+      const resizeDirection = target.dataset['resize'] as ResizeDirection;
+      if(resizeDirection) {
+        const cursorStyle = RESIZE_DIRECTION_CURSOR_NAME_MAP[resizeDirection];
 
         setEventType(ImageEventType.resize);
+        setResizeDirection(resizeDirection);
         document.documentElement.style.cursor = elRef().style.cursor = cursorStyle;
       } else {
         setEventType(ImageEventType.move);
@@ -184,6 +187,7 @@ export function ImageConunterpartControl(props: ImageConunterpartControlProps) {
 
       setStartPos(undefined);
       setEventType(ImageEventType.none);
+      setResizeDirection(undefined);
 
       onGrabEnd();
     });
@@ -206,8 +210,8 @@ export function ImageConunterpartControl(props: ImageConunterpartControlProps) {
     const rootRect = rootEl().getBoundingClientRect();
     const eventX = clamp(pageX - rootRect.left, 0, rootRect.width);
     const eventY = clamp(pageY - rootRect.top, 0, rootRect.height);
-    const deltaX = (eventX - startX);
-    const deltaY = (eventY - startY);
+    const deltaX = (eventX - startX) * window.devicePixelRatio;
+    const deltaY = (eventY - startY) * window.devicePixelRatio;
 
     setStartPos([eventX, eventY]);
     props.onImageChange({
@@ -224,8 +228,13 @@ export function ImageConunterpartControl(props: ImageConunterpartControlProps) {
     const elRect = elRef().getBoundingClientRect();
     const eventX = clamp(pageX - rootRect.left, 0, rootRect.width);
     const eventY = clamp(pageY - rootRect.top, 0, rootRect.height);
-    const scaleX = elRect.width / (elRect.width - (eventX - startX));
-    const scaleY = elRect.height / (elRect.height + (eventY - startY));
+
+    const invertX = [ResizeDirection.topLeft, ResizeDirection.bottomLeft].includes(resizeDirection()) ? 1 : -1;
+    const invertY = [ResizeDirection.topLeft, ResizeDirection.topRight].includes(resizeDirection()) ? 1 : -1;
+    const deltaX = (eventX - startX) * window.devicePixelRatio;
+    const deltaY = (eventY - startY) * window.devicePixelRatio;
+    const scaleX = elRect.width / (elRect.width + invertX * deltaX);
+    const scaleY = elRect.height / (elRect.height + invertY * deltaY);
 
     props.onImageChange({
       type: ImageChangeType.resize,
