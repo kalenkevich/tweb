@@ -44,7 +44,7 @@ const IMAGE_FILTER_CONTROLS_CONFIG = [{
   component: (props: ImageFilterControlProps) => (
     <RangeSelectorTsx
       step={1}
-      min={0}
+      min={-100}
       max={100}
       value={Math.round(props.imageState.filter.contrast * 100)}
       trumpSize={20}
@@ -140,7 +140,7 @@ const IMAGE_FILTER_CONTROLS_CONFIG = [{
   component: (props: ImageFilterControlProps) => (
     <RangeSelectorTsx
       step={1}
-      min={-100}
+      min={0}
       max={100}
       value={Math.round(props.imageState.filter.vignette * 100)}
       trumpSize={20}

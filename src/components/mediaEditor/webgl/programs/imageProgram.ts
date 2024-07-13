@@ -33,12 +33,12 @@ const ImageShaders = {
       vec2 scaled = coords / resolution;
       vec2 clipped = clipSpace(scaled);
 
-      // gl_Position = vec4(applyMatrix(u_matrix, clipSpace(coords)), 0.0, 1.0);
       gl_Position = vec4(clipped, 0.0, 1.0);
     }
   `,
   fragment: `
-    precision mediump float;
+    precision highp float;
+
     struct ImageFilter {
       float enhance;
       float brightness;
@@ -53,9 +53,18 @@ const ImageShaders = {
       float sharpen;
     };
 
+    uniform float u_width;
+    uniform float u_height;
     uniform sampler2D u_texture;
     uniform vec2 u_textureSize;
     uniform ImageFilter u_filter;
+
+    varying vec2 v_texCoord;
+    varying vec4 v_color;
+
+    float rand(vec2 co){
+      return fract(sin(dot(co.xy, vec2(12.9898, 78.233))) * 43758.5453);
+    }
 
     vec3 brightness(vec3 color, float brightness) {
       return color + brightness;
@@ -63,6 +72,10 @@ const ImageShaders = {
       
     vec3 contrast(vec3 color, float contrast) {
       return 0.5 + (contrast + 1.0) * (color.rgb - 0.5);
+    }
+
+    vec3 fade(vec3 color, float fade) {
+      return mix(color, vec3(0.0, 0.0, 0.0), fade);
     }
 
     vec3 saturation(vec3 color, float saturation) {
@@ -103,42 +116,50 @@ const ImageShaders = {
       return mix(rgb, processed, warmth);
     }
 
-    vec3 vignette(vec3 color, vec2 coord, float vignette, float size) {
-      float dist = distance(coord, vec2(0.5, 0.5));
+    vec4 vignette(vec4 color, vec2 uv, float vignette) {
+      float d = length(uv - 0.5) * -1.0;
+      vec4 overlay = vec4(d, d, d, vignette);
 
-      return color *= smoothstep(0.8, size * 0.799, dist * (vignette + size));
+      return mix(color, overlay, overlay.a);
     }
 
-    // vec3 sharpen(float sharpen) {
-    //   vec2 onePixel = vec2(1.0, 1.0) / u_textureSize;
-    //   float sharpen_kernel[9] = float[9](0.0, -1.0, 0, -1.0, 1.0, -1.0, 0, -1.0, 0);
-    //   vec4 colorSum =
-    //     texture2D(u_texture, v_texCoord + onePixel * vec2(-1, -1)) * sharpen_kernel[0] +
-    //     texture2D(u_texture, v_texCoord + onePixel * vec2( 0, -1)) * sharpen_kernel[1] * sharpen +
-    //     texture2D(u_texture, v_texCoord + onePixel * vec2( 1, -1)) * sharpen_kernel[2] +
-    //     texture2D(u_texture, v_texCoord + onePixel * vec2(-1,  0)) * sharpen_kernel[3] * sharpen +
-    //     texture2D(u_texture, v_texCoord + onePixel * vec2( 0,  0)) * sharpen_kernel[4] + 4 * sharpen +
-    //     texture2D(u_texture, v_texCoord + onePixel * vec2( 1,  0)) * sharpen_kernel[5] * sharpen +
-    //     texture2D(u_texture, v_texCoord + onePixel * vec2(-1,  1)) * sharpen_kernel[6] +
-    //     texture2D(u_texture, v_texCoord + onePixel * vec2( 0,  1)) * sharpen_kernel[7] * sharpen +
-    //     texture2D(u_texture, v_texCoord + onePixel * vec2( 1,  1)) * sharpen_kernel[8];
+    vec4 grain(vec4 fragColor, vec2 uv, float grain) {
+      vec4 color = fragColor;
+      float diff = (rand(uv) - 0.0) * grain;
+      color.r += diff;
+      color.g += diff;
+      color.b += diff;
 
-    //    return (colorSum / 1.0).rgb;
-    // }
+      return mix(fragColor, color, color.a);
+    }
 
-    varying vec2 v_texCoord;
-    varying vec4 v_color;
-    
+    vec4 sharpen(vec4 color, float sharpen) {
+      float dx = 1.0 / u_textureSize.x;
+      float dy = 1.0 / u_textureSize.y;
+      vec4 sum = vec4(0.0);
+      sum += -1. * texture2D(u_texture, v_texCoord + vec2( -1.0 * dx , 0.0 * dy));
+      sum += -1. * texture2D(u_texture, v_texCoord + vec2( 0.0 * dx , -1.0 * dy));
+      sum +=  9. * texture2D(u_texture, v_texCoord + vec2( 0.0 * dx , 0.0 * dy));
+      sum += -1. * texture2D(u_texture, v_texCoord + vec2( 0.0 * dx , 1.0 * dy));
+      sum += -1. * texture2D(u_texture, v_texCoord + vec2( 1.0 * dx , 0.0 * dy));
+
+      return mix(color, sum, sharpen);
+    }
+
     void main() {
+      vec2 resolution = vec2(u_width, u_height);
+      vec2 uv = gl_FragCoord.xy / resolution;
       vec4 color = texture2D(u_texture, v_texCoord);
 
       color.rgb = brightness(color.rgb, u_filter.brightness);
       color.rgb = contrast(color.rgb, u_filter.contrast);
       color.rgb = saturation(color.rgb, u_filter.saturation);
+      color.rgb = fade(color.rgb, u_filter.fade);
       color.rgb = shadowsHighlights(color.rgb, u_filter.shadows, u_filter.highlights);
       color.rgb = warmthTint(color.rgb, u_filter.warmth, 0.0);
-      color.rgb = vignette(color.rgb, v_texCoord, u_filter.vignette, 0.0);
-      // color.rgb = sharpen(u_filter.sharpen);
+      color = vignette(color, uv, u_filter.vignette);
+      color = grain(color, uv, u_filter.grain);
+      color = sharpen(color, u_filter.sharpen);
 
       gl_FragColor = color;
     }
