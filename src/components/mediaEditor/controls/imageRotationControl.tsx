@@ -1,4 +1,4 @@
-import {JSX, For, createSignal, onMount, Show, createEffect, on} from 'solid-js';
+import {JSX, For, createSignal, onMount, Show, createEffect, on, onCleanup} from 'solid-js';
 import {ImageChangeType} from '../types';
 import {ImageControlProps} from './imageControl';
 import {ButtonIconTsx} from '../../buttonIconTsx';
@@ -6,9 +6,26 @@ import {IconTsx} from '../../iconTsx';
 import clamp from '../../../helpers/number/clamp';
 import attachGrabListeners from '../../../helpers/dom/attachGrabListeners';
 
+const getRangeBasedOnWidth = (width: number): number => {
+  console.log('getRangeBasedOnWidth', width);
+
+  if(width >= 0 && width <= 400) {
+    return 15;
+  }
+
+  if(width > 400 && width <= 800) {
+    return 30;
+  }
+
+  if(width > 800 && width <= 1200) {
+    return 45;
+  }
+
+  return 90;
+}
+
 const generateStepsFromAngle = (centerAngle: number, range: number = 90, stepMilestone: number = 15) => {
   const result = [];
-
 
   for(let i = centerAngle - range; i <= centerAngle + range; i++) {
     let angle = centerAngle + i;
@@ -34,15 +51,19 @@ export interface ImageRotationControlProps extends ImageControlProps {}
 export function ImageRotationControl(props: ImageRotationControlProps): JSX.Element {
   const [currentAngle, setCurrentAngle] = createSignal(props.imageState.rotateAngle);
   const [caruselRef, setCaruselRef] = createSignal<HTMLDivElement>();
+  const [rootRef, setRootRef] = createSignal<HTMLDivElement>();
   const [startPosX, setStartPos] = createSignal<number | undefined>();
   const [startAngle, setStartAngle] = createSignal<number | undefined>();
-  const steps = () => generateStepsFromAngle(currentAngle() / 2);
+  const [steps, setSteps] = createSignal([]);
 
   createEffect(on(() => props.imageState.rotateAngle, (val) => {
     setCurrentAngle(val);
-  }))
+    updateSteps();
+  }));
 
   onMount(() => {
+    window.addEventListener('resize', updateSteps);
+
     attachGrabListeners(caruselRef() as any, (pos) => {
       onGrabStart();
 
@@ -55,6 +76,14 @@ export function ImageRotationControl(props: ImageRotationControlProps): JSX.Elem
     }, () => {
       onGrabEnd();
     });
+
+    setTimeout(() => {
+      updateSteps();
+    }, 0);
+  });
+
+  onCleanup(() => {
+    window.removeEventListener('resize', updateSteps);
   });
 
   const caruselRotateHandler = (pageX: number) => {
@@ -65,10 +94,15 @@ export function ImageRotationControl(props: ImageRotationControlProps): JSX.Elem
 
     const newAngle = startAngle() - angleDelta;
     setCurrentAngle(newAngle);
+    updateSteps();
     props.onImageChange({
       type: ImageChangeType.rotate,
       value: newAngle
     });
+  };
+
+  const updateSteps = () => {
+    setSteps(generateStepsFromAngle(currentAngle() / 2, getRangeBasedOnWidth(rootRef().offsetWidth)));
   };
 
   const onGrabStart = () => {
@@ -81,7 +115,7 @@ export function ImageRotationControl(props: ImageRotationControlProps): JSX.Elem
   };
 
   return (
-    <div class="image-editor__image-control rotation-control">
+    <div class="image-editor__image-control rotation-control" ref={(el) => setRootRef(el)}>
       <div class="rotation-control__container">
         <ButtonIconTsx
           icon="rotate"
