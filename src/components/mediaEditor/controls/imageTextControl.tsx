@@ -1,9 +1,9 @@
 import {JSX, For} from 'solid-js';
 import {i18n} from '../../../lib/langPack';
 import {ImageChangeType, TextAlignment, TextStyle, TextLayer, AttachmentChangeAction} from '../types';
-import {QUCIK_PALLETE_COLORS, DEFAULT_TEXT_LAYER} from '../consts';
+import {QUCIK_PALLETE_COLORS} from '../consts';
 import {ImageControlProps} from './imageControl';
-import {Color, ColorFormatType, anyColorToHexColor, anyColorToHslaColor} from '../../../helpers/color';
+import {Color, ColorFormatType, anyColorToHexColor} from '../../../helpers/color';
 import {ColorPickerV2} from '../../colorPickerV2';
 import {RangeSelectorTsx} from '../../rangeSelectorTsx';
 import {SvgIconType} from '../../iconSvg';
@@ -74,20 +74,17 @@ enum TextAttachmentProperty {
 
 export interface ImageTextControlProps extends ImageControlProps {}
 export function ImageTextControl(props: ImageTextControlProps): JSX.Element {
-  const currentLayerIndex = () => props.currentLayerIndex;
   const layer = () => props.imageState.layers[props.currentLayerIndex] as TextLayer;
-  const color = () => layer()?.color || DEFAULT_TEXT_LAYER.color;
-  const alignment = () => layer()?.alignment || DEFAULT_TEXT_LAYER.alignment;
-  const style = () => layer()?.style || DEFAULT_TEXT_LAYER.style;
-  const fontName = () => layer()?.fontName || DEFAULT_TEXT_LAYER.fontName;
-  const fontSize = () => layer()?.fontSize || DEFAULT_TEXT_LAYER.fontSize;
-  const hexColor = () => anyColorToHexColor(color())
-  const hslaColor = () => anyColorToHslaColor(color())
+  const color = () => layer()?.color;
+  const alignment = () => layer()?.alignment;
+  const style = () => layer()?.style;
+  const fontName = () => layer()?.fontName;
+  const fontSize = () => layer()?.fontSize;
+  const hexColor = () => anyColorToHexColor(color());
 
   const onPropertyChange = (propertyType: TextAttachmentProperty, value: string | TextAlignment | TextStyle | number | Color) => {
-    const isNew = !layer();
     const newAttachmentState = {
-      ...(layer() || DEFAULT_TEXT_LAYER)
+      ...(layer())
     } as TextLayer;
 
     switch(propertyType) {
@@ -108,7 +105,11 @@ export function ImageTextControl(props: ImageTextControlProps): JSX.Element {
         break;
       }
       case TextAttachmentProperty.fontSize: {
-        newAttachmentState.fontSize = value as number;
+        const val = value as number;
+        newAttachmentState.fontSize = val;
+        newAttachmentState.padding = val / 2;
+        newAttachmentState.borderRadius = val / 4;
+        newAttachmentState.strokeWidth = val / 6;
         break;
       }
     }
@@ -116,8 +117,7 @@ export function ImageTextControl(props: ImageTextControlProps): JSX.Element {
     props.onImageChange({
       type: ImageChangeType.layer,
       layer: newAttachmentState,
-      layerIndex: currentLayerIndex(),
-      action: isNew ? AttachmentChangeAction.create : AttachmentChangeAction.update
+      action: AttachmentChangeAction.update
     });
   };
 
@@ -175,7 +175,7 @@ export function ImageTextControl(props: ImageTextControlProps): JSX.Element {
             color={hexColor()}
             step={1}
             min={0}
-            max={64}
+            max={128}
             value={fontSize()}
             trumpSize={20}
             onScrub={(value: number) => onPropertyChange(TextAttachmentProperty.fontSize, value)}

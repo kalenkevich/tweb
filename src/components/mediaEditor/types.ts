@@ -8,13 +8,13 @@ export enum ImageAspectRatio {
   square = 'square'
 }
 
-export enum ImageAttachmentType {
+export enum ImageLayerType {
   text = 'text',
   sticker = 'sticker',
   draw = 'draw'
 }
 
-export type ObjectLayer = TextLayer| DrawLayer;
+export type ImageLayer = TextLayer | DrawLayer | StickerLayer;
 
 export interface LayerBox {
   // from left top corner of image
@@ -53,24 +53,61 @@ export enum AttachmentChangeAction {
 }
 
 export interface TextLayer {
-  type: ImageAttachmentType.text;
+  id: number;
+  type: ImageLayerType.text;
+  isDirty: boolean;
   zIndex: number;
-  box: LayerBox;
   text: string;
   fontName: string;
-  fontSize: number;
+  fontSize: number
+  fontWeight: number;
   color: Color;
   alignment: TextAlignment;
   style: TextStyle;
+
+  // styles for TextStyle.fill_inverse
+  padding: number; // fontSize / 2
+  borderRadius: number; // fontSize / 4
+  inverseColor: Color;
+  strokeWidth: number; // fontSize / 6
+
+  image: ImageSource;
+  width: number;
+  height: number;
+  rotation: number;
+  origin: [number, number],
+  translation: [number, number];
+  scale: [number, number];
 }
 
 export interface DrawLayer {
-  type: ImageAttachmentType.draw;
+  id: number;
+  type: ImageLayerType.draw;
+  isDirty: boolean;
   zIndex: number;
-  box: LayerBox;
   color: Color;
   size: number;
   style: DrawStyle;
+  width: number;
+  height: number;
+  rotation: number;
+  origin: [number, number],
+  translation: [number, number];
+  scale: [number, number];
+}
+
+export interface StickerLayer {
+  id: number;
+  type: ImageLayerType.sticker;
+  isDirty: boolean;
+  zIndex: number;
+  image: ImageSource | string;
+  width: number;
+  height: number;
+  rotation: number;
+  origin: [number, number],
+  translation: [number, number];
+  scale: [number, number];
 }
 
 export const IMAGE_FILTER_NAMES = [
@@ -111,7 +148,7 @@ export interface ImageState {
   origin: [number, number],
   translation: [number, number];
   scale: [number, number];
-  layers: ObjectLayer[];
+  layers: ImageLayer[];
 }
 
 export enum ImageChangeType {
@@ -131,7 +168,7 @@ export type ImageChangeEvent = FilterImageChangeEvent
   | FlipImageChangeEvent
   | MoveChangeEvent
   | ResizeChangeEvent
-  | AttachmentChangeEvent;
+  | LayerChangeEvent;
 
 export interface FilterImageChangeEvent {
   type: ImageChangeType.filter;
@@ -168,9 +205,8 @@ export interface ResizeChangeEvent {
   animation?: boolean;
 }
 
-export interface AttachmentChangeEvent {
+export interface LayerChangeEvent {
   type: ImageChangeType.layer;
-  layer: ObjectLayer;
-  layerIndex?: number;
+  layer: ImageLayer;
   action: AttachmentChangeAction;
 }

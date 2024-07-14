@@ -1,5 +1,5 @@
 import {Color, ColorFormatType} from '../../helpers/color';
-import {ImageAspectRatio, ImageState, TextLayer, DrawLayer, ImageAttachmentType, TextAlignment, TextStyle, DrawStyle} from './types';
+import {ImageAspectRatio, ImageState, TextLayer, DrawLayer, StickerLayer, ImageLayerType, TextAlignment, TextStyle, DrawStyle} from './types';
 
 export const DEFAULT_IMAGE_STATE: ImageState = {
   width: 0,
@@ -28,42 +28,67 @@ export const DEFAULT_IMAGE_STATE: ImageState = {
 const isDarkMode = !!document.documentElement.classList.contains('dark');
 
 export const DEFAULT_TEXT_LAYER: TextLayer = {
-  type: ImageAttachmentType.text,
+  id: 0,
+  type: ImageLayerType.text,
+  isDirty: false,
   zIndex: 0,
-  box: {
-    x: 0,
-    y: 0,
-    width: 0,
-    height: 0,
-    rotation: 0
-  },
   text: '',
   fontName: 'Roboto',
   fontSize: 24,
+  fontWeight: 500,
   color: {
     type: ColorFormatType.hexa,
     value: isDarkMode ? '#FFFFFF' : '#000000'
   },
   alignment: TextAlignment.left,
-  style: TextStyle.fill
-}
+  style: TextStyle.fill,
+  padding: 12,
+  borderRadius: 6,
+  strokeWidth: 4,
+  inverseColor: {
+    type: ColorFormatType.hexa,
+    value: '#000000'
+  },
+  image: new Image(),
+  width: 0,
+  height: 0,
+  rotation: 0,
+  origin: [0, 0],
+  translation: [0, 0],
+  scale: [1, 1]
+};
 
 export const DEFAULT_DRAW_LAYER: DrawLayer = {
-  type: ImageAttachmentType.draw,
+  id: 0,
+  type: ImageLayerType.draw,
+  isDirty: false,
   zIndex: 0,
-  box: {
-    x: 0,
-    y: 0,
-    width: 0,
-    height: 0,
-    rotation: 0
-  },
   color: {
     type: ColorFormatType.hexa,
     value: isDarkMode ? '#FFFFFF' : '#000000'
   },
   size: 15,
-  style: DrawStyle.pen
+  style: DrawStyle.pen,
+  width: 0,
+  height: 0,
+  rotation: 0,
+  origin: [0, 0],
+  translation: [0, 0],
+  scale: [1, 1]
+};
+
+export const DEFAULT_STICKER_LAYER: StickerLayer = {
+  id: 0,
+  type: ImageLayerType.sticker,
+  isDirty: false,
+  zIndex: 0,
+  image: '',
+  width: 0,
+  height: 0,
+  rotation: 0,
+  origin: [0, 0],
+  translation: [0, 0],
+  scale: [1, 1]
 }
 
 export const QUCIK_PALLETE_COLORS: Color[] = [{

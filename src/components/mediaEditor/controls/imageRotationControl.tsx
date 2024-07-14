@@ -7,8 +7,6 @@ import clamp from '../../../helpers/number/clamp';
 import attachGrabListeners from '../../../helpers/dom/attachGrabListeners';
 
 const getRangeBasedOnWidth = (width: number): number => {
-  console.log('getRangeBasedOnWidth', width);
-
   if(width >= 0 && width <= 400) {
     return 15;
   }

@@ -1,4 +1,4 @@
-import {ImageAspectRatio, ImageState, ImageFilterState} from './types';
+import {ImageAspectRatio, ImageState, ImageFilterState, TextLayer} from './types';
 import {DEFAULT_IMAGE_STATE} from './consts';
 import {ImageRenderer} from './imageRenderer';
 import {WebglImageRenderer} from './webgl/webglImageRenderer';
@@ -62,10 +62,12 @@ export class ImageEditorManager {
     return this.getCurrentImageState();
   }
 
-  pushState(state: ImageState): ImageState {
+  pushState(state: ImageState, rerender: boolean = false): ImageState {
     this.createNewImageState(state);
 
-    this.rerender();
+    if(rerender) {
+      this.rerender();
+    }
 
     return state;
   }
@@ -172,7 +174,10 @@ export class ImageEditorManager {
     return newImageState;
   }
 
-  // -----------------------------------------------------
+  addTextLayer(textLayer: TextLayer): ImageState {
+    return this.createNewImageState({});
+  }
+
   public getCurrentImageState(): ImageState {
     return this.imageStates[this.currentStateIndex];
   }

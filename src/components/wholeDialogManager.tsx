@@ -22,8 +22,10 @@ export class WholeDialogManagerTsx {
   private overlayEl?: HTMLDivElement;
   private contentEl?: HTMLDivElement;
 
-  constructor(rootEl: HTMLElement = document.body) {
-    this.rootEl = rootEl;
+  constructor(private readonly anchorEl: HTMLElement = document.body) {
+    this.rootEl = document.createElement('div');
+    this.rootEl.classList.add('whole-dialog-manager');
+    this.anchorEl.appendChild(this.rootEl);
   }
 
   show(renderFn: (renderProps: ContentRenderProps) => JSX.Element) {
@@ -34,31 +36,30 @@ export class WholeDialogManagerTsx {
       });
 
       return (
-        <div class="whole-dialog-manager">
-          <div class="whole-dialog-manager__overlay"
-            ref={this.overlayEl}
-            onClick={(e) => {
-              e.stopImmediatePropagation();
+        <div class="whole-dialog-manager__overlay"
+          tabindex="1"
+          ref={this.overlayEl}
+          onClick={(e) => {
+            e.stopImmediatePropagation();
+            this.hide();
+          }}
+          onKeyPress={(e: KeyboardEvent) => {
+            e.stopImmediatePropagation();
+          }}
+          onKeyUp={(e: KeyboardEvent) => {
+            e.stopImmediatePropagation();
+          }}
+          onKeyDown={(e: KeyboardEvent) => {
+            e.stopImmediatePropagation();
+            if(e.key === 'Escape') {
               this.hide();
-            }}
-            onKeyPress={(e: KeyboardEvent) => {
-              e.stopImmediatePropagation();
-            }}
-            onKeyUp={(e: KeyboardEvent) => {
-              e.stopImmediatePropagation();
-            }}
-            onKeyDown={(e: KeyboardEvent) => {
-              e.stopImmediatePropagation();
-              if(e.key === 'Escape') {
-                this.hide();
-              }
-            }}
-          >
-            <div class="whole-dialog-manager__content" ref={this.contentEl}>
-              <div class="whole-dialog-manager__content-wrapper"
-                onClick={(e) => e.stopImmediatePropagation()}>
-                {renderFn({hide: () => this.hide()})}
-              </div>
+            }
+          }}
+        >
+          <div class="whole-dialog-manager__content" ref={this.contentEl}>
+            <div class="whole-dialog-manager__content-wrapper"
+              onClick={(e) => e.stopImmediatePropagation()}>
+              {renderFn({hide: () => this.hide()})}
             </div>
           </div>
         </div>

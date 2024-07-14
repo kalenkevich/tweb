@@ -90,7 +90,7 @@ export function createImageDataTextureSource(
 }
 
 export function createImageElementTextureSource(
-  source: HTMLImageElement,
+  source: HTMLImageElement | HTMLCanvasElement | OffscreenCanvas,
   width: number,
   height: number,
   options: CreateTextureSourceOptions = DefaultCreateOptions
@@ -138,7 +138,7 @@ export interface ImageElementTextureSource {
   type: TextureSourceType.IMAGE_ELEMENT;
   width: number;
   height: number;
-  data: HTMLImageElement;
+  data: HTMLImageElement | HTMLCanvasElement | OffscreenCanvas;
 }
 
 export interface CreateTextureOptions {

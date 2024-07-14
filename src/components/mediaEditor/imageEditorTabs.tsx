@@ -13,7 +13,7 @@ export enum TabType {
   RESIZE,
   TEXT,
   PAINT,
-  STICKERS
+  STICKER
 }
 
 export interface ImageEditorTab {
@@ -73,7 +73,7 @@ export const TABS_CONFIG: ImageEditorTab[] = [{
     />
   )
 }, {
-  tabId: TabType.STICKERS,
+  tabId: TabType.STICKER,
   name: i18n('ImageEditor.Stickers'),
   icon: 'smile',
   asSvgIcon: true,
@@ -87,6 +87,7 @@ export const TABS_CONFIG: ImageEditorTab[] = [{
 }];
 
 export interface ImageEditorTabsProps extends ImageControlProps {
+  selectedTab: ImageEditorTab;
   canUndo: boolean;
   canRedo: boolean;
   onUndo: () => void;
@@ -96,7 +97,7 @@ export interface ImageEditorTabsProps extends ImageControlProps {
 }
 
 export function ImageEditorTabs(props: ImageEditorTabsProps) {
-  const [selectedTab, setSelectedTab] = createSignal(TABS_CONFIG[0]);
+  const selectedTab = () => props.selectedTab;
 
   return (
     <div class="image-editor__tabs-container">
@@ -132,7 +133,6 @@ export function ImageEditorTabs(props: ImageEditorTabsProps) {
                 icon={tabConfig.icon}
                 asSvgIcon={tabConfig.asSvgIcon}
                 onClick={() => {
-                  setSelectedTab(tabConfig);
                   props.onTabSelected(tabConfig);
                 }}
               />

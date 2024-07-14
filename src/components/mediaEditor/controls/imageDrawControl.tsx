@@ -45,7 +45,6 @@ enum DrawAttachmentProperty {
 }
 
 export function ImageDrawControl(props: ImageDrawControlProps): JSX.Element {
-  const currentLayerIndex = () => props.currentLayerIndex;
   const layer = () => props.imageState.layers[props.currentLayerIndex] as DrawLayer;
   const color = () => layer()?.color || DEFAULT_DRAW_LAYER.color;
   const size = () => layer()?.size || DEFAULT_DRAW_LAYER.size;
@@ -76,7 +75,6 @@ export function ImageDrawControl(props: ImageDrawControlProps): JSX.Element {
     props.onImageChange({
       type: ImageChangeType.layer,
       layer: newAttachmentState,
-      layerIndex: currentLayerIndex(),
       action: isNew ? AttachmentChangeAction.create : AttachmentChangeAction.update
     });
   };

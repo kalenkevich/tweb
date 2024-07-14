@@ -15,6 +15,7 @@
     width: 100%;
     height: 100%;
     background-color: #000000;
+    overflow: hidden;
 
     .preview-container-canvas {
       width: 100%;
@@ -30,6 +31,8 @@
     flex-direction: column;
     max-width: 400px;
     width: 100%;
+    position: relative;
+    z-index: 1;
 
     .tabs-header {
       display: flex;
@@ -87,6 +90,12 @@
       overflow-y: auto;
       padding: 16px 0;
     }
+  }
+
+  &__save-button {
+    position: absolute;
+    bottom: 70px;
+    right: 0px;
   }
 
   .filter-image-control {
@@ -322,9 +331,22 @@
     }
   }
 
-  &__save-button {
+  .text-image-input-control {
     position: absolute;
-    bottom: 70px;
-    right: 0px;
+    width: 100%;
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+    top: calc(50% - 20px);
+    left: calc(50% - 150px);
+    z-index: 1;
+
+    .invisible-input {
+      width: 100%;
+      height: 40px;
+      border: 0;
+      outline: none;
+      background: transparent;
+    }
   }
 }
