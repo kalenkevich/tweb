@@ -23,14 +23,14 @@ export const renderTextLayerOnCanvas = (canvas: HTMLCanvasElement, text: string,
     ctx.lineWidth = layer.strokeWidth;
     if(text) {
       ctx.strokeStyle = anyColorToHexColor(layer.color);
-      ctx.strokeText(text, 0, height);
+      ctx.strokeText(text, 0, height - layer.strokeWidth);
       ctx.fillStyle = anyColorToHexColor(layer.inverseColor);
-      ctx.fillText(text, 0, height);
+      ctx.fillText(text, 0, height - layer.strokeWidth);
     } else {
       ctx.strokeStyle = PLACEHOLDER_COLOR_HEX;
-      ctx.strokeText(placeholder, 0, height);
+      ctx.strokeText(placeholder, 0, height - layer.strokeWidth);
       ctx.fillStyle = anyColorToHexColor(layer.inverseColor);
-      ctx.fillText(text, 0, height);
+      ctx.fillText(text, 0, height - layer.strokeWidth);
     }
     ctx.stroke();
     ctx.fill();
@@ -58,16 +58,18 @@ export const renderTextLayerOnCanvas = (canvas: HTMLCanvasElement, text: string,
     ctx.fill();
     if(text) {
       ctx.fillStyle = anyColorToHexColor(layer.inverseColor);
-      ctx.fillText(text, layer.padding, height + layer.padding / 2);
+      ctx.fillText(text, layer.padding, height - layer.padding);
     } else {
       ctx.fillStyle = PLACEHOLDER_COLOR_HEX;
-      ctx.fillText(placeholder, layer.padding, height + layer.padding / 2);
+      ctx.fillText(placeholder, layer.padding, height - layer.padding);
     }
   }
 }
 
 const getTextLayerInputElementStyles = (text: string, layer: TextLayer, placeholder = PLACEHOLDER) => {
-  const {width, height} = mesureInputText(text || placeholder, layer.fontName, layer.fontSize, layer.fontWeight, layer.style === TextStyle.stroke ? layer.strokeWidth : 0);
+  // const {width, height} = mesureInputText(text || placeholder, layer.fontName, layer.fontSize, layer.fontWeight, layer.style === TextStyle.stroke ? layer.strokeWidth : 0);
+  const {width, height} = measureCanvasText(text || placeholder, layer.fontName, layer.fontSize, layer.fontWeight, layer.style === TextStyle.stroke ? layer.strokeWidth : 0);
+
   const baseStyle = {
     'border': 'none',
     'outline': 'none',

@@ -11,17 +11,18 @@ export const measureText = (
   text: string,
   fontName: string,
   fontSize: number,
-  fontWeight: number
+  fontWeight: number,
+  extraPadding: number = 0
 ) => {
   const canvas = getOffscreenCanvas();
   const ctx = canvas.getContext('2d') as OffscreenCanvasRenderingContext2D;
   ctx.font = getCanvas2DFontStyle({fontName, fontSize, fontWeight});
   const metrics = ctx.measureText(text);
-  const actualHeight = metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent;
+  const actualHeight = metrics.fontBoundingBoxAscent  + metrics.fontBoundingBoxDescent;
 
   return {
-    width: metrics.width,
-    height: actualHeight
+    width: metrics.width + extraPadding * 2,
+    height: actualHeight + extraPadding * 2
   };
 };
 
