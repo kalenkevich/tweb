@@ -11,7 +11,7 @@ export interface ImagePreviewProps extends ImageControlProps {
   selectedTab: ImageEditorTab;
   onCanvasMounted: (canvas: HTMLCanvasElement) => void;
   onCanvasResized: (width: number, height: number) => void;
-  onActiveLayerChange: (layer: ImageLayer) => void;
+  onActiveLayerChange: (layer?: ImageLayer) => void;
 }
 
 export function ImageEditorPreview(props: ImagePreviewProps): JSX.Element {

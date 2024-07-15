@@ -6,6 +6,11 @@ import {InputFieldTsx} from './inputFieldTsx';
 import clamp from '../helpers/number/clamp';
 import attachGrabListeners from '../helpers/dom/attachGrabListeners';
 
+const DEFAULT_COLOR: Color = {
+  type: ColorFormatType.hexa,
+  value: '#FFFFFF'
+}
+
 export interface PalleteSwitchButtonProps {
   onClick: () => void;
 }
@@ -40,14 +45,14 @@ export function QuickPallete(props: QuickPalleteProps) {
 }
 
 export interface ColorSliderProps {
-  color: Color;
+  color?: Color;
   onChange: (color: Color) => void;
 }
 export function ColorSlider(props: ColorSliderProps) {
   const [hueRef, setHueRef] = createSignal<SVGSVGElement>();
   const [hueDraggerRef, setHueDraggerRef] = createSignal<SVGSVGElement>();
 
-  const hslaColor = () => anyColorToHslaColor(props.color);
+  const hslaColor = () => anyColorToHslaColor(props.color || DEFAULT_COLOR);
   const [hue, setHue] = createSignal<number>(hslaColor().h);
   const [saturation, setSaturation] = createSignal<number>(hslaColor().s);
   const [lightness, setLightness] = createSignal<number>(hslaColor().l);
@@ -153,7 +158,7 @@ export function ColorSlider(props: ColorSliderProps) {
 }
 
 export interface ColorPalleteBoxProps {
-  color: Color;
+  color?: Color;
   onChange: (color: Color) => void;
 }
 export function ColorPalleteBox(props: ColorPalleteBoxProps) {
@@ -161,7 +166,7 @@ export function ColorPalleteBox(props: ColorPalleteBoxProps) {
   const [boxDraggerRef, setBoxDraggerRef] = createSignal<SVGSVGElement>();
   const [saturationRef, setSaturationRef] = createSignal<SVGLinearGradientElement>();
 
-  const hslaColor = () => anyColorToHslaColor(props.color);
+  const hslaColor = () => anyColorToHslaColor(props.color || DEFAULT_COLOR);
   const [hue, setHue] = createSignal<number>(hslaColor().h);
   const [saturation, setSaturation] = createSignal<number>(hslaColor().s);
   const [lightness, setLightness] = createSignal<number>(hslaColor().l);
@@ -290,7 +295,7 @@ export function ColorPalleteBox(props: ColorPalleteBoxProps) {
 // patched https://stackoverflow.com/a/34029238/6758968
 const rgbRegExp = /^(?:rgb)?\(?([01]?\d\d?|2[0-4]\d|25[0-5])(?:\W+)([01]?\d\d?|2[0-4]\d|25[0-5])\W+(?:([01]?\d\d?|2[0-4]\d|25[0-5])\)?)$/;
 export interface AdvancedPalleteProps {
-  color: Color;
+  color?: Color;
   onChange: (color: Color) => void;
   onPalleteSwitchClick: () => void;
 }
@@ -372,7 +377,7 @@ export function AdvancedPallete(props: AdvancedPalleteProps) {
 }
 
 export interface ColorPickerProps {
-  color: Color;
+  color?: Color;
   quickPallete?: Color[];
   outputColorFormat: ColorFormatType;
   onChange: (color: Color) => void;

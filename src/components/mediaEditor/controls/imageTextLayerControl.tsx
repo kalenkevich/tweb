@@ -1,92 +1,12 @@
-import {createSignal, createEffect, on, For, Show} from 'solid-js';
-import {ImageChangeType, TextLayer, AttachmentChangeAction, TextStyle, ImageLayer, ImageLayerType, ImageChangeEvent} from '../types';
+import {createSignal, createEffect, on, For} from 'solid-js';
+import {i18n} from '../../../lib/langPack';
+import {ImageChangeType, TextLayer, AttachmentChangeAction, ImageLayer, ImageLayerType, ImageChangeEvent} from '../types';
 import {ImageControlProps} from './imageControl';
-import {anyColorToHexColor} from '../../../helpers/color';
 import {Draggable} from '../draggable/draggable';
 import {DraggingSurface} from '../draggable/surface';
-import {measureText as measureCanvasText, getCanvas2DFontStyle} from '../helpers/canvas2dHelper';
+import {getTextLayerInputElementStyles} from '../helpers/textHelper';
 
-const PLACEHOLDER = 'Add text';
-
-export const renderTextLayerOnCanvas = (canvas: HTMLCanvasElement, text: string, layer: TextLayer, placeholder = PLACEHOLDER) => {
-  const ctx = canvas.getContext('2d') as CanvasRenderingContext2D;
-  const fontStyle = getCanvas2DFontStyle(layer);
-  const {width, height} = measureCanvasText(text || placeholder, layer.fontName, layer.fontSize, layer.fontWeight);
-
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-  if(layer.style === TextStyle.stroke) {
-    ctx.beginPath();
-    ctx.font = fontStyle;
-    ctx.lineWidth = layer.strokeWidth;
-    ctx.strokeStyle = anyColorToHexColor(layer.strokeColor);
-    ctx.strokeText(text, 0, height - layer.strokeWidth);
-    ctx.fillStyle = anyColorToHexColor(layer.color);
-    ctx.fillText(text, 0, height - layer.strokeWidth);
-    ctx.stroke();
-    ctx.fill();
-  } else if(layer.style === TextStyle.fill) {
-    ctx.beginPath();
-    ctx.font = fontStyle;
-    ctx.fillStyle = anyColorToHexColor(layer.color);
-    ctx.fillText(text, 0, height);
-    ctx.fill();
-  } else if(layer.style === TextStyle.fill_inverse) {
-    ctx.beginPath();
-    ctx.font = fontStyle;
-    ctx.fillStyle = anyColorToHexColor(layer.color);
-    ctx.roundRect(
-      0,
-      0,
-      width + layer.padding * 2,
-      height + layer.padding * 2,
-      layer.borderRadius);
-    ctx.fill();
-    ctx.fillStyle = anyColorToHexColor(layer.secondColor);
-    ctx.fillText(text, layer.padding, height - layer.padding);
-  }
-}
-
-const getTextLayerInputElementStyles = (text: string, layer: TextLayer, placeholder = PLACEHOLDER) => {
-  const {width, height} = measureCanvasText(text || placeholder, layer.fontName, layer.fontSize, layer.fontWeight, layer.style === TextStyle.stroke ? layer.strokeWidth : 0);
-
-  const baseStyle = {
-    'border': 'none',
-    'outline': 'none',
-    'width': `${width}px`,
-    'height': `${height}px`,
-    'font-family': layer.fontName,
-    'font-size': `${layer.fontSize}px`,
-    'font-weight': `${layer.fontWeight}`,
-    'line-height': `${layer.fontSize}px`,
-    'text-align': layer.alignment,
-    'box-sizing': 'content-box'
-  };
-
-  if(layer.style === TextStyle.fill) {
-    return {
-      ...baseStyle,
-      color: anyColorToHexColor(layer.color)
-    }
-  }
-
-  if(layer.style === TextStyle.stroke) {
-    return {
-      ...baseStyle,
-      'paint-order': 'stroke fill',
-      '-webkit-text-stroke': `${layer.strokeWidth}px ${anyColorToHexColor(layer.strokeColor)}`,
-      'color': anyColorToHexColor(layer.color)
-    }
-  }
-
-  return {
-    ...baseStyle,
-    'color': anyColorToHexColor(layer.secondColor),
-    'padding': `${layer.padding}px`,
-    'background-color': anyColorToHexColor(layer.color),
-    'border-radius': `${layer.borderRadius}px`
-  };
-};
+const PLACEHOLDER = i18n('ImageEditor.TextControl.AddText');
 
 export interface EditableTextElementProps {
   surface: DraggingSurface;
@@ -97,64 +17,57 @@ export interface EditableTextElementProps {
 }
 export function EditableTextElement(props: EditableTextElementProps) {
   const [inputRef, setInputRef] = createSignal<HTMLInputElement | undefined>();
-  const [width, setWidth] = createSignal(props.layer.width);
-  const [height, setHeight] = createSignal(props.layer.height);
-  const [textValue, setTextValue] = createSignal(props.layer.text);
+  const [textValueInternal, setTextValueInternal] = createSignal(props.layer.text);
+  const [isActiveInternal, setActiveInternalState] = createSignal(props.isActive);
   const layer = () => props.layer;
-  const isActive = () => props.isActive;
-  const inputStyles = () => getTextLayerInputElementStyles(textValue(), layer());
+  const inputStyles = () => getTextLayerInputElementStyles(textValueInternal(), layer());
 
-  createEffect(on(() => props.layer.text, (newVal) => {
-    setTextValue(newVal);
-  }));
-  createEffect(on(() => props.layer.width, (newVal) => {
-    setWidth(newVal);
-  }));
-  createEffect(on(() => props.layer.height, (newVal) => {
-    setHeight(newVal);
-  }));
-
-  const onInputBlur = (e: Event) => {
-    props.onImageChange({
-      type: ImageChangeType.layer,
-      layer: {
-        ...layer(),
-        isDirty: !!textValue(),
-        text: textValue()
-      },
-      action: AttachmentChangeAction.update
-    });
-  };
-
-  const handleMouseMove = (e: Event) => {
-    e.stopPropagation();
-    // Returns focus on input instead of draggable surface
-    setTimeout(() => {
-      inputRef().focus();
-    });
-  };
-
-  const blurInput = (e: MouseEvent) => {
-    e.stopPropagation();
-    setTimeout(() => {
+  createEffect(on(() => props.isActive, (isActive) => {
+    if(isActive) {
+      if(document.activeElement !== inputRef()) {
+        inputRef().focus();
+      }
+    } else {
       inputRef().blur();
-    });
+    }
+
+    setActiveInternalState(isActive);
+  }));
+
+  const onInputBlur = () => {
+    const hasChange = textValueInternal() !== layer().text;
+
+    if(hasChange) {
+      props.onImageChange({
+        type: ImageChangeType.layer,
+        layer: {
+          ...layer(),
+          isDirty: !!textValueInternal(),
+          text: textValueInternal()
+        },
+        action: AttachmentChangeAction.update
+      });
+    }
   };
 
   const handleInputChange = (e: Event) => {
     const value = (e.target as HTMLInputElement).value;
 
-    setTextValue(value);
+    setTextValueInternal(value);
+  };
+
+  const onWrapperMouseDown = () => {
+    setActiveInternalState(true);
+    props.onClick();
   };
 
   return (
     <Draggable
       surface={props.surface}
-      enabled={isActive()}
+      enabled={isActiveInternal()}
       translation={layer().translation}
       scale={layer().scale}
       rotation={layer().rotation}
-      onClick={props.onClick}
       onChange={(translation: [number, number]) => {
         props.onImageChange({
           type: ImageChangeType.layer,
@@ -167,16 +80,14 @@ export function EditableTextElement(props: EditableTextElementProps) {
       }}
     >
       <div class="editable-input-wrapper"
-        classList={{'active': isActive()}}
-        onMouseUp={blurInput}
-      >
+        classList={{'active': isActiveInternal()}}
+        onMouseDown={onWrapperMouseDown}>
         <input
           ref={(el) => setInputRef(el)}
           tabindex="1"
-          onMouseMove={handleMouseMove}
           style={inputStyles() as any}
-          placeholder={PLACEHOLDER}
-          value={textValue()}
+          placeholder={PLACEHOLDER.innerText}
+          value={textValueInternal()}
           onBlur={onInputBlur}
           onInput={handleInputChange}
         />
@@ -187,13 +98,22 @@ export function EditableTextElement(props: EditableTextElementProps) {
 
 export interface ImageTextLayerControlProps extends ImageControlProps {
   surface: DraggingSurface;
-  onActiveLayerChange: (layer: ImageLayer) => void;
+  onActiveLayerChange: (layer?: ImageLayer) => void;
 }
 export function ImageTextLayerControl(props: ImageTextLayerControlProps) {
+  const [elRef, setElRef] = createSignal<HTMLDivElement>();
   const textObjects = () => props.imageState.layers.filter(l => l.type === ImageLayerType.text) as TextLayer[];
 
+  const handleBackdropClick = (e: Event) => {
+    if((e.target as HTMLDivElement) === elRef()) {
+      props.onActiveLayerChange(null);
+    }
+  };
+
   return (
-    <div class="image-editor__image-control text-image-input-control">
+    <div class="image-editor__image-control text-image-input-control"
+      ref={(el) => setElRef(el)}
+      onClick={handleBackdropClick}>
       <For each={textObjects()}>
         {(layer: TextLayer) => (
           <EditableTextElement

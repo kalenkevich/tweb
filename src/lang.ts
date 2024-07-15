@@ -2867,6 +2867,7 @@ const lang = {
   'ImageEditor.ResizeControl.AspectRatio': 'Aspect Ratio',
   'ImageEditor.TextControl.Size': 'Size',
   'ImageEditor.TextControl.Font': 'Font',
+  'ImageEditor.TextControl.AddText': 'Add text',
   'ImageEditor.DrawControl.Tool': 'Tool',
   'ImageEditor.DrawControl.Pen': 'Pen',
   'ImageEditor.DrawControl.Arrow': 'Arrow',

@@ -6,6 +6,10 @@ import {IconTsx} from '../../iconTsx';
 import clamp from '../../../helpers/number/clamp';
 import attachGrabListeners from '../../../helpers/dom/attachGrabListeners';
 
+export const ROTATE_CARUSEL_HEIGHT = 40;
+export const ROTATE_CARUSEL_PADDING_BOTTOM = 20;
+export const ROTATE_CARUSEL_ACTUAL_HEIGHT = ROTATE_CARUSEL_HEIGHT + ROTATE_CARUSEL_PADDING_BOTTOM;
+
 const getRangeBasedOnWidth = (width: number): number => {
   if(width >= 0 && width <= 400) {
     return 15;
@@ -61,6 +65,9 @@ export function ImageRotationControl(props: ImageRotationControlProps): JSX.Elem
 
   onMount(() => {
     window.addEventListener('resize', updateSteps);
+
+    rootRef().style.height = `${ROTATE_CARUSEL_HEIGHT}px`;
+    rootRef().style.paddingBottom = `${ROTATE_CARUSEL_PADDING_BOTTOM}px`;
 
     attachGrabListeners(caruselRef() as any, (pos) => {
       onGrabStart();

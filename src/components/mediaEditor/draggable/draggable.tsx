@@ -9,7 +9,7 @@ export interface DraggableProps {
   translation: [number, number];
   scale: [number, number];
   rotation: number;
-  onClick: () => void;
+  onClick?: () => void;
   onChange: (translation: [number, number]) => void;
 }
 export function Draggable(props: DraggableProps) {
@@ -48,10 +48,6 @@ export function Draggable(props: DraggableProps) {
   }));
 
   const onDragStart = (pos: GrabEvent) => {
-    if(!isDraggingEnabled()) {
-      return;
-    }
-
     const rootRect = surface().element.getBoundingClientRect();
     const eventX = clamp(pos.x - rootRect.left, 0, rootRect.width);
     const eventY = clamp(pos.y - rootRect.top, 0, rootRect.height);

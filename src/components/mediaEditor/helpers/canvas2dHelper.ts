@@ -35,11 +35,20 @@ export const resizeCanvas = (canvasEl: HTMLCanvasElement, width: number, height:
   canvasEl.getContext('2d').scale(ratio, ratio);
 };
 
-export const getImageFromCanvas = (canvas: HTMLCanvasElement): HTMLImageElement => {
-  const img = new Image();
-  img.src = canvas.toDataURL();
+export const getImageFromCanvas = async(canvas: HTMLCanvasElement | OffscreenCanvas): Promise<HTMLImageElement> => {
+  if((canvas as HTMLCanvasElement).toDataURL) {
+    const img = new Image();
+    img.src = (canvas as HTMLCanvasElement).toDataURL();
 
-  return img
+    return Promise.resolve(img);
+  }
+
+  // @ts-ignore
+  const blob = await canvas[canvas.convertToBlob ? 'convertToBlob' : 'toBlob']();
+  const img = new Image();
+  img.src = URL.createObjectURL(blob);
+
+  return img;
 }
 
 export const getCanvas2DFontStyle = ({fontName, fontSize, fontWeight}: {fontName: string; fontSize: number; fontWeight:number}) => `${fontWeight} ${fontSize}px "${fontName}"`;

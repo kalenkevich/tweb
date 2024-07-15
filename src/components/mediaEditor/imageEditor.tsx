@@ -180,10 +180,14 @@ export function ImageEditor(props: MediaEditorProps) {
     setCanRedu(imageEditorManager().canRedo());
   };
 
-  const onActiveLayerChange = (layer: ImageLayer) => {
-    const index = imageState().layers.findIndex(l => l === layer);
+  const onActiveLayerChange = (layer?: ImageLayer) => {
+    if(!layer) {
+      setCurrentLayerIndex(-1);
+    } else {
+      const index = imageState().layers.findIndex(l => l === layer);
 
-    setCurrentLayerIndex(index);
+      setCurrentLayerIndex(index);
+    }
   };
 
   const handleTabSelection = (tab: ImageEditorTab) => {

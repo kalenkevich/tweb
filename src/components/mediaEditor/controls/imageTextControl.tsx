@@ -3,7 +3,7 @@ import {i18n} from '../../../lib/langPack';
 import {ImageChangeType, TextAlignment, TextStyle, TextLayer, AttachmentChangeAction} from '../types';
 import {QUCIK_PALLETE_COLORS, WHITE_COLOR_HEX, BLACK_COLOR_HEX} from '../consts';
 import {ImageControlProps} from './imageControl';
-import {Color, ColorHex, ColorFormatType, anyColorToHexColor} from '../../../helpers/color';
+import {Color, ColorFormatType, anyColorToHexColor} from '../../../helpers/color';
 import {ColorPickerV2} from '../../colorPickerV2';
 import {RangeSelectorTsx} from '../../rangeSelectorTsx';
 import {SvgIconType} from '../../iconSvg';
@@ -80,7 +80,7 @@ export function ImageTextControl(props: ImageTextControlProps): JSX.Element {
   const style = () => layer()?.style;
   const fontName = () => layer()?.fontName;
   const fontSize = () => layer()?.fontSize;
-  const hexColor = () => anyColorToHexColor(color());
+  const hexColor = () => color() && anyColorToHexColor(color());
 
   const onPropertyChange = (propertyType: TextAttachmentProperty, value: string | TextAlignment | TextStyle | number | Color) => {
     const newAttachmentState = {
@@ -89,8 +89,8 @@ export function ImageTextControl(props: ImageTextControlProps): JSX.Element {
 
     switch(propertyType) {
       case TextAttachmentProperty.color: {
+        newAttachmentState.color = value as Color;
         if(newAttachmentState.style === TextStyle.fill_inverse) {
-          newAttachmentState.color = value as Color;
           newAttachmentState.secondColor = (value as Color).value === WHITE_COLOR_HEX.value ? BLACK_COLOR_HEX : WHITE_COLOR_HEX;
         }
         break;

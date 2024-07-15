@@ -56,13 +56,10 @@ export function DraggingSurfaceComponent(props: DraggingSurfaceProps) {
 
     attachGrabListeners(surfaceEl() as any, (event) => {
       onEvent(DragEventType.DragStart, event);
-      console.log('surface onMouseDown');
     }, (event) => {
       onEvent(DragEventType.DragMove, event);
-      console.log('surface onMouseMove');
     }, (event) => {
       onEvent(DragEventType.DragEnd, event);
-      console.log('surface onMouseUp');
     });
 
     props.onSurfaceReady(surfaceInstance);

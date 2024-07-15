@@ -99,7 +99,7 @@ export const DEFAULT_TEXT_LAYER: TextLayer = {
   },
   secondColor: {
     type: ColorFormatType.hexa,
-    value: '#000000'
+    value: '#FFFFFF'
   },
   image: new Image(),
   width: 130 * window.devicePixelRatio,
