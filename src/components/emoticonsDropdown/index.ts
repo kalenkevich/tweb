@@ -133,10 +133,12 @@ export class EmoticonsDropdown extends DropdownHover {
     customOnSelect?: (emoji: {element: HTMLElement} & ReturnType<typeof getEmojiFromElement>) => void,
     onMount?: (el: HTMLElement) => void,
     onMediaClicked?: (options: Parameters<ChatInput['sendMessageWithDocument']>[0]) => void,
+    stayAlwaysOpen?: boolean
   } = {}) {
     super({
       element: renderEmojiDropdownElement(),
-      ignoreOutClickClassName: 'input-message-input'
+      ignoreOutClickClassName: 'input-message-input',
+      stayAlwaysOpen: options.stayAlwaysOpen
     });
     this.onMediaClicked = options.onMediaClicked;
     safeAssign(this, options);

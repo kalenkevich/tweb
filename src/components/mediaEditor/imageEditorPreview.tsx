@@ -1,14 +1,14 @@
 import {JSX, onMount, createSignal, Show, onCleanup} from 'solid-js';
 import {ImageLayer} from './types';
-import {ImageEditorTab, TabType} from './imageEditorTabs';
+import {TabType} from './imageEditorTabs';
 import {ImageControlProps} from './controls/imageControl';
 import {ImageRotationControl} from './controls/imageRotationControl';
-import {ImageTextLayerControl} from './controls/imageTextLayerControl';
+import {DraggableObjects} from './controls/draggableObjects';
 import {ImageConunterpartControl} from './controls/imageCounterpartControl';
 import {DraggingSurfaceComponent, DraggingSurface} from './draggable/surface';
 
 export interface ImagePreviewProps extends ImageControlProps {
-  selectedTab: ImageEditorTab;
+  selectedTabId: TabType;
   onCanvasMounted: (canvas: HTMLCanvasElement) => void;
   onCanvasResized: (width: number, height: number) => void;
   onActiveLayerChange: (layer?: ImageLayer) => void;
@@ -19,8 +19,8 @@ export function ImageEditorPreview(props: ImagePreviewProps): JSX.Element {
   const [rootRef, setRootRef] = createSignal<HTMLDivElement>();
   const [resizeObserver, setResizeObserver] = createSignal<ResizeObserver>();
   const [draggingSurface, setDraggingSurface] = createSignal<DraggingSurface>();
-  const isResizeTabSelected = () => props.selectedTab.tabId === TabType.RESIZE;
-  const isTextTabSelected = () => props.selectedTab.tabId === TabType.TEXT;
+  const isResizeTabSelected = () => props.selectedTabId === TabType.RESIZE;
+  const showDraggableObjects = () => [TabType.TEXT, TabType.STICKER, TabType.PAINT].includes(props.selectedTabId);
 
   onMount(() => {
     const [width, height] = [rootRef().offsetWidth, rootRef().offsetHeight];
@@ -58,8 +58,8 @@ export function ImageEditorPreview(props: ImagePreviewProps): JSX.Element {
             currentLayerIndex={props.currentLayerIndex}
           />
         </Show>
-        <Show when={isTextTabSelected()}>
-          <ImageTextLayerControl
+        <Show when={showDraggableObjects()}>
+          <DraggableObjects
             surface={draggingSurface()}
             imageState={props.imageState}
             onImageChange={props.onImageChange}

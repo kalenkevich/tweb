@@ -1,21 +1,20 @@
 import {createEffect, createSignal, on, batch} from 'solid-js';
 import {ImageChangeType, ImageChangeEvent, ImageSource, ImageState, ImageLayer, AttachmentChangeAction, ImageLayerType} from './types';
-import {DEFAULT_DRAW_LAYER, DEFAULT_IMAGE_STATE, DEFAULT_TEXT_LAYER, DEFAULT_STICKER_LAYER} from './consts';
+import {DEFAULT_DRAW_LAYER, DEFAULT_IMAGE_STATE, DEFAULT_TEXT_LAYER} from './consts';
 import {ImageEditorPreview} from './imageEditorPreview';
-import {ImageEditorTab, ImageEditorTabs, TABS_CONFIG, TabType} from './imageEditorTabs';
+import {ImageEditorTabs, TABS_CONFIG, TabType} from './imageEditorTabs';
 import {ImageEditorManager} from './imageEditorManager';
 import {ButtonIconTsx} from '../buttonIconTsx';
 import {fitImageIntoCanvas, ScaleMode} from './helpers/aspectRatioHelper';
 import {createImageElementTextureSource} from './webgl/helpers/webglTexture';
 import {renderTextLayer} from './helpers/textHelper';
-
-let currentLayerId = 0;
-const getLayerNextId = () => currentLayerId++;
+import {getLayerNextId, getRandomLayerStartPosition} from './helpers/layerHelper';
 
 export function createImageState(source: ImageSource): ImageState {
   const texture = createImageElementTextureSource(source, source.width, source.height);
   return {
     ...DEFAULT_IMAGE_STATE,
+    layers: [DEFAULT_DRAW_LAYER],
     source,
     texture,
     width: source.width,
@@ -37,7 +36,7 @@ export function ImageEditor(props: MediaEditorProps) {
   const [canRedo, setCanRedu] = createSignal(false);
   const [canUndo, setCanUndo] = createSignal(false);
   const [currentLayerIndex, setCurrentLayerIndex] = createSignal(-1);
-  const [selectedTab, setSelectedTab] = createSignal(TABS_CONFIG[0]);
+  const [selectedTabId, setSelectedTabId] = createSignal(TABS_CONFIG[0].tabId);
 
   createEffect(on(() => [props.imgSource], () => {
     const newImageState = createImageState(props.imgSource);
@@ -124,7 +123,19 @@ export function ImageEditor(props: MediaEditorProps) {
         let newState: ImageState;
 
         if(event.action === AttachmentChangeAction.create) {
-          const newLayers = [...state.layers, event.layer];
+          if(event.layer.type === ImageLayerType.draw) {
+            throw new Error('Can\'t create draw layers');
+          }
+
+          const newLayerState = {
+            ...event.layer,
+            id: getLayerNextId()
+          };
+          if(event.appearInRandomSpot) {
+            const canvas = imageEditorManager().getCanvas();
+            newLayerState.translation = getRandomLayerStartPosition(canvas.width, canvas.height);
+          }
+          const newLayers = [...state.layers, newLayerState];
           newState = {
             ...state,
             layers: newLayers
@@ -146,6 +157,10 @@ export function ImageEditor(props: MediaEditorProps) {
           //   });
           // }
         } else if(event.action === AttachmentChangeAction.delete) {
+          if(event.layer.type === ImageLayerType.draw) {
+            throw new Error('Can\'t delete draw layers');
+          }
+
           const newLayers = state.layers.filter((l) => l.id !== event.layer.id);
           newState = {
             ...state,
@@ -199,56 +214,48 @@ export function ImageEditor(props: MediaEditorProps) {
     } else {
       const index = imageState().layers.findIndex(l => l === layer);
 
+      if(layer.type === ImageLayerType.text) {
+        setSelectedTabId(TabType.TEXT);
+      } else if(layer.type === ImageLayerType.sticker) {
+        setSelectedTabId(TabType.STICKER);
+      }
+
       setCurrentLayerIndex(index);
     }
   };
 
-  const handleTabSelection = (tab: ImageEditorTab) => {
-    let layerIndex = currentLayerIndex();
-    const newState = {
-      ...imageState()
-    };
-    const lastLayer = newState.layers[layerIndex];
-    // remove layer if it was untouched
-    if(lastLayer && !lastLayer.isDirty) {
-      newState.layers = [...newState.layers.splice(layerIndex)];
-      layerIndex--;
+  const handleTabSelection = (tabId: TabType) => {
+    let newActiveLayerIndex = -1;
+    let newState = imageState();
+
+    // remove all text layers if it was untouched
+    const currentLayers = [...imageState().layers];
+    for(const layer of currentLayers) {
+      if(layer.type === ImageLayerType.text && !layer.isDirty) {
+        newState = handleChangeEvent({
+          type: ImageChangeType.layer,
+          action: AttachmentChangeAction.delete,
+          layer
+        });
+      }
     }
 
-    const canvas = imageEditorManager().getCanvas();
-    const layerTranslation: [number, number] = [
-      canvas.width / 2,
-      canvas.height / 2
-    ];
-
     // add default layer
-    if(tab.tabId === TabType.TEXT) {
-      newState.layers.push({
-        ...DEFAULT_TEXT_LAYER,
-        id: getLayerNextId(),
-        translation: layerTranslation
+    if(tabId === TabType.TEXT) {
+      newState = handleChangeEvent({
+        type: ImageChangeType.layer,
+        action: AttachmentChangeAction.create,
+        layer: DEFAULT_TEXT_LAYER,
+        appearInRandomSpot: true
       });
-      layerIndex++;
-    } else if(tab.tabId === TabType.PAINT) {
-      newState.layers.push({
-        ...DEFAULT_DRAW_LAYER,
-        id: getLayerNextId(),
-        translation: layerTranslation
-      });
-      layerIndex++;
-    } else if(tab.tabId === TabType.STICKER) {
-      newState.layers.push({
-        ...DEFAULT_STICKER_LAYER,
-        id: getLayerNextId(),
-        translation: layerTranslation
-      });
-      layerIndex++;
+      // set new text layer as active
+      newActiveLayerIndex = newState.layers.length - 1;
     }
 
     batch(() => {
       setImageState(newState);
-      setSelectedTab(tab);
-      setCurrentLayerIndex(layerIndex);
+      setSelectedTabId(tabId);
+      setCurrentLayerIndex(newActiveLayerIndex);
     });
   };
 
@@ -257,14 +264,14 @@ export function ImageEditor(props: MediaEditorProps) {
       <ImageEditorPreview
         imageState={imageState()}
         currentLayerIndex={currentLayerIndex()}
+        selectedTabId={selectedTabId()}
         onCanvasMounted={onCanvasMounted}
         onCanvasResized={onCanvasResized}
         onImageChange={onImageChange}
         onActiveLayerChange={onActiveLayerChange}
-        selectedTab={selectedTab()}
       />
       <ImageEditorTabs
-        selectedTab={selectedTab()}
+        selectedTabId={selectedTabId()}
         canUndo={canUndo()}
         canRedo={canRedo()}
         onUndo={handleUndo}

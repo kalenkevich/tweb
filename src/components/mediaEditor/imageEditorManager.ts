@@ -60,7 +60,15 @@ export class ImageEditorManager {
           layer.origin = [-(texture.width / 2) / window.devicePixelRatio, -(texture.height / 2) / window.devicePixelRatio];
         }));
       } else if(layer.type === ImageLayerType.sticker) {
-        layer.texture = createImageElementTextureSource(layer.image);
+        const img = new Image();
+        img.src = layer.imageSrc;
+        const promise = new Promise((resolve) => {
+          img.addEventListener('load', resolve);
+        }).then(() => {
+          layer.texture = createImageElementTextureSource(img)
+        });
+
+        promises.push(promise);
       }
     }
     await Promise.all(promises);

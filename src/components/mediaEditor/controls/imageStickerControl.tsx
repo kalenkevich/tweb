@@ -1,8 +1,11 @@
 import {JSX, createSignal, onMount} from 'solid-js';
 import {ImageControlProps} from './imageControl';
+import {ImageChangeType, AttachmentChangeAction} from '../types';
+import {DEFAULT_STICKER_LAYER} from '../consts';
 import rootScope from '../../../lib/rootScope';
 import StickersTab from '../../emoticonsDropdown/tabs/stickers';
 import {EmoticonsDropdown} from '../../emoticonsDropdown';
+import {getLayerNextId} from '../helpers/layerHelper';
 
 export interface ImageStickerControlProps extends ImageControlProps {}
 export function ImageStickerControl(props: ImageStickerControlProps): JSX.Element {
@@ -12,13 +15,27 @@ export function ImageStickerControl(props: ImageStickerControlProps): JSX.Elemen
     const emoticonsDropdown = new EmoticonsDropdown({
       customParentElement: ref(),
       tabsToRender: [new StickersTab(rootScope.managers)],
+      stayAlwaysOpen: true,
       onMount: (el) => {
         el.style.height = `${ref().offsetHeight}px`;
         el.style.maxHeight = `${ref().offsetHeight}px`;
         el.style.setProperty('--height', `${ref().offsetHeight}px`);
       },
       onMediaClicked: (e) => {
-        console.log('sticker clicked', e);
+        const sourceImage = (e.target as HTMLDivElement).children[0] as HTMLImageElement;
+
+        props.onImageChange({
+          type: ImageChangeType.layer,
+          layer: {
+            ...DEFAULT_STICKER_LAYER,
+            id: getLayerNextId(),
+            width: sourceImage.width,
+            height: sourceImage.height,
+            imageSrc: sourceImage.src
+          },
+          action: AttachmentChangeAction.create,
+          appearInRandomSpot: true
+        });
       }
     });
     emoticonsDropdown.onButtonClick();

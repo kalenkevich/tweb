@@ -1,5 +1,5 @@
 import {JSX, For} from 'solid-js';
-import {DrawLayer, DrawStyle, ImageChangeType, AttachmentChangeAction} from '../types';
+import {DrawLayer, DrawStyle, ImageChangeType, AttachmentChangeAction, ImageLayerType} from '../types';
 import {Color, ColorFormatType, anyColorToHexColor} from '../../../helpers/color';
 import {ImageControlProps} from './imageControl';
 import {ColorPickerV2} from '../../colorPickerV2';
@@ -45,7 +45,7 @@ enum DrawAttachmentProperty {
 }
 
 export function ImageDrawControl(props: ImageDrawControlProps): JSX.Element {
-  const layer = () => props.imageState.layers[props.currentLayerIndex] as DrawLayer;
+  const layer = () => props.imageState.layers.find(l => l.type === ImageLayerType.draw) as DrawLayer;
   const color = () => layer()?.color || DEFAULT_DRAW_LAYER.color;
   const size = () => layer()?.size || DEFAULT_DRAW_LAYER.size;
   const style = () => layer()?.style || DEFAULT_DRAW_LAYER.style;

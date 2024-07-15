@@ -91,9 +91,8 @@ export interface DrawLayer {
 export interface StickerLayer {
   id: number;
   type: ImageLayerType.sticker;
-  isDirty: boolean;
   zIndex: number;
-  image: ImageSource;
+  imageSrc: string;
   width: number;
   height: number;
   rotation: number;
@@ -205,4 +204,5 @@ export interface LayerChangeEvent {
   type: ImageChangeType.layer;
   layer: ImageLayer;
   action: AttachmentChangeAction;
+  appearInRandomSpot?: boolean;
 }

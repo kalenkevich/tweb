@@ -87,17 +87,18 @@ export const TABS_CONFIG: ImageEditorTab[] = [{
 }];
 
 export interface ImageEditorTabsProps extends ImageControlProps {
-  selectedTab: ImageEditorTab;
+  selectedTabId: TabType;
   canUndo: boolean;
   canRedo: boolean;
   onUndo: () => void;
   onRedo: () => void;
   onClose: () => void;
-  onTabSelected: (tab: ImageEditorTab) => void;
+  onTabSelected: (tabId: TabType) => void;
 }
 
 export function ImageEditorTabs(props: ImageEditorTabsProps) {
-  const selectedTab = () => props.selectedTab;
+  const selectedTabId = () => props.selectedTabId;
+  const selectedTab = () => TABS_CONFIG.find(t => t.tabId === props.selectedTabId);
 
   return (
     <div class="image-editor__tabs-container">
@@ -128,12 +129,12 @@ export function ImageEditorTabs(props: ImageEditorTabsProps) {
       <div class="tab-icons">
         <For each={TABS_CONFIG}>
           {(tabConfig) => (
-            <div class="tab-icon__container" classList={{'tab-icon__selected': tabConfig === selectedTab()}}>
+            <div class="tab-icon__container" classList={{'tab-icon__selected': tabConfig.tabId === selectedTabId()}}>
               <ButtonIconTsx
                 icon={tabConfig.icon}
                 asSvgIcon={tabConfig.asSvgIcon}
                 onClick={() => {
-                  props.onTabSelected(tabConfig);
+                  props.onTabSelected(tabConfig.tabId);
                 }}
               />
               <div class="tab-icon__highlight"></div>

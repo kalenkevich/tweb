@@ -331,7 +331,7 @@
     }
   }
 
-  .text-image-input-control {
+  .draggable-objects {
     position: absolute;
     top: 0;
     left: 0;
@@ -339,13 +339,13 @@
     width: 100%;
     height: 100%;
 
-    .editable-input-wrapper {
+    .draggable-sticker, .draggable-text {
       padding: 14px 6px;
       margin: -16px -8px;
       box-sizing: content-box;
       border: 2px dashed transparent;
       border-radius: 10px;
-
+  
       &:hover, &.active {
         border: 2px dashed rgba(255, 255, 255, 0.5);
       }

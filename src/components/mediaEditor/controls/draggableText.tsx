@@ -1,26 +1,25 @@
-import {createSignal, createEffect, on, For} from 'solid-js';
+import {createSignal, createEffect, on} from 'solid-js';
 import {i18n} from '../../../lib/langPack';
-import {ImageChangeType, TextLayer, AttachmentChangeAction, ImageLayer, ImageLayerType, ImageChangeEvent} from '../types';
-import {ImageControlProps} from './imageControl';
+import {ImageChangeType, TextLayer, AttachmentChangeAction, ImageChangeEvent} from '../types';
 import {Draggable} from '../draggable/draggable';
 import {DraggingSurface} from '../draggable/surface';
 import {getTextLayerInputElementStyles} from '../helpers/textHelper';
 
-const PLACEHOLDER = i18n('ImageEditor.TextControl.AddText');
+const PLACEHOLDER = i18n('ImageEditor.TextControl.AddText').innerText;
 
-export interface EditableTextElementProps {
+export interface DraggableTextProps {
   surface: DraggingSurface;
   layer: TextLayer;
   isActive: boolean;
   onClick: () => void;
   onImageChange: (imageChangeEvent: ImageChangeEvent) => void;
 }
-export function EditableTextElement(props: EditableTextElementProps) {
+export function DraggableText(props: DraggableTextProps) {
   const [inputRef, setInputRef] = createSignal<HTMLInputElement | undefined>();
   const [textValueInternal, setTextValueInternal] = createSignal(props.layer.text);
   const [isActiveInternal, setActiveInternalState] = createSignal(props.isActive);
   const layer = () => props.layer;
-  const inputStyles = () => getTextLayerInputElementStyles(textValueInternal(), layer());
+  const inputStyles = () => getTextLayerInputElementStyles(textValueInternal(), layer(), PLACEHOLDER);
 
   createEffect(on(() => props.isActive, (isActive) => {
     if(isActive) {
@@ -79,52 +78,20 @@ export function EditableTextElement(props: EditableTextElementProps) {
         });
       }}
     >
-      <div class="editable-input-wrapper"
+      <div class="draggable-object draggable-text"
         classList={{'active': isActiveInternal()}}
         onMouseDown={onWrapperMouseDown}>
         <input
+          class="draggable-text__input"
           ref={(el) => setInputRef(el)}
           tabindex="1"
           style={inputStyles() as any}
-          placeholder={PLACEHOLDER.innerHTML}
+          placeholder={PLACEHOLDER}
           value={textValueInternal()}
           onBlur={onInputBlur}
           onInput={handleInputChange}
         />
       </div>
     </Draggable>
-  );
-}
-
-export interface ImageTextLayerControlProps extends ImageControlProps {
-  surface: DraggingSurface;
-  onActiveLayerChange: (layer?: ImageLayer) => void;
-}
-export function ImageTextLayerControl(props: ImageTextLayerControlProps) {
-  const [elRef, setElRef] = createSignal<HTMLDivElement>();
-  const textObjects = () => props.imageState.layers.filter(l => l.type === ImageLayerType.text) as TextLayer[];
-
-  const handleBackdropClick = (e: Event) => {
-    if((e.target as HTMLDivElement) === elRef()) {
-      props.onActiveLayerChange(null);
-    }
-  };
-
-  return (
-    <div class="image-editor__image-control text-image-input-control"
-      ref={(el) => setElRef(el)}
-      onClick={handleBackdropClick}>
-      <For each={textObjects()}>
-        {(layer: TextLayer) => (
-          <EditableTextElement
-            surface={props.surface}
-            layer={layer as TextLayer}
-            isActive={layer === props.imageState.layers[props.currentLayerIndex]}
-            onClick={() => props.onActiveLayerChange(layer)}
-            onImageChange={props.onImageChange}
-          />
-        )}
-      </For>
-    </div>
   );
 }
