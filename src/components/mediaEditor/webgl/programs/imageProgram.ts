@@ -167,6 +167,7 @@ const ImageShaders = {
 };
 
 export class ImageProgram extends BaseWebglProgram {
+  private currentTextureId: number;
   // Uniforms
   protected textureUniform: WebGlUniform;
   protected textureSizeUniform: WebGlUniform;
@@ -260,14 +261,20 @@ export class ImageProgram extends BaseWebglProgram {
 
     this.textureUniform.setInteger(this.texture.index);
     this.texture.bind();
-    if(imageDrawObject.texture.type === TextureSourceType.IMAGE_BITMAP ||
-      imageDrawObject.texture.type === TextureSourceType.IMAGE_DATA ||
-      imageDrawObject.texture.type === TextureSourceType.IMAGE_ELEMENT
-    ) {
-      this.texture.setSource(imageDrawObject.texture);
-    } else {
-      this.texture.setPixels(imageDrawObject.texture);
+
+    // Cache the image.
+    if(imageDrawObject.texture.id !== this.currentTextureId) {
+      if(imageDrawObject.texture.type === TextureSourceType.IMAGE_BITMAP ||
+        imageDrawObject.texture.type === TextureSourceType.IMAGE_DATA ||
+        imageDrawObject.texture.type === TextureSourceType.IMAGE_ELEMENT
+      ) {
+        this.texture.setSource(imageDrawObject.texture);
+      } else {
+        this.texture.setPixels(imageDrawObject.texture);
+      }
+      this.currentTextureId = imageDrawObject.texture.id;
     }
+
     this.textureSizeUniform.setVector2([imageDrawObject.texture.width, imageDrawObject.texture.height]);
 
     this.positionBuffer.bufferData(imageDrawObject.vertecies.buffer);

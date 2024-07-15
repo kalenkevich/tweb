@@ -1,4 +1,4 @@
-import {JSX, onMount, createSignal, Show} from 'solid-js';
+import {JSX, onMount, createSignal, Show, onCleanup} from 'solid-js';
 import {ImageLayer} from './types';
 import {ImageEditorTab, TabType} from './imageEditorTabs';
 import {ImageControlProps} from './controls/imageControl';
@@ -17,17 +17,31 @@ export interface ImagePreviewProps extends ImageControlProps {
 export function ImageEditorPreview(props: ImagePreviewProps): JSX.Element {
   const [canvasRef, setCanvasRef] = createSignal<HTMLCanvasElement>();
   const [rootRef, setRootRef] = createSignal<HTMLDivElement>();
+  const [resizeObserver, setResizeObserver] = createSignal<ResizeObserver>();
   const [draggingSurface, setDraggingSurface] = createSignal<DraggingSurface>();
   const isResizeTabSelected = () => props.selectedTab.tabId === TabType.RESIZE;
   const isTextTabSelected = () => props.selectedTab.tabId === TabType.TEXT;
 
   onMount(() => {
     const [width, height] = [rootRef().offsetWidth, rootRef().offsetHeight];
-    canvasRef().width = width;
-    canvasRef().height = height;
+    const canvas = canvasRef();
+    canvas.width = width;
+    canvas.height = height;
 
-    props.onCanvasMounted(canvasRef());
+    props.onCanvasMounted(canvas);
+
+    const resizeObserver = new ResizeObserver(onResize);
+    resizeObserver.observe(canvas, {box: 'content-box'});
+    setResizeObserver(resizeObserver);
   });
+
+  onCleanup(() => {
+    resizeObserver().disconnect();
+  });
+
+  const onResize = () => {
+    props.onCanvasResized(rootRef().offsetWidth, rootRef().offsetHeight);
+  };
 
   return (
     <div class="image-editor__preview-container" ref={el => setRootRef(el)}>

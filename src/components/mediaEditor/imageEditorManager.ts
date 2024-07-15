@@ -1,4 +1,4 @@
-import {ImageAspectRatio, ImageState, ImageFilterState, TextLayer} from './types';
+import {ImageState, ImageFilterState, TextLayer} from './types';
 import {DEFAULT_IMAGE_STATE} from './consts';
 import {ImageRenderer} from './imageRenderer';
 import {WebglImageRenderer} from './webgl/webglImageRenderer';
@@ -6,6 +6,7 @@ import {RenderQueue} from './helpers/renderQueue';
 import {easyAnimation} from './helpers/animation';
 
 export class ImageEditorManager {
+  private canvas?: HTMLCanvasElement;
   private renderQueue: RenderQueue = new RenderQueue();
   private imageStates: ImageState[] = [];
   private currentStateIndex: number = 0;
@@ -16,6 +17,7 @@ export class ImageEditorManager {
   constructor(private readonly stateSnapshowCounts = 10) {}
 
   init(canvas: HTMLCanvasElement, initialImageState: ImageState = DEFAULT_IMAGE_STATE) {
+    this.canvas = canvas;
     this.renderer.init(canvas);
     this.imageStates.push(initialImageState);
     this.ready = true;
@@ -28,6 +30,10 @@ export class ImageEditorManager {
   resizeCanvas(width: number, height: number) {
     this.renderer.resize(width, height);
     this.rerender();
+  }
+
+  getCanvas(): HTMLCanvasElement {
+    return this.canvas;
   }
 
   destroy() {
@@ -80,14 +86,6 @@ export class ImageEditorManager {
     return newImageState;
   }
 
-  aspectRatio(aspectRatio: number | ImageAspectRatio, animation: boolean = false): ImageState {
-    const newImageState = this.createNewImageState({aspectRatio});
-
-    this.rerender();
-
-    return newImageState;
-  }
-
   rotate(rotateAngle: number, animation: boolean = false): ImageState {
     const state = this.getCurrentImageState();
     const newImageState = this.createNewImageState({rotateAngle});
@@ -109,22 +107,22 @@ export class ImageEditorManager {
     return newImageState;
   }
 
-  move(deltaX: number, deltaY: number, animation: boolean = false) {
+  moveTo(translationX: number, translationY: number, animation: boolean = false) {
     const state = this.getCurrentImageState();
     const newImageState = this.createNewImageState({
-      translation: [
-        state.translation[0] + deltaX,
-        state.translation[1] + deltaY
-      ]
+      translation: [translationX, translationY]
     });
 
     if(animation) {
+      const fromTranslationX = state.translation[0];
+      const fromTranslationY = state.translation[1];
+
       easyAnimation((progress) => {
         this.renderer.render({
           ...state,
           translation: [
-            state.translation[0] + deltaX * progress,
-            state.translation[1] + deltaY * progress
+            state.translation[0] + (translationX - fromTranslationX) * progress,
+            state.translation[1] + (translationY - fromTranslationY) * progress
           ]
         });
       });

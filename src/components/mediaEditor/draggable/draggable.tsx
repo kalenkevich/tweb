@@ -4,24 +4,22 @@ import clamp from '../../../helpers/number/clamp';
 
 export interface DraggableProps {
   children: JSX.Element;
+  enabled: boolean;
   surface: DraggingSurface;
-  width?: number;
-  height?: number;
   translation: [number, number];
   scale: [number, number];
-  origin: [number, number];
   rotation: number;
+  onClick: () => void;
   onChange: (translation: [number, number]) => void;
 }
 export function Draggable(props: DraggableProps) {
   const [elRef, setElRef] = createSignal<HTMLDivElement>();
   const [startPos, setStartPos] = createSignal<[number, number]>();
   const [translation, setTranslation] = createSignal(props.translation);
+  const [isDragging, setIsDragging] = createSignal(false);
+  const isDraggingEnabled = () => props.enabled;
   const surface = () => props.surface;
-  const width = () => props.width;
-  const height = () => props.height;
   const scale = () => props.scale;
-  const origin = () => props.origin;
   const rotation = () => props.rotation;
   const c = children(() => props.children);
 
@@ -43,32 +41,47 @@ export function Draggable(props: DraggableProps) {
   }));
 
   createEffect(on(() => [
-    props.width,
-    props.height,
     props.scale,
-    props.origin,
     props.rotation
   ], () => {
     updateElement();
   }));
 
   const onDragStart = (pos: GrabEvent) => {
+    if(!isDraggingEnabled()) {
+      return;
+    }
+
     const rootRect = surface().element.getBoundingClientRect();
     const eventX = clamp(pos.x - rootRect.left, 0, rootRect.width);
     const eventY = clamp(pos.y - rootRect.top, 0, rootRect.height);
     setStartPos([eventX, eventY]);
+    setIsDragging(true);
     document.documentElement.style.cursor = elRef().style.cursor = 'grabbing';
   };
 
   const onDragMove = (pos: GrabEvent) => {
-    moveHandler(pos.x, pos.y, false);
+    if(!isDraggingEnabled()) {
+      return;
+    }
+
+    if(isDragging()) {
+      moveHandler(pos.x, pos.y, false);
+    }
     updateElement();
     document.documentElement.style.cursor = elRef().style.cursor = 'grabbing';
   };
 
   const onDragEnd = (pos: GrabEvent) => {
-    moveHandler(pos.x, pos.y, true);
+    if(!isDraggingEnabled()) {
+      return;
+    }
+
+    if(isDragging()) {
+      moveHandler(pos.x, pos.y, true);
+    }
     setStartPos(undefined);
+    setIsDragging(false);
     elRef().style.cursor = 'grab';
     document.documentElement.style.cursor = '';
   }
@@ -79,15 +92,8 @@ export function Draggable(props: DraggableProps) {
     elRef().style.left = '0';
     elRef().style.display = 'block';
     elRef().style.cursor = 'grab';
-
-    if(width()) {
-      elRef().style.width = `${width() / window.devicePixelRatio}px`;
-    }
-    if(height()) {
-      elRef().style.height = `${height() / window.devicePixelRatio}px`;
-    }
-    const translationX = (translation()[0] + origin()[0]) / window.devicePixelRatio;
-    const translationY = (translation()[1] + origin()[1]) / window.devicePixelRatio;
+    const translationX = (translation()[0] - elRef().offsetWidth / 2) / window.devicePixelRatio;
+    const translationY = (translation()[1] - elRef().offsetHeight / 2) / window.devicePixelRatio;
     elRef().style.transform = `translateX(${translationX}px) translateY(${translationY}px) rotateZ(${rotation()}deg) scaleX(${scale()[0]}) scaleY(${scale()[1]})`;
   };
 
@@ -108,7 +114,7 @@ export function Draggable(props: DraggableProps) {
   };
 
   return (
-    <div ref={(el) => setElRef(el)}>
+    <div ref={(el) => setElRef(el)} onClick={props.onClick}>
       {c()}
     </div>
   );

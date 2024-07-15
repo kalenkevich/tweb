@@ -4,6 +4,8 @@ import {ImageAspectRatio, ImageState, TextLayer, DrawLayer, StickerLayer, ImageL
 export const DEFAULT_IMAGE_STATE: ImageState = {
   width: 0,
   height: 0,
+  originalWidth: 0,
+  originalHeight: 0,
   filter: {
     enhance: 0,
     brightness: 0,
@@ -20,76 +22,19 @@ export const DEFAULT_IMAGE_STATE: ImageState = {
   aspectRatio: ImageAspectRatio.original,
   rotateAngle: 0,
   translation: [0, 0],
-  origin: [0, 0],
   scale: [1, 1],
   layers: []
 };
 
-const isDarkMode = !!document.documentElement.classList.contains('dark');
-
-export const DEFAULT_TEXT_LAYER: TextLayer = {
-  id: 0,
-  type: ImageLayerType.text,
-  isDirty: false,
-  zIndex: 0,
-  text: '',
-  fontName: 'Roboto',
-  fontSize: 24,
-  fontWeight: 500,
-  color: {
-    type: ColorFormatType.hexa,
-    value: isDarkMode ? '#FFFFFF' : '#000000'
-  },
-  alignment: TextAlignment.left,
-  style: TextStyle.fill,
-  padding: 12,
-  borderRadius: 6,
-  strokeWidth: 4,
-  inverseColor: {
-    type: ColorFormatType.hexa,
-    value: '#000000'
-  },
-  image: new Image(),
-  width: 0,
-  height: 0,
-  rotation: 0,
-  origin: [0, 0],
-  translation: [0, 0],
-  scale: [1, 1]
+export const WHITE_COLOR_HEX = {
+  type: ColorFormatType.hexa,
+  value: '#FFFFFF'
 };
 
-export const DEFAULT_DRAW_LAYER: DrawLayer = {
-  id: 0,
-  type: ImageLayerType.draw,
-  isDirty: false,
-  zIndex: 0,
-  color: {
-    type: ColorFormatType.hexa,
-    value: isDarkMode ? '#FFFFFF' : '#000000'
-  },
-  size: 15,
-  style: DrawStyle.pen,
-  width: 0,
-  height: 0,
-  rotation: 0,
-  origin: [0, 0],
-  translation: [0, 0],
-  scale: [1, 1]
+export const BLACK_COLOR_HEX = {
+  type: ColorFormatType.hexa,
+  value: '#000000'
 };
-
-export const DEFAULT_STICKER_LAYER: StickerLayer = {
-  id: 0,
-  type: ImageLayerType.sticker,
-  isDirty: false,
-  zIndex: 0,
-  image: '',
-  width: 0,
-  height: 0,
-  rotation: 0,
-  origin: [0, 0],
-  translation: [0, 0],
-  scale: [1, 1]
-}
 
 export const QUCIK_PALLETE_COLORS: Color[] = [{
   type: ColorFormatType.hexa,
@@ -132,3 +77,62 @@ export const QUCIK_PALLETE_COLORS: Color[] = [{
   // hsla(279, 86%, 66%, 1)
   // rgba(189, 92, 243, 1)
 }];
+
+export const DEFAULT_TEXT_LAYER: TextLayer = {
+  id: 0,
+  type: ImageLayerType.text,
+  isDirty: false,
+  zIndex: 0,
+  text: '',
+  fontName: 'Roboto',
+  fontSize: 24,
+  fontWeight: 500,
+  color: QUCIK_PALLETE_COLORS[0],
+  alignment: TextAlignment.left,
+  style: TextStyle.fill,
+  padding: 12,
+  borderRadius: 6,
+  strokeWidth: 4,
+  strokeColor: {
+    type: ColorFormatType.hexa,
+    value: '#000000'
+  },
+  secondColor: {
+    type: ColorFormatType.hexa,
+    value: '#000000'
+  },
+  image: new Image(),
+  width: 130 * window.devicePixelRatio,
+  height: 82 * window.devicePixelRatio,
+  rotation: 0,
+  translation: [0, 0],
+  scale: [1, 1]
+};
+
+export const DEFAULT_DRAW_LAYER: DrawLayer = {
+  id: 0,
+  type: ImageLayerType.draw,
+  isDirty: false,
+  zIndex: 0,
+  color: QUCIK_PALLETE_COLORS[0],
+  size: 15,
+  style: DrawStyle.pen,
+  width: 0,
+  height: 0,
+  rotation: 0,
+  translation: [0, 0],
+  scale: [1, 1]
+};
+
+export const DEFAULT_STICKER_LAYER: StickerLayer = {
+  id: 0,
+  type: ImageLayerType.sticker,
+  isDirty: false,
+  zIndex: 0,
+  image: '',
+  width: 0,
+  height: 0,
+  rotation: 0,
+  translation: [0, 0],
+  scale: [1, 1]
+}

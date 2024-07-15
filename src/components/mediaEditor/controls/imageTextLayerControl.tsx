@@ -1,16 +1,14 @@
-import {createSignal, onCleanup, onMount, createEffect, on, For, Show, batch} from 'solid-js';
+import {createSignal, createEffect, on, For, Show} from 'solid-js';
 import {ImageChangeType, TextLayer, AttachmentChangeAction, TextStyle, ImageLayer, ImageLayerType, ImageChangeEvent} from '../types';
 import {ImageControlProps} from './imageControl';
 import {anyColorToHexColor} from '../../../helpers/color';
 import {Draggable} from '../draggable/draggable';
 import {DraggingSurface} from '../draggable/surface';
-import {measureText as measureCanvasText, resizeCanvas, getCanvas2DFontStyle} from '../helpers/canvas2dHelper';
-import {measureText as mesureInputText} from '../helpers/textHelper';
+import {measureText as measureCanvasText, getCanvas2DFontStyle} from '../helpers/canvas2dHelper';
 
 const PLACEHOLDER = 'Add text';
-const PLACEHOLDER_COLOR_HEX = '#8e8e8e';
 
-export const renderTextLayerOnCanvas = (canvas: HTMLCanvasElement, text: string, layer: TextLayer, placeholder: string = PLACEHOLDER) => {
+export const renderTextLayerOnCanvas = (canvas: HTMLCanvasElement, text: string, layer: TextLayer, placeholder = PLACEHOLDER) => {
   const ctx = canvas.getContext('2d') as CanvasRenderingContext2D;
   const fontStyle = getCanvas2DFontStyle(layer);
   const {width, height} = measureCanvasText(text || placeholder, layer.fontName, layer.fontSize, layer.fontWeight);
@@ -21,29 +19,17 @@ export const renderTextLayerOnCanvas = (canvas: HTMLCanvasElement, text: string,
     ctx.beginPath();
     ctx.font = fontStyle;
     ctx.lineWidth = layer.strokeWidth;
-    if(text) {
-      ctx.strokeStyle = anyColorToHexColor(layer.color);
-      ctx.strokeText(text, 0, height - layer.strokeWidth);
-      ctx.fillStyle = anyColorToHexColor(layer.inverseColor);
-      ctx.fillText(text, 0, height - layer.strokeWidth);
-    } else {
-      ctx.strokeStyle = PLACEHOLDER_COLOR_HEX;
-      ctx.strokeText(placeholder, 0, height - layer.strokeWidth);
-      ctx.fillStyle = anyColorToHexColor(layer.inverseColor);
-      ctx.fillText(text, 0, height - layer.strokeWidth);
-    }
+    ctx.strokeStyle = anyColorToHexColor(layer.strokeColor);
+    ctx.strokeText(text, 0, height - layer.strokeWidth);
+    ctx.fillStyle = anyColorToHexColor(layer.color);
+    ctx.fillText(text, 0, height - layer.strokeWidth);
     ctx.stroke();
     ctx.fill();
   } else if(layer.style === TextStyle.fill) {
     ctx.beginPath();
     ctx.font = fontStyle;
-    if(text) {
-      ctx.fillStyle = anyColorToHexColor(layer.color);
-      ctx.fillText(text, 0, height);
-    } else {
-      ctx.fillStyle = PLACEHOLDER_COLOR_HEX;
-      ctx.fillText(placeholder, 0, height);
-    }
+    ctx.fillStyle = anyColorToHexColor(layer.color);
+    ctx.fillText(text, 0, height);
     ctx.fill();
   } else if(layer.style === TextStyle.fill_inverse) {
     ctx.beginPath();
@@ -56,18 +42,12 @@ export const renderTextLayerOnCanvas = (canvas: HTMLCanvasElement, text: string,
       height + layer.padding * 2,
       layer.borderRadius);
     ctx.fill();
-    if(text) {
-      ctx.fillStyle = anyColorToHexColor(layer.inverseColor);
-      ctx.fillText(text, layer.padding, height - layer.padding);
-    } else {
-      ctx.fillStyle = PLACEHOLDER_COLOR_HEX;
-      ctx.fillText(placeholder, layer.padding, height - layer.padding);
-    }
+    ctx.fillStyle = anyColorToHexColor(layer.secondColor);
+    ctx.fillText(text, layer.padding, height - layer.padding);
   }
 }
 
 const getTextLayerInputElementStyles = (text: string, layer: TextLayer, placeholder = PLACEHOLDER) => {
-  // const {width, height} = mesureInputText(text || placeholder, layer.fontName, layer.fontSize, layer.fontWeight, layer.style === TextStyle.stroke ? layer.strokeWidth : 0);
   const {width, height} = measureCanvasText(text || placeholder, layer.fontName, layer.fontSize, layer.fontWeight, layer.style === TextStyle.stroke ? layer.strokeWidth : 0);
 
   const baseStyle = {
@@ -94,14 +74,14 @@ const getTextLayerInputElementStyles = (text: string, layer: TextLayer, placehol
     return {
       ...baseStyle,
       'paint-order': 'stroke fill',
-      '-webkit-text-stroke': `${layer.strokeWidth}px ${anyColorToHexColor(layer.color)}`,
-      'color': anyColorToHexColor(layer.inverseColor)
+      '-webkit-text-stroke': `${layer.strokeWidth}px ${anyColorToHexColor(layer.strokeColor)}`,
+      'color': anyColorToHexColor(layer.color)
     }
   }
 
   return {
     ...baseStyle,
-    'color': anyColorToHexColor(layer.inverseColor),
+    'color': anyColorToHexColor(layer.secondColor),
     'padding': `${layer.padding}px`,
     'background-color': anyColorToHexColor(layer.color),
     'border-radius': `${layer.borderRadius}px`
@@ -116,48 +96,23 @@ export interface EditableTextElementProps {
   onImageChange: (imageChangeEvent: ImageChangeEvent) => void;
 }
 export function EditableTextElement(props: EditableTextElementProps) {
-  const [canvasEl, setCanvasEl] = createSignal<HTMLCanvasElement>();
+  const [inputRef, setInputRef] = createSignal<HTMLInputElement | undefined>();
   const [width, setWidth] = createSignal(props.layer.width);
   const [height, setHeight] = createSignal(props.layer.height);
   const [textValue, setTextValue] = createSignal(props.layer.text);
   const layer = () => props.layer;
+  const isActive = () => props.isActive;
   const inputStyles = () => getTextLayerInputElementStyles(textValue(), layer());
-
-  onMount(() => {
-    updateCanvasOnPropsChange();
-  });
-  createEffect(on(() => [
-    props.layer.text,
-    props.layer.fontName,
-    props.layer.fontSize,
-    props.layer.alignment,
-    props.layer.padding,
-    props.layer.borderRadius
-  ], () => {
-    updateCanvasOnPropsChange();
-  }));
 
   createEffect(on(() => props.layer.text, (newVal) => {
     setTextValue(newVal);
   }));
-
-  const updateCanvasOnPropsChange = () => {
-    const canvas = canvasEl();
-    const {width, height} = measureCanvasText(
-      textValue() || PLACEHOLDER,
-      layer().fontName,
-      layer().fontSize,
-      layer().fontWeight
-    );
-
-    resizeCanvas(canvas, width + layer().padding * 2, height + layer().padding * 2);
-    renderTextLayerOnCanvas(canvas, textValue(), layer(), PLACEHOLDER);
-
-    batch(() => {
-      setWidth(width);
-      setHeight(width);
-    });
-  }
+  createEffect(on(() => props.layer.width, (newVal) => {
+    setWidth(newVal);
+  }));
+  createEffect(on(() => props.layer.height, (newVal) => {
+    setHeight(newVal);
+  }));
 
   const onInputBlur = (e: Event) => {
     props.onImageChange({
@@ -171,24 +126,35 @@ export function EditableTextElement(props: EditableTextElementProps) {
     });
   };
 
-  const handleInputClick = (e: Event) => {
-    e.stopImmediatePropagation();
+  const handleMouseMove = (e: Event) => {
+    e.stopPropagation();
+    // Returns focus on input instead of draggable surface
+    setTimeout(() => {
+      inputRef().focus();
+    });
+  };
+
+  const blurInput = (e: MouseEvent) => {
+    e.stopPropagation();
+    setTimeout(() => {
+      inputRef().blur();
+    });
   };
 
   const handleInputChange = (e: Event) => {
     const value = (e.target as HTMLInputElement).value;
 
     setTextValue(value);
-    updateCanvasOnPropsChange();
   };
 
   return (
     <Draggable
       surface={props.surface}
+      enabled={isActive()}
       translation={layer().translation}
       scale={layer().scale}
-      origin={layer().origin}
       rotation={layer().rotation}
+      onClick={props.onClick}
       onChange={(translation: [number, number]) => {
         props.onImageChange({
           type: ImageChangeType.layer,
@@ -200,17 +166,14 @@ export function EditableTextElement(props: EditableTextElementProps) {
         });
       }}
     >
-      <div style={{
-        'display': 'flex',
-        'flex-direction': 'column'
-      }}>
-        <canvas ref={el => setCanvasEl(el)}>
-        </canvas>
-        <div style={{'height': '10px'}}></div>
+      <div class="editable-input-wrapper"
+        classList={{'active': isActive()}}
+        onMouseUp={blurInput}
+      >
         <input
+          ref={(el) => setInputRef(el)}
           tabindex="1"
-          onMouseDown={handleInputClick}
-          onMouseUp={handleInputClick}
+          onMouseMove={handleMouseMove}
           style={inputStyles() as any}
           placeholder={PLACEHOLDER}
           value={textValue()}

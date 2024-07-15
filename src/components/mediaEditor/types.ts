@@ -1,4 +1,5 @@
 import {Color} from '../../helpers/color';
+import {ImageElementTextureSource} from './webgl/helpers/webglTexture';
 
 export type ImageSource = HTMLImageElement;
 
@@ -68,14 +69,15 @@ export interface TextLayer {
   // styles for TextStyle.fill_inverse
   padding: number; // fontSize / 2
   borderRadius: number; // fontSize / 4
-  inverseColor: Color;
+  strokeColor: Color;
   strokeWidth: number; // fontSize / 6
+  secondColor: Color; // bac
 
   image: ImageSource;
   width: number;
   height: number;
   rotation: number;
-  origin: [number, number],
+  // origin: [number, number],
   translation: [number, number];
   scale: [number, number];
 }
@@ -91,7 +93,7 @@ export interface DrawLayer {
   width: number;
   height: number;
   rotation: number;
-  origin: [number, number],
+  // origin: [number, number],
   translation: [number, number];
   scale: [number, number];
 }
@@ -105,7 +107,7 @@ export interface StickerLayer {
   width: number;
   height: number;
   rotation: number;
-  origin: [number, number],
+  // origin: [number, number];
   translation: [number, number];
   scale: [number, number];
 }
@@ -140,12 +142,15 @@ export interface ImageFilterState {
 
 export interface ImageState {
   source?: ImageSource;
+  texture?: ImageElementTextureSource;
   width: number;
   height: number;
+  originalWidth: number;
+  originalHeight: number;
   filter: ImageFilterState;
   aspectRatio: number | ImageAspectRatio;
   rotateAngle: number;
-  origin: [number, number],
+  // origin: [number, number],
   translation: [number, number];
   scale: [number, number];
   layers: ImageLayer[];

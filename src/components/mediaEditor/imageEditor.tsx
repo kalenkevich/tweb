@@ -5,18 +5,22 @@ import {ImageEditorPreview} from './imageEditorPreview';
 import {ImageEditorTab, ImageEditorTabs, TABS_CONFIG, TabType} from './imageEditorTabs';
 import {ImageEditorManager} from './imageEditorManager';
 import {ButtonIconTsx} from '../buttonIconTsx';
+import {fitImageIntoCanvas, ScaleMode} from './helpers/aspectRatioHelper';
+import {createImageElementTextureSource} from './webgl/helpers/webglTexture';
 
 let currentLayerId = 0;
 const getLayerNextId = () => currentLayerId++;
 
 export function createImageState(source: ImageSource): ImageState {
+  const texture = createImageElementTextureSource(source, source.width, source.height);
   return {
     ...DEFAULT_IMAGE_STATE,
     source,
+    texture,
     width: source.width,
     height: source.height,
-    // Set image origin as the center of the image
-    origin: [-(source.width / 2), -(source.height / 2)]
+    originalWidth: source.width,
+    originalHeight: source.height
   }
 }
 
@@ -44,32 +48,67 @@ export function ImageEditor(props: MediaEditorProps) {
   const onCanvasMounted = async(canvas: HTMLCanvasElement) => {
     imageEditorManager().init(canvas, imageState());
 
-    // Move image to center
-    const newState = handleChangeEvent({
-      type: ImageChangeType.move,
-      deltaX: canvas.width / 2,
-      deltaY: canvas.height / 2
-    });
+    const state = imageState();
+    const scale = fitImageIntoCanvas(
+      ScaleMode.contain,
+      state.originalWidth,
+      state.originalHeight,
+      canvas.width,
+      canvas.height,
+      DEFAULT_IMAGE_STATE.aspectRatio
+    );
+
+    // Move to center and fit the image
+    imageEditorManager().moveTo(canvas.width / 2, canvas.height / 2, false);
+    const newState = imageEditorManager().resize(scale[0], scale[1], false);
+
     setImageState(newState);
   };
 
-  const onCanvasResized = (width: number, height: number) => {
-    imageEditorManager().resizeCanvas(width, height);
+  const onCanvasResized = (canvasWidth: number, canvasHeight: number) => {
+    imageEditorManager().resizeCanvas(canvasWidth, canvasHeight);
+
+    const state = imageState();
+    const canvas = imageEditorManager().getCanvas();
+    const [scaleX, scaleY] = fitImageIntoCanvas(
+      ScaleMode.contain,
+      state.originalWidth,
+      state.originalHeight,
+      canvas.width,
+      canvas.height,
+      state.aspectRatio
+    );
+
+    // Move to center and fit the image
+    imageEditorManager().moveTo(canvas.width / 2, canvas.height / 2, false);
+    imageEditorManager().resize(scaleX, scaleY, false);
   };
 
   const handleChangeEvent = (event: ImageChangeEvent): ImageState => {
+    const state = imageEditorManager().getCurrentImageState();
     switch(event.type) {
       case ImageChangeType.filter: {
         return imageEditorManager().filter(event.value);
       }
       case ImageChangeType.aspectRatio: {
-        return imageEditorManager().aspectRatio(event.value, event.animation);
+        const canvas = imageEditorManager().getCanvas();
+        const [scaleX, scaleY] = fitImageIntoCanvas(
+          ScaleMode.contain,
+          state.originalWidth,
+          state.originalHeight,
+          canvas.clientWidth,
+          canvas.clientHeight,
+          event.value
+        );
+
+        return imageEditorManager().resize(scaleX, scaleY, event.animation);
       }
       case ImageChangeType.rotate: {
         return imageEditorManager().rotate(event.value, event.animation);
       }
       case ImageChangeType.move: {
-        return imageEditorManager().move(event.deltaX, event.deltaY, event.animation);
+        const state = imageEditorManager().getCurrentImageState();
+        return imageEditorManager().moveTo(state.translation[0] + event.deltaX, state.translation[1] + event.deltaY, event.animation);
       }
       case ImageChangeType.resize: {
         return imageEditorManager().resize(event.scaleX, event.scaleY, event.animation);
@@ -159,24 +198,32 @@ export function ImageEditor(props: MediaEditorProps) {
       layerIndex--;
     }
 
+    const canvas = imageEditorManager().getCanvas();
+    const layerTranslation: [number, number] = [
+      canvas.width / 2,
+      canvas.height / 2
+    ];
+
     // add default layer
     if(tab.tabId === TabType.TEXT) {
-      // const {} = measureText();
       newState.layers.push({
         ...DEFAULT_TEXT_LAYER,
-        id: getLayerNextId()
+        id: getLayerNextId(),
+        translation: layerTranslation
       });
       layerIndex++;
     } else if(tab.tabId === TabType.PAINT) {
       newState.layers.push({
         ...DEFAULT_DRAW_LAYER,
-        id: getLayerNextId()
+        id: getLayerNextId(),
+        translation: layerTranslation
       });
       layerIndex++;
     } else if(tab.tabId === TabType.STICKER) {
       newState.layers.push({
         ...DEFAULT_STICKER_LAYER,
-        id: getLayerNextId()
+        id: getLayerNextId(),
+        translation: layerTranslation
       });
       layerIndex++;
     }

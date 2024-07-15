@@ -60,7 +60,7 @@ export class WebglImageRenderer implements ImageRenderer {
       width: imageState.width,
       height: imageState.height
     });
-    const projectionViewMatrix = getProjectionViewMatrix(imageState);
+    const projectionViewMatrix = getProjectionViewMatrix(imageState, this.canvas);
     const imageDrawObject = imageState2ImageDrawObject(imageState, this.canvas);
 
     this.imageProgram.link();
@@ -81,11 +81,11 @@ export class WebglImageRenderer implements ImageRenderer {
   }
 }
 
-export function getProjectionViewMatrix(imageState: ImageState): Matrix3 {
+export function getProjectionViewMatrix(imageState: ImageState, canvas: HTMLCanvasElement): Matrix3 {
   const translationMatrix = translateMatrix3(createMatrix3(), imageState.translation);
   const rotationMatrix = rotateMatrix3(createMatrix3(), degreesToRadians(imageState.rotateAngle));
   const scaleMatrix = scaleMatrix3(createMatrix3(), imageState.scale);
-  const originMatrix = translateMatrix3(createMatrix3(), imageState.origin);
+  const originMatrix = translateMatrix3(createMatrix3(), [-((canvas.width) / 2), -((canvas.height) / 2)]);
 
   return multiplyMatrix3(
     multiplyMatrix3(

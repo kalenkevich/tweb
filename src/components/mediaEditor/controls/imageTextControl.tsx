@@ -1,9 +1,9 @@
 import {JSX, For} from 'solid-js';
 import {i18n} from '../../../lib/langPack';
 import {ImageChangeType, TextAlignment, TextStyle, TextLayer, AttachmentChangeAction} from '../types';
-import {QUCIK_PALLETE_COLORS} from '../consts';
+import {QUCIK_PALLETE_COLORS, WHITE_COLOR_HEX, BLACK_COLOR_HEX} from '../consts';
 import {ImageControlProps} from './imageControl';
-import {Color, ColorFormatType, anyColorToHexColor} from '../../../helpers/color';
+import {Color, ColorHex, ColorFormatType, anyColorToHexColor} from '../../../helpers/color';
 import {ColorPickerV2} from '../../colorPickerV2';
 import {RangeSelectorTsx} from '../../rangeSelectorTsx';
 import {SvgIconType} from '../../iconSvg';
@@ -89,7 +89,10 @@ export function ImageTextControl(props: ImageTextControlProps): JSX.Element {
 
     switch(propertyType) {
       case TextAttachmentProperty.color: {
-        newAttachmentState.color = value as Color;
+        if(newAttachmentState.style === TextStyle.fill_inverse) {
+          newAttachmentState.color = value as Color;
+          newAttachmentState.secondColor = (value as Color).value === WHITE_COLOR_HEX.value ? BLACK_COLOR_HEX : WHITE_COLOR_HEX;
+        }
         break;
       }
       case TextAttachmentProperty.alignment: {

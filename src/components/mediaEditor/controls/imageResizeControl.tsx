@@ -80,7 +80,7 @@ const ASTECT_RATIO_CONFIGS = [{
   asSvgIcon: true,
   fullWidth: false
 }, {
-  label: '16:9',
+  label: '9:16',
   value: 9/16,
   icon: 'aspect_9x16',
   asSvgIcon: true,
@@ -110,7 +110,7 @@ export function ImageResizeControl(props: ImageResizeControlProps): JSX.Element 
               title={config.label}
               clickable={() => {
                 setSelectedValue(config);
-                props.onImageChange({type: ImageChangeType.aspectRatio, value: config.value});
+                props.onImageChange({type: ImageChangeType.aspectRatio, value: config.value, animation: true});
               }}
             />
           )}
