@@ -253,7 +253,7 @@ export function ImageConunterpartControl(props: ImageConunterpartControlProps) {
     elRef().style.height = `${state.height / window.devicePixelRatio}px`;
     const translationX = (state.translation[0]) / window.devicePixelRatio;
     const translationY = (state.translation[1]) / window.devicePixelRatio;
-    elRef().style.transform = `translateX(${translationX}px) translateY(${translationY}px) rotateZ(${state.rotateAngle}deg) scaleX(${state.scale[0]}) scaleY(${state.scale[1]})`;
+    elRef().style.transform = `translateX(${translationX}px) translateY(${translationY}px) rotateZ(${state.rotation}deg) scaleX(${state.scale[0]}) scaleY(${state.scale[1]})`;
 
     elRef().querySelectorAll('.image-grid__resize').forEach(el => {
       (el as HTMLDivElement).style.transform = `scaleX(${1/state.scale[0]}) scaleY(${1/state.scale[1]})`;

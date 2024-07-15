@@ -21,6 +21,12 @@ export const measureText = (
   const actualHeight = metrics.fontBoundingBoxAscent  + metrics.fontBoundingBoxDescent;
 
   return {
+    actualBoundingBoxAscent: metrics.actualBoundingBoxAscent,
+    actualBoundingBoxDescent: metrics.actualBoundingBoxDescent,
+    actualBoundingBoxLeft: metrics.actualBoundingBoxLeft,
+    actualBoundingBoxRight: metrics.actualBoundingBoxRight,
+    fontBoundingBoxAscent: metrics.fontBoundingBoxAscent,
+    fontBoundingBoxDescent: metrics.fontBoundingBoxDescent,
     width: metrics.width + extraPadding * 2,
     height: actualHeight + extraPadding * 2
   };

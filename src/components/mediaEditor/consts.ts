@@ -20,9 +20,10 @@ export const DEFAULT_IMAGE_STATE: ImageState = {
     sharpen: 0
   },
   aspectRatio: ImageAspectRatio.original,
-  rotateAngle: 0,
+  rotation: 0,
   translation: [0, 0],
   scale: [1, 1],
+  origin: [0, 0],
   layers: []
 };
 
@@ -101,12 +102,12 @@ export const DEFAULT_TEXT_LAYER: TextLayer = {
     type: ColorFormatType.hexa,
     value: '#FFFFFF'
   },
-  image: new Image(),
   width: 130 * window.devicePixelRatio,
   height: 82 * window.devicePixelRatio,
   rotation: 0,
   translation: [0, 0],
-  scale: [1, 1]
+  scale: [1, 1],
+  origin: [0, 0]
 };
 
 export const DEFAULT_DRAW_LAYER: DrawLayer = {
@@ -121,7 +122,8 @@ export const DEFAULT_DRAW_LAYER: DrawLayer = {
   height: 0,
   rotation: 0,
   translation: [0, 0],
-  scale: [1, 1]
+  scale: [1, 1],
+  origin: [0, 0]
 };
 
 export const DEFAULT_STICKER_LAYER: StickerLayer = {
@@ -129,10 +131,11 @@ export const DEFAULT_STICKER_LAYER: StickerLayer = {
   type: ImageLayerType.sticker,
   isDirty: false,
   zIndex: 0,
-  image: '',
+  image: new Image(),
   width: 0,
   height: 0,
   rotation: 0,
   translation: [0, 0],
-  scale: [1, 1]
+  scale: [1, 1],
+  origin: [0, 0]
 }

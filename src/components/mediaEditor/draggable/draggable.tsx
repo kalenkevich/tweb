@@ -1,4 +1,4 @@
-import {JSX, children, createSignal, createEffect, on, onCleanup, onMount} from 'solid-js';
+import {JSX, children, createSignal, createEffect, on, onCleanup, onMount, batch} from 'solid-js';
 import {DraggingSurface, DragEventType, GrabEvent} from './surface';
 import clamp from '../../../helpers/number/clamp';
 
@@ -100,12 +100,15 @@ export function Draggable(props: DraggableProps) {
     const eventY = clamp(pageY - rootRect.top, 0, rootRect.height);
     const deltaX = (eventX - startX) * window.devicePixelRatio;
     const deltaY = (eventY - startY) * window.devicePixelRatio;
+    const newTranslation: [number, number] = [translation()[0] + deltaX, translation()[1] + deltaY];
 
-    setStartPos([eventX, eventY]);
-    setTranslation([translation()[0] + deltaX, translation()[1] + deltaY]);
+    batch(() => {
+      setStartPos([eventX, eventY]);
+      setTranslation(newTranslation);
+    });
 
     if(emitChangeEvent) {
-      props.onChange(translation());
+      props.onChange(newTranslation);
     }
   };
 

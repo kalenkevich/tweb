@@ -91,7 +91,11 @@ export function ImageTextControl(props: ImageTextControlProps): JSX.Element {
       case TextAttachmentProperty.color: {
         newAttachmentState.color = value as Color;
         if(newAttachmentState.style === TextStyle.fill_inverse) {
-          newAttachmentState.secondColor = (value as Color).value === WHITE_COLOR_HEX.value ? BLACK_COLOR_HEX : WHITE_COLOR_HEX;
+          if((value as Color).value === WHITE_COLOR_HEX.value) {
+            newAttachmentState.secondColor = BLACK_COLOR_HEX;
+          } else {
+            newAttachmentState.secondColor = WHITE_COLOR_HEX;
+          }
         }
         break;
       }
@@ -101,6 +105,14 @@ export function ImageTextControl(props: ImageTextControlProps): JSX.Element {
       }
       case TextAttachmentProperty.style: {
         newAttachmentState.style = value as TextStyle;
+
+        if((value as TextStyle) === TextStyle.fill_inverse) {
+          if(newAttachmentState.color.value === WHITE_COLOR_HEX.value) {
+            newAttachmentState.secondColor = BLACK_COLOR_HEX;
+          } else {
+            newAttachmentState.secondColor = WHITE_COLOR_HEX;
+          }
+        }
         break;
       }
       case TextAttachmentProperty.fontName: {
@@ -110,7 +122,7 @@ export function ImageTextControl(props: ImageTextControlProps): JSX.Element {
       case TextAttachmentProperty.fontSize: {
         const val = value as number;
         newAttachmentState.fontSize = val;
-        newAttachmentState.padding = Math.min(val / 2, 10);
+        newAttachmentState.padding = Math.min(val / 2, 4);
         newAttachmentState.borderRadius = Math.min(val / 4, 8);
         newAttachmentState.strokeWidth = Math.min(val / 6, 20);
         break;

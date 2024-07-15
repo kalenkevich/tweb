@@ -1,4 +1,4 @@
-import {ImageState} from '../../types';
+import {ImageLayer, ImageState} from '../../types';
 import {DrawObject, DrawObjectAttribute, DrawObjectAttributeType} from './drawObject';
 import {TextureSource} from '../helpers/webglTexture';
 
@@ -9,7 +9,7 @@ export interface ImageDrawObject extends DrawObject {
   textcoords: DrawObjectAttribute<DrawObjectAttributeType.FLOAT, 2, Float32Array>;
 }
 
-export function imageState2ImageDrawObject(imageState: ImageState, canvas: HTMLCanvasElement): ImageDrawObject {
+export function toImageDrawObject(state: ImageState | ImageLayer): ImageDrawObject {
   return {
     name: 'image',
     zIndex: 1,
@@ -19,11 +19,11 @@ export function imageState2ImageDrawObject(imageState: ImageState, canvas: HTMLC
       size: 2,
       buffer: new Float32Array([
         0, 0,
-        canvas.width, 0,
-        0, canvas.height,
-        0, canvas.height,
-        canvas.width, 0,
-        canvas.width, canvas.height
+        state.texture.width, 0,
+        0, state.texture.height,
+        0, state.texture.height,
+        state.texture.width, 0,
+        state.texture.width, state.texture.height
       ])
     },
     textcoords: {
@@ -32,7 +32,7 @@ export function imageState2ImageDrawObject(imageState: ImageState, canvas: HTMLC
       // basic quad
       buffer: new Float32Array([0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0])
     },
-    texture: imageState.texture
+    texture: state.texture
   };
 }
 

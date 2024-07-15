@@ -51,14 +51,14 @@ const generateStepsFromAngle = (centerAngle: number, range: number = 90, stepMil
 export interface ImageRotationControlProps extends ImageControlProps {}
 
 export function ImageRotationControl(props: ImageRotationControlProps): JSX.Element {
-  const [currentAngle, setCurrentAngle] = createSignal(props.imageState.rotateAngle);
+  const [currentAngle, setCurrentAngle] = createSignal(props.imageState.rotation);
   const [caruselRef, setCaruselRef] = createSignal<HTMLDivElement>();
   const [rootRef, setRootRef] = createSignal<HTMLDivElement>();
   const [startPosX, setStartPos] = createSignal<number | undefined>();
   const [startAngle, setStartAngle] = createSignal<number | undefined>();
   const [steps, setSteps] = createSignal([]);
 
-  createEffect(on(() => props.imageState.rotateAngle, (val) => {
+  createEffect(on(() => props.imageState.rotation, (val) => {
     setCurrentAngle(val);
     updateSteps();
   }));

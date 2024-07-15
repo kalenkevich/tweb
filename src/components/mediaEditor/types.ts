@@ -17,15 +17,6 @@ export enum ImageLayerType {
 
 export type ImageLayer = TextLayer | DrawLayer | StickerLayer;
 
-export interface LayerBox {
-  // from left top corner of image
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  rotation: number;
-}
-
 export enum TextAlignment {
   left = 'left',
   right = 'right',
@@ -65,21 +56,19 @@ export interface TextLayer {
   color: Color;
   alignment: TextAlignment;
   style: TextStyle;
-
   // styles for TextStyle.fill_inverse
   padding: number; // fontSize / 2
   borderRadius: number; // fontSize / 4
   strokeColor: Color;
   strokeWidth: number; // fontSize / 6
   secondColor: Color; // bac
-
-  image: ImageSource;
   width: number;
   height: number;
   rotation: number;
-  // origin: [number, number],
+  origin: [number, number],
   translation: [number, number];
   scale: [number, number];
+  texture?: ImageElementTextureSource;
 }
 
 export interface DrawLayer {
@@ -93,9 +82,10 @@ export interface DrawLayer {
   width: number;
   height: number;
   rotation: number;
-  // origin: [number, number],
+  origin: [number, number],
   translation: [number, number];
   scale: [number, number];
+  texture?: ImageElementTextureSource;
 }
 
 export interface StickerLayer {
@@ -103,13 +93,14 @@ export interface StickerLayer {
   type: ImageLayerType.sticker;
   isDirty: boolean;
   zIndex: number;
-  image: ImageSource | string;
+  image: ImageSource;
   width: number;
   height: number;
   rotation: number;
-  // origin: [number, number];
+  origin: [number, number];
   translation: [number, number];
   scale: [number, number];
+  texture?: ImageElementTextureSource;
 }
 
 export const IMAGE_FILTER_NAMES = [
@@ -149,9 +140,9 @@ export interface ImageState {
   originalHeight: number;
   filter: ImageFilterState;
   aspectRatio: number | ImageAspectRatio;
-  rotateAngle: number;
-  // origin: [number, number],
+  rotation: number;
   translation: [number, number];
+  origin: [number, number];
   scale: [number, number];
   layers: ImageLayer[];
 }

@@ -91,15 +91,15 @@ export function createImageDataTextureSource(
 
 export function createImageElementTextureSource(
   source: HTMLImageElement | HTMLCanvasElement | OffscreenCanvas,
-  width: number,
-  height: number,
+  width?: number,
+  height?: number,
   options: CreateTextureSourceOptions = DefaultCreateOptions
 ): ImageElementTextureSource {
   return {
     id: currentTextureId++,
     type: TextureSourceType.IMAGE_ELEMENT,
-    width,
-    height,
+    width: source.width,
+    height: source.height,
     data: source
   };
 }

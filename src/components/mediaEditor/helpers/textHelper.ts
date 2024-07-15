@@ -1,6 +1,7 @@
 import {TextLayer, TextStyle} from '../types';
 import {anyColorToHexColor} from '../../../helpers/color';
 import {measureText as measureCanvasText, getCanvas2DFontStyle, getImageFromCanvas} from '../helpers/canvas2dHelper';
+import {ImageElementTextureSource, createImageElementTextureSource} from '../webgl/helpers/webglTexture';
 
 let _offscreenInputEl: HTMLDivElement;
 
@@ -49,10 +50,13 @@ export const measureText = (
   };
 };
 
-export const renderTextLayerOnCanvas = async(text: string, layer: TextLayer): Promise<HTMLImageElement> => {
-  const {width, height} = measureCanvasText(text, layer.fontName, layer.fontSize, layer.fontWeight);
-  const canvas = new OffscreenCanvas(width, height);
+export const renderTextLayer = async(text: string, layer: TextLayer): Promise<ImageElementTextureSource> => {
+  const {width, height, fontBoundingBoxDescent} = measureCanvasText(text, layer.fontName, layer.fontSize, layer.fontWeight);
+  const ratio = window.devicePixelRatio || 1;
+  const canvas = new OffscreenCanvas((width + layer.padding * 2) * ratio, (height + layer.padding * 2) * ratio);
   const ctx = canvas.getContext('2d') as OffscreenCanvasRenderingContext2D;
+  ctx.scale(ratio, ratio);
+
   const fontStyle = getCanvas2DFontStyle(layer);
 
   ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -85,10 +89,10 @@ export const renderTextLayerOnCanvas = async(text: string, layer: TextLayer): Pr
       layer.borderRadius);
     ctx.fill();
     ctx.fillStyle = anyColorToHexColor(layer.secondColor);
-    ctx.fillText(text, layer.padding, height - layer.padding);
+    ctx.fillText(text, layer.padding, height + layer.padding - fontBoundingBoxDescent);
   }
 
-  return getImageFromCanvas(canvas);
+  return createImageElementTextureSource(canvas);
 }
 
 export const getTextLayerInputElementStyles = (text: string, layer: TextLayer, placeholder: string = '') => {
@@ -104,7 +108,8 @@ export const getTextLayerInputElementStyles = (text: string, layer: TextLayer, p
     'font-weight': `${layer.fontWeight}`,
     'line-height': `${layer.fontSize}px`,
     'text-align': layer.alignment,
-    'box-sizing': 'content-box'
+    'box-sizing': 'content-box',
+    'padding': `${layer.padding}px`
   };
 
   if(layer.style === TextStyle.fill) {
@@ -126,7 +131,6 @@ export const getTextLayerInputElementStyles = (text: string, layer: TextLayer, p
   return {
     ...baseStyle,
     'color': anyColorToHexColor(layer.secondColor),
-    'padding': `${layer.padding}px`,
     'background-color': anyColorToHexColor(layer.color),
     'border-radius': `${layer.borderRadius}px`
   };

@@ -86,7 +86,7 @@ export function EditableTextElement(props: EditableTextElementProps) {
           ref={(el) => setInputRef(el)}
           tabindex="1"
           style={inputStyles() as any}
-          placeholder={PLACEHOLDER.innerText}
+          placeholder={PLACEHOLDER.innerHTML}
           value={textValueInternal()}
           onBlur={onInputBlur}
           onInput={handleInputChange}

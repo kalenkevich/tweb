@@ -1,5 +1,5 @@
 import {createEffect, createSignal, on, batch} from 'solid-js';
-import {ImageChangeType, ImageChangeEvent, ImageSource, ImageState, ImageLayer, AttachmentChangeAction} from './types';
+import {ImageChangeType, ImageChangeEvent, ImageSource, ImageState, ImageLayer, AttachmentChangeAction, ImageLayerType} from './types';
 import {DEFAULT_DRAW_LAYER, DEFAULT_IMAGE_STATE, DEFAULT_TEXT_LAYER, DEFAULT_STICKER_LAYER} from './consts';
 import {ImageEditorPreview} from './imageEditorPreview';
 import {ImageEditorTab, ImageEditorTabs, TABS_CONFIG, TabType} from './imageEditorTabs';
@@ -7,6 +7,7 @@ import {ImageEditorManager} from './imageEditorManager';
 import {ButtonIconTsx} from '../buttonIconTsx';
 import {fitImageIntoCanvas, ScaleMode} from './helpers/aspectRatioHelper';
 import {createImageElementTextureSource} from './webgl/helpers/webglTexture';
+import {renderTextLayer} from './helpers/textHelper';
 
 let currentLayerId = 0;
 const getLayerNextId = () => currentLayerId++;
@@ -59,6 +60,7 @@ export function ImageEditor(props: MediaEditorProps) {
     );
 
     // Move to center and fit the image
+    imageEditorManager().origin(-(state.originalWidth / 2), -(state.originalHeight / 2), false);
     imageEditorManager().moveTo(canvas.width / 2, canvas.height / 2, false);
     const newState = imageEditorManager().resize(scale[0], scale[1], false);
 
@@ -80,6 +82,7 @@ export function ImageEditor(props: MediaEditorProps) {
     );
 
     // Move to center and fit the image
+    imageEditorManager().origin(-(state.originalWidth / 2), -(state.originalHeight / 2), false);
     imageEditorManager().moveTo(canvas.width / 2, canvas.height / 2, false);
     imageEditorManager().resize(scaleX, scaleY, false);
   };
@@ -132,6 +135,16 @@ export function ImageEditor(props: MediaEditorProps) {
             ...state,
             layers: newLayers
           };
+
+          // if(event.layer.type === ImageLayerType.text && !!event.layer.text) {
+          //   renderTextLayer(event.layer.text, event.layer).then(texture => {
+          //     event.layer.texture = texture;
+          //     event.layer.origin = [-(texture.width / 2) / window.devicePixelRatio, -(texture.height / 2) / window.devicePixelRatio];
+
+          //     imageEditorManager().pushState(newState);
+          //     imageEditorManager().triggerRerender({renderAllLayers: true})
+          //   });
+          // }
         } else if(event.action === AttachmentChangeAction.delete) {
           const newLayers = state.layers.filter((l) => l.id !== event.layer.id);
           newState = {
@@ -161,7 +174,7 @@ export function ImageEditor(props: MediaEditorProps) {
   };
 
   const handleSave = async() => {
-    // const resultImage = await imageEditorManager().getCurrentImageSource();
+    const resultImage = await imageEditorManager().compileImage();
 
     // props.onSave(resultImage);
   };

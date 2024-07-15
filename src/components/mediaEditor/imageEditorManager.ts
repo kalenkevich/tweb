@@ -1,34 +1,44 @@
-import {ImageState, ImageFilterState, TextLayer} from './types';
+import {ImageState, ImageFilterState, TextLayer, ImageLayerType} from './types';
 import {DEFAULT_IMAGE_STATE} from './consts';
-import {ImageRenderer} from './imageRenderer';
+import {ImageRenderer, RenderOptions} from './imageRenderer';
 import {WebglImageRenderer} from './webgl/webglImageRenderer';
 import {RenderQueue} from './helpers/renderQueue';
 import {easyAnimation} from './helpers/animation';
+import {renderTextLayer} from './helpers/textHelper';
+import {createImageElementTextureSource} from './webgl/helpers/webglTexture';
 
 export class ImageEditorManager {
   private canvas?: HTMLCanvasElement;
+  private shadowCanvas?: HTMLCanvasElement;
   private renderQueue: RenderQueue = new RenderQueue();
   private imageStates: ImageState[] = [];
   private currentStateIndex: number = 0;
   // Could be WebGPU renrerer implementation some day.
   private renderer: ImageRenderer = new WebglImageRenderer();
+  private compiler: ImageRenderer = new WebglImageRenderer();
   private ready: boolean = false;
 
-  constructor(private readonly stateSnapshowCounts = 10) {}
+  constructor(private readonly stateSnapshowCounts = 10) {
+    this.shadowCanvas = document.createElement('canvas');
+  }
 
   init(canvas: HTMLCanvasElement, initialImageState: ImageState = DEFAULT_IMAGE_STATE) {
     this.canvas = canvas;
+    this.shadowCanvas.width = canvas.width;
+    this.shadowCanvas.height = canvas.height;
     this.renderer.init(canvas);
+    this.compiler.init(this.shadowCanvas, {compileMode: true});
     this.imageStates.push(initialImageState);
     this.ready = true;
   }
 
-  triggerRerender() {
-    this.rerender();
+  triggerRerender(rerenderOptions?: RenderOptions) {
+    this.rerender(this.getCurrentImageState(), rerenderOptions);
   }
 
   resizeCanvas(width: number, height: number) {
     this.renderer.resize(width, height);
+    this.compiler.resize(width, height);
     this.rerender();
   }
 
@@ -40,8 +50,22 @@ export class ImageEditorManager {
     this.renderer.destroy();
   }
 
-  getCurrentImageSource(): Promise<Uint8Array> {
-    return this.renderer.getImageSnapshot();
+  async compileImage(): Promise<Uint8Array> {
+    const state = this.getCurrentImageState();
+    const promises = [];
+    for(const layer of state.layers) {
+      if(layer.type === ImageLayerType.text && !!layer.text) {
+        promises.push(renderTextLayer(layer.text, layer).then(texture => {
+          layer.texture = texture;
+          layer.origin = [-(texture.width / 2) / window.devicePixelRatio, -(texture.height / 2) / window.devicePixelRatio];
+        }));
+      } else if(layer.type === ImageLayerType.sticker) {
+        layer.texture = createImageElementTextureSource(layer.image);
+      }
+    }
+    await Promise.all(promises);
+
+    return this.compiler.compileImage(state);
   }
 
   canUndo(): boolean {
@@ -86,18 +110,44 @@ export class ImageEditorManager {
     return newImageState;
   }
 
-  rotate(rotateAngle: number, animation: boolean = false): ImageState {
+  origin(originX: number, originY: number, animation: boolean = false) {
     const state = this.getCurrentImageState();
-    const newImageState = this.createNewImageState({rotateAngle});
+    const newImageState = this.createNewImageState({
+      origin: [originX, originY]
+    });
 
     if(animation) {
-      const from = state.rotateAngle;
-      const to = rotateAngle;
+      const fromOriginX = state.origin[0];
+      const fromOriginY = state.origin[1];
 
       easyAnimation((progress) => {
         this.renderer.render({
           ...state,
-          rotateAngle: from + (to - from) * progress
+          translation: [
+            state.translation[0] + (originX - fromOriginX) * progress,
+            state.translation[1] + (originY - fromOriginY) * progress
+          ]
+        });
+      });
+    } else {
+      this.rerender();
+    }
+
+    return newImageState;
+  }
+
+  rotate(rotation: number, animation: boolean = false): ImageState {
+    const state = this.getCurrentImageState();
+    const newImageState = this.createNewImageState({rotation});
+
+    if(animation) {
+      const from = state.rotation;
+      const to = rotation;
+
+      easyAnimation((progress) => {
+        this.renderer.render({
+          ...state,
+          rotation: from + (to - from) * progress
         });
       });
     } else {
@@ -201,13 +251,13 @@ export class ImageEditorManager {
     return newState;
   }
 
-  private rerender(state = this.getCurrentImageState()): Promise<void> {
+  private rerender(state = this.getCurrentImageState(), rerenderOptions?: RenderOptions): Promise<void> {
     if(!this.ready) {
       return;
     }
 
     return this.renderQueue.runInNextAvailableFrame(() => {
-      this.renderer.render(state);
+      this.renderer.render(state, rerenderOptions);
     });
   }
 }
