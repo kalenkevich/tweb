@@ -32,6 +32,7 @@ export class WebglImageRenderer implements ImageRenderer {
     let gl = this.gl = this.canvas.getContext('webgl2', {
       performance: 'high-performance',
       alpha: true,
+      premultipliedAlpha: !!options?.compileMode,
       preserveDrawingBuffer: !!options?.compileMode
     }) as CompatibleWebGLRenderingContext;
     if(!this.gl) {
@@ -39,6 +40,7 @@ export class WebglImageRenderer implements ImageRenderer {
       const gl1 = this.canvas.getContext('webgl', {
         performance: 'high-performance',
         alpha: true,
+        premultipliedAlpha: !!options?.compileMode,
         preserveDrawingBuffer: !!options?.compileMode
       }) as WebGLRenderingContext;
       gl = this.gl = makeCompatibleWebGLRenderingContext(gl1);

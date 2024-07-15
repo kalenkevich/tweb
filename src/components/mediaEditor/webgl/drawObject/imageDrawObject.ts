@@ -1,4 +1,4 @@
-import {ImageLayer, ImageState} from '../../types';
+import {ImageLayer, ImageLayerType, ImageState} from '../../types';
 import {DrawObject, DrawObjectAttribute, DrawObjectAttributeType} from './drawObject';
 import {TextureSource} from '../helpers/webglTexture';
 
@@ -10,6 +10,13 @@ export interface ImageDrawObject extends DrawObject {
 }
 
 export function toImageDrawObject(state: ImageState | ImageLayer): ImageDrawObject {
+  let width = state.texture.width;
+  let height = state.texture.height;
+  if((state as ImageLayer).type === ImageLayerType.sticker) {
+    width = state.width * devicePixelRatio;
+    height = state.height * devicePixelRatio;
+  }
+
   return {
     name: 'image',
     zIndex: 1,
@@ -19,11 +26,11 @@ export function toImageDrawObject(state: ImageState | ImageLayer): ImageDrawObje
       size: 2,
       buffer: new Float32Array([
         0, 0,
-        state.texture.width, 0,
-        0, state.texture.height,
-        0, state.texture.height,
-        state.texture.width, 0,
-        state.texture.width, state.texture.height
+        width, 0,
+        0, height,
+        0, height,
+        width, 0,
+        width, height
       ])
     },
     textcoords: {

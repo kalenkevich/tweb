@@ -106,6 +106,7 @@ export class ImageProgram extends BaseWebglProgram {
       name: 'layer_image',
       // image flipping handled by space clipping inside the shader.
       // flipY: true,
+      premultiplyAlpha: true,
       wrapS: gl.CLAMP_TO_EDGE,
       wrapT: gl.CLAMP_TO_EDGE,
       minFilter: gl.LINEAR,

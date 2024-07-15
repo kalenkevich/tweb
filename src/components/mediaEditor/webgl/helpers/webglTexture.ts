@@ -147,7 +147,7 @@ export interface CreateTextureOptions {
   width?: number;
   height?: number;
   flipY?: boolean;
-  unpackPremultiplyAlpha?: boolean;
+  premultiplyAlpha?: boolean;
   wrapS?: number;
   wrapT?: number;
   minFilter?: number;
@@ -223,7 +223,7 @@ export function createWebGlTexture(gl: CompatibleWebGLRenderingContext, options:
     );
   }
 
-  if(options.unpackPremultiplyAlpha) {
+  if(options.premultiplyAlpha) {
     gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
   }
   if(options.flipY) {
