@@ -10,7 +10,7 @@ export interface WebGlFrameBuffer {
   framebuffer: WebGLFramebuffer;
   bind(): void;
   unbind(): void;
-  clear(): void;
+  clear(color?: [number, number, number, number]): void;
   getTexture(): WebGlTexture;
 }
 

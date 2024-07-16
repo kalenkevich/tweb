@@ -52,10 +52,6 @@ export abstract class BaseWebglProgram {
   protected isReadPixelRenderModeUniform: WebGlUniform;
   protected featureFlagsUnifroms: Record<string, WebGlUniform>;
 
-  // Attribures
-  protected positionBuffer: WebGlBuffer;
-  protected colorBuffer: WebGlBuffer;
-
   protected vao: WebGLVertexArrayObjectOES;
 
   constructor(
@@ -86,9 +82,6 @@ export abstract class BaseWebglProgram {
 
     gl.bindVertexArray(this.vao);
 
-    this.positionBuffer = createWebGlBuffer(this.gl, {location: 0, size: 2});
-    this.colorBuffer = createWebGlBuffer(this.gl, {location: 1, size: 4});
-
     gl.bindVertexArray(null);
   }
 
@@ -103,6 +96,8 @@ export abstract class BaseWebglProgram {
   }
 
   protected setupTextures() {}
+
+  protected setupFramebuffers() {}
 
   link() {
     this.gl.useProgram(this.program);
@@ -137,5 +132,5 @@ export abstract class BaseWebglProgram {
     this.devicePixelRatioUniform.setFloat(devicePixelRatio);
   }
 
-  abstract draw(objectGroup: DrawObject): void;
+  abstract draw(objectGroup: DrawObject | any): void;
 }

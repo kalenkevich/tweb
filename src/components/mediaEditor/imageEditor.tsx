@@ -3,8 +3,8 @@ import rootScope from '../../lib/rootScope';
 import LazyLoadQueue from '../lazyLoadQueue';
 import SuperStickerRenderer from '../emoticonsDropdown/tabs/SuperStickerRenderer';
 
-import {ImageChangeType, ImageChangeEvent, ImageSource, ImageState, ImageLayer, AttachmentChangeAction, ImageLayerType} from './types';
-import {DEFAULT_DRAW_LAYER, DEFAULT_IMAGE_STATE, DEFAULT_TEXT_LAYER} from './consts';
+import {ImageChangeType, ImageChangeEvent, ImageSource, ImageState, ObjectLayer, AttachmentChangeAction, ObjectLayerType} from './types';
+import {DEFAULT_IMAGE_STATE, DEFAULT_TEXT_LAYER} from './consts';
 import {ImageEditorPreview} from './imageEditorPreview';
 import {ImageEditorTabs, TABS_CONFIG, TabType} from './imageEditorTabs';
 import {ImageEditorManager} from './imageEditorManager';
@@ -18,7 +18,7 @@ export function createImageState(source: ImageSource): ImageState {
   const texture = createImageElementTextureSource(source, source.width, source.height);
   return {
     ...DEFAULT_IMAGE_STATE,
-    layers: [DEFAULT_DRAW_LAYER],
+    layers: [],
     source,
     texture,
     width: source.width,
@@ -132,10 +132,6 @@ export function ImageEditor(props: MediaEditorProps) {
         let newState: ImageState;
 
         if(event.action === AttachmentChangeAction.create) {
-          if(event.layer.type === ImageLayerType.draw) {
-            throw new Error('Can\'t create draw layers');
-          }
-
           const newLayerState = {
             ...event.layer,
             id: getLayerNextId()
@@ -166,10 +162,6 @@ export function ImageEditor(props: MediaEditorProps) {
           //   });
           // }
         } else if(event.action === AttachmentChangeAction.delete) {
-          if(event.layer.type === ImageLayerType.draw) {
-            throw new Error('Can\'t delete draw layers');
-          }
-
           const newLayers = state.layers.filter((l) => l.id !== event.layer.id);
           newState = {
             ...state,
@@ -178,6 +170,40 @@ export function ImageEditor(props: MediaEditorProps) {
         }
 
         imageEditorManager().pushState(newState);
+
+        return newState;
+      }
+      case ImageChangeType.drawLayer: {
+        const newState: ImageState = {
+          ...imageState(),
+          drawLayer: {
+            ...imageState().drawLayer,
+            ...event.layer
+          }
+        };
+        imageEditorManager().pushState(newState);
+
+        return newState;
+      }
+      case ImageChangeType.drawTouch: {
+        console.log('draw touch');
+        const state = imageState();
+        const newTouch = {
+          x: event.touchX,
+          y: event.touchY,
+          color: {...state.drawLayer.color},
+          style: state.drawLayer.style,
+          size: state.drawLayer.size
+        };
+        const newState: ImageState = {
+          ...state,
+          drawLayer: {
+            ...state.drawLayer,
+            touches: [...state.drawLayer.touches, newTouch]
+          }
+        };
+        imageEditorManager().pushState(newState);
+        imageEditorManager().triggerRerender();
 
         return newState;
       }
@@ -217,15 +243,15 @@ export function ImageEditor(props: MediaEditorProps) {
     setCanRedu(imageEditorManager().canRedo());
   };
 
-  const onActiveLayerChange = (layer?: ImageLayer) => {
+  const onActiveLayerChange = (layer?: ObjectLayer) => {
     if(!layer) {
       setCurrentLayerIndex(-1);
     } else {
       const index = imageState().layers.findIndex(l => l === layer);
 
-      if(layer.type === ImageLayerType.text) {
+      if(layer.type === ObjectLayerType.text) {
         setSelectedTabId(TabType.TEXT);
-      } else if(layer.type === ImageLayerType.sticker) {
+      } else if(layer.type === ObjectLayerType.sticker) {
         setSelectedTabId(TabType.STICKER);
       }
 
@@ -240,7 +266,7 @@ export function ImageEditor(props: MediaEditorProps) {
     // remove all text layers if it was untouched
     const currentLayers = [...imageState().layers];
     for(const layer of currentLayers) {
-      if(layer.type === ImageLayerType.text && !layer.isDirty) {
+      if(layer.type === ObjectLayerType.text && !layer.isDirty) {
         newState = handleChangeEvent({
           type: ImageChangeType.layer,
           action: AttachmentChangeAction.delete,

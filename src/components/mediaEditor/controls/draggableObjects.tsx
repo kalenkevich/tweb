@@ -1,5 +1,5 @@
 import {createSignal, For} from 'solid-js';
-import {TextLayer, ImageLayer, ImageLayerType, StickerLayer} from '../types';
+import {TextLayer, ObjectLayer, ObjectLayerType, StickerLayer} from '../types';
 import {ImageControlProps} from './imageControl';
 import {DraggingSurface} from '../draggable/surface';
 import {DraggableText} from './draggableText';
@@ -9,12 +9,12 @@ import SuperStickerRenderer from '../../emoticonsDropdown/tabs/SuperStickerRende
 export interface DraggableObjectsProps extends ImageControlProps {
   surface: DraggingSurface;
   stickerRenderer: SuperStickerRenderer;
-  onActiveLayerChange: (layer?: ImageLayer) => void;
+  onActiveLayerChange: (layer?: ObjectLayer) => void;
 }
 export function DraggableObjects(props: DraggableObjectsProps) {
   const [elRef, setElRef] = createSignal<HTMLDivElement>();
-  const textObjects = () => props.imageState.layers.filter(l => l.type === ImageLayerType.text) as TextLayer[];
-  const stickerObjects = () => props.imageState.layers.filter(l => l.type === ImageLayerType.sticker) as StickerLayer[];
+  const textObjects = () => props.imageState.layers.filter(l => l.type === ObjectLayerType.text) as TextLayer[];
+  const stickerObjects = () => props.imageState.layers.filter(l => l.type === ObjectLayerType.sticker) as StickerLayer[];
 
   const handleBackdropClick = (e: Event) => {
     if((e.target as HTMLDivElement) === elRef()) {

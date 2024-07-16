@@ -18,3 +18,10 @@ export enum DrawObjectAttributeType {
   UNSIGNED_INT = 0x1405,
   FLOAT = 0x1406,
 }
+
+export enum VERTEX_QUAD_POSITION {
+  TOP_LEFT = 0,
+  TOP_RIGHT = 1,
+  BOTTOM_LEFT = 2,
+  BOTTOM_RIGHT = 3,
+}

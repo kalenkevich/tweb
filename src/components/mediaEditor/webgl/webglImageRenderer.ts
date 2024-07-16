@@ -1,11 +1,16 @@
-import {ImageLayer, ImageLayerType, ImageState, TextLayer} from '../types';
+import {ObjectLayer, ObjectLayerType, ImageState} from '../types';
 import {ImageRenderer, ImageRendererOptions, RenderOptions} from '../imageRenderer';
 import {CompatibleWebGLRenderingContext, makeCompatibleWebGLRenderingContext} from './webglContext';
-import {ImageProgram} from './programs/imageProgram';
+import {ObjectLayerProgram} from './programs/objectLayerProgram';
+import {BrushTouchProgram} from './programs/brushTouchProgram';
 import {BackgroundImageProgram} from './programs/backgroundImageProgram';
+import {FramebufferProgram} from './programs/framebufferProgram';
+import {WebGlFrameBuffer, createFrameBuffer} from './helpers/webglFramebuffer';
+import {createWebGlTexture} from './helpers/webglTexture';
 import {toImageDrawObject} from './drawObject/imageDrawObject';
-import readBlobAsUint8Array from '../../../helpers/blob/readBlobAsUint8Array';
+import {toBrushTouchDrawObject} from './drawObject/brushTouchDrawObject';
 import {Matrix3, createMatrix3, multiplyMatrix3, rotateMatrix3, translateMatrix3, scaleMatrix3} from '../helpers/matrixHelpers';
+import readBlobAsUint8Array from '../../../helpers/blob/readBlobAsUint8Array';
 
 const a = document.createElement('a');
 document.body.appendChild(a);
@@ -21,8 +26,11 @@ function saveBlobAsFile(blob: Blob, fileName: string) {
 export class WebglImageRenderer implements ImageRenderer {
   private canvas: HTMLCanvasElement;
   private gl: CompatibleWebGLRenderingContext;
+  private imageProgram: ObjectLayerProgram;
+  private brushTouchProgram: BrushTouchProgram;
   private backgroundImageProgram: BackgroundImageProgram;
-  private imageProgram: ImageProgram;
+  private framebufferProgram: FramebufferProgram;
+  private inited: boolean = false;
 
   constructor(private readonly devicePixelRatio = window.devicePixelRatio) {}
 
@@ -32,7 +40,7 @@ export class WebglImageRenderer implements ImageRenderer {
     let gl = this.gl = this.canvas.getContext('webgl2', {
       performance: 'high-performance',
       alpha: true,
-      premultipliedAlpha: !!options?.compileMode,
+      premultipliedAlpha: true,
       preserveDrawingBuffer: !!options?.compileMode
     }) as CompatibleWebGLRenderingContext;
     if(!this.gl) {
@@ -40,20 +48,28 @@ export class WebglImageRenderer implements ImageRenderer {
       const gl1 = this.canvas.getContext('webgl', {
         performance: 'high-performance',
         alpha: true,
-        premultipliedAlpha: !!options?.compileMode,
+        premultipliedAlpha: true,
         preserveDrawingBuffer: !!options?.compileMode
       }) as WebGLRenderingContext;
       gl = this.gl = makeCompatibleWebGLRenderingContext(gl1);
     }
 
-    this.resize(this.canvas.width, this.canvas.height);
     gl.clear(gl.COLOR_BUFFER_BIT);
+
+    this.framebufferProgram = new FramebufferProgram(gl);
+    this.framebufferProgram.init();
+
+    this.imageProgram = new ObjectLayerProgram(gl);
+    this.imageProgram.init();
+
+    this.brushTouchProgram = new BrushTouchProgram(gl);
+    this.brushTouchProgram.init();
 
     this.backgroundImageProgram = new BackgroundImageProgram(gl);
     this.backgroundImageProgram.init();
 
-    this.imageProgram = new ImageProgram(gl);
-    this.imageProgram.init();
+    this.inited = true;
+    this.resize(this.canvas.width, this.canvas.height);
   }
 
   destroy() {}
@@ -62,13 +78,32 @@ export class WebglImageRenderer implements ImageRenderer {
     this.canvas.width = width * this.devicePixelRatio;
     this.canvas.height = height * this.devicePixelRatio;
 
+    if(!this.inited) {
+      return;
+    }
+
     this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
+    this.brushTouchProgram?.resetFramebuffer(this.canvas.width, this.canvas.height);
   }
 
-  render(imageState: ImageState, options?: RenderOptions) {
+  public render(imageState: ImageState, options?: RenderOptions) {
     const projectionViewMatrix = getProjectionViewMatrix(imageState);
     const imageDrawObject = toImageDrawObject(imageState);
 
+    // render all brush touches first to framebuffer (texture)
+    if((options?.renderLayers || []).includes(imageState.drawLayer.type)) {
+      const brushTouchDrawObject = toBrushTouchDrawObject(imageState);
+      this.brushTouchProgram.link();
+      this.brushTouchProgram.setMatrix(projectionViewMatrix);
+      this.brushTouchProgram.setWidth(this.canvas.width);
+      this.brushTouchProgram.setHeight(this.canvas.height);
+      this.brushTouchProgram.setDevicePixelRatio(this.devicePixelRatio);
+      this.brushTouchProgram.setupFramebuffer(this.canvas.width, this.canvas.height);
+      this.brushTouchProgram.drawToFramebuffer(brushTouchDrawObject);
+      this.brushTouchProgram.unlink();
+    }
+
+    // Render main image first
     this.backgroundImageProgram.link();
     this.backgroundImageProgram.setMatrix(projectionViewMatrix);
     this.backgroundImageProgram.setWidth(this.canvas.width);
@@ -78,12 +113,21 @@ export class WebglImageRenderer implements ImageRenderer {
     this.backgroundImageProgram.draw(imageDrawObject);
     this.backgroundImageProgram.unlink();
 
-    if(options?.renderAllLayers) {
+    // render all touches (as a texture) to canvas
+    this.framebufferProgram.link();
+    this.framebufferProgram.setMatrix(projectionViewMatrix);
+    this.framebufferProgram.setWidth(this.canvas.width);
+    this.framebufferProgram.setHeight(this.canvas.height);
+    this.framebufferProgram.setDevicePixelRatio(this.devicePixelRatio);
+    this.framebufferProgram.draw(this.brushTouchProgram.getFramebufferTexture());
+    this.framebufferProgram.unlink();
+
+    // Render other layers if needed
+    if(options?.renderLayers) {
       for(const layer of imageState.layers) {
-        if([ImageLayerType.text, ImageLayerType.sticker].includes(layer.type)) {
+        if(options.renderLayers.includes(layer.type)) {
           const projectionViewMatrix = getProjectionViewMatrix(layer);
           const imageDrawObject = toImageDrawObject(layer);
-
           this.imageProgram.link();
           this.imageProgram.setMatrix(projectionViewMatrix);
           this.imageProgram.setWidth(this.canvas.width);
@@ -98,7 +142,7 @@ export class WebglImageRenderer implements ImageRenderer {
 
   async compileImage(imageState: ImageState): Promise<Uint8Array> {
     // Draw image first
-    this.render(imageState, {renderAllLayers: true});
+    this.render(imageState, {renderLayers: [ObjectLayerType.draw, ObjectLayerType.sticker, ObjectLayerType.text]});
 
     return new Promise(resolve => {
       this.canvas.toBlob(async(blobResult) => {
@@ -109,7 +153,7 @@ export class WebglImageRenderer implements ImageRenderer {
   }
 }
 
-export function getProjectionViewMatrix(state: ImageState | ImageLayer): Matrix3 {
+export function getProjectionViewMatrix(state: ImageState | ObjectLayer): Matrix3 {
   const translationMatrix = translateMatrix3(createMatrix3(), state.translation);
   const rotationMatrix = rotateMatrix3(createMatrix3(), degreesToRadians(state.rotation));
   const scaleMatrix = scaleMatrix3(createMatrix3(), state.scale);

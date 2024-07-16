@@ -1,6 +1,6 @@
-import {ImageState, ImageFilterState, TextLayer, ImageLayerType} from './types';
+import {ImageState, ImageFilterState, TextLayer, ObjectLayerType} from './types';
 import {DEFAULT_IMAGE_STATE} from './consts';
-import {ImageRenderer, RenderOptions} from './imageRenderer';
+import {ImageRenderer, RenderOptions, DEFAULT_RENDER_OPTIONS} from './imageRenderer';
 import {WebglImageRenderer} from './webgl/webglImageRenderer';
 import {RenderQueue} from './helpers/renderQueue';
 import {easyAnimation} from './helpers/animation';
@@ -59,12 +59,14 @@ export class ImageEditorManager {
     const state = this.getCurrentImageState();
     const promises = [];
     for(const layer of state.layers) {
-      if(layer.type === ImageLayerType.text && !!layer.text) {
+      if(layer.type === ObjectLayerType.text && !!layer.text) {
         promises.push(renderTextLayer(layer.text, layer).then(texture => {
           layer.texture = texture;
+          layer.width = layer.texture.width;
+          layer.height = layer.texture.height;
           layer.origin = [-(texture.width / 2) / window.devicePixelRatio, -(texture.height / 2) / window.devicePixelRatio];
         }));
-      } else if(layer.type === ImageLayerType.sticker) {
+      } else if(layer.type === ObjectLayerType.sticker) {
         promises.push(
           rootScope.managers.appDocsManager.getDoc(layer.stickerId).then(async(doc) => {
             const el = document.createElement('div');
@@ -268,7 +270,10 @@ export class ImageEditorManager {
     return newState;
   }
 
-  private rerender(state = this.getCurrentImageState(), rerenderOptions?: RenderOptions): Promise<void> {
+  private rerender(
+    state = this.getCurrentImageState(),
+    rerenderOptions: RenderOptions = DEFAULT_RENDER_OPTIONS
+  ): Promise<void> {
     if(!this.ready) {
       return;
     }

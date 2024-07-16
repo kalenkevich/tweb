@@ -5,7 +5,7 @@ import {WebGlBuffer, createWebGlBuffer} from '../helpers/webglBuffer';
 import {WebGlTexture, createWebGlTexture, TextureSourceType} from '../helpers/webglTexture';
 import {ImageDrawObject} from '../drawObject/imageDrawObject';
 
-const ImageShaders = {
+const ObjectLayerProgramShaders = {
   vertext: `
     precision highp float;
 
@@ -18,14 +18,11 @@ const ImageShaders = {
 
     attribute vec2 a_position;
     attribute vec2 a_texCoord;
-    attribute vec4 a_color;
 
     varying vec2 v_texCoord;
-    varying vec4 v_color;
 
     void main() {
       v_texCoord = a_texCoord;
-      v_color = a_color;
 
       vec2 resolution = vec2(u_width, u_height);
       vec2 coords = (u_matrix * vec3(a_position, 1)).xy;
@@ -47,23 +44,23 @@ const ImageShaders = {
   `
 };
 
-export class ImageProgram extends BaseWebglProgram {
+export class ObjectLayerProgram extends BaseWebglProgram {
   private currentTextureId: number;
   // Uniforms
   protected textureUniform: WebGlUniform;
   protected textureSizeUniform: WebGlUniform;
 
   // Attributes
+  protected positionBuffer: WebGlBuffer;
   protected textcoordBuffer: WebGlBuffer;
-  protected propertiesBuffer: WebGlBuffer;
 
   // Textures
   protected texture: WebGlTexture;
 
   constructor(
     protected readonly gl: CompatibleWebGLRenderingContext,
-    protected readonly vertexShaderSource: string = ImageShaders.vertext,
-    protected readonly fragmentShaderSource: string = ImageShaders.fragment
+    protected readonly vertexShaderSource: string = ObjectLayerProgramShaders.vertext,
+    protected readonly fragmentShaderSource: string = ObjectLayerProgramShaders.fragment
   ) {
     super(gl, vertexShaderSource, fragmentShaderSource);
   }
@@ -109,8 +106,8 @@ export class ImageProgram extends BaseWebglProgram {
       premultiplyAlpha: true,
       wrapS: gl.CLAMP_TO_EDGE,
       wrapT: gl.CLAMP_TO_EDGE,
-      minFilter: gl.LINEAR,
-      magFilter: gl.LINEAR,
+      minFilter: gl.NEAREST,
+      magFilter: gl.NEAREST,
       format: gl.RGBA,
       internalFormat: gl.RGBA
     });

@@ -1,11 +1,12 @@
 import {JSX, onMount, createSignal, Show, onCleanup, batch} from 'solid-js';
-import {ImageLayer} from './types';
+import {ObjectLayer} from './types';
 import {TabType} from './imageEditorTabs';
 import {ImageControlProps} from './controls/imageControl';
 import {ImageRotationControl} from './controls/imageRotationControl';
 import {DraggableObjects} from './controls/draggableObjects';
 import {ImageConunterpartControl} from './controls/imageCounterpartControl';
 import {DraggingSurfaceComponent, DraggingSurface} from './draggable/surface';
+import {DrawableSurface} from './controls/drawableSurface';
 import SuperStickerRenderer from '../emoticonsDropdown/tabs/SuperStickerRenderer';
 
 export interface ImagePreviewProps extends ImageControlProps {
@@ -13,7 +14,7 @@ export interface ImagePreviewProps extends ImageControlProps {
   stickerRenderer: SuperStickerRenderer;
   onCanvasMounted: (canvas: HTMLCanvasElement) => void;
   onCanvasResized: (width: number, height: number) => void;
-  onActiveLayerChange: (layer?: ImageLayer) => void;
+  onActiveLayerChange: (layer?: ObjectLayer) => void;
 }
 
 export function ImageEditorPreview(props: ImagePreviewProps): JSX.Element {
@@ -22,6 +23,7 @@ export function ImageEditorPreview(props: ImagePreviewProps): JSX.Element {
   const [resizeObserver, setResizeObserver] = createSignal<ResizeObserver>();
   const [draggingSurface, setDraggingSurface] = createSignal<DraggingSurface>();
   const isResizeTabSelected = () => props.selectedTabId === TabType.RESIZE;
+  const isDrawTabSelected = () => props.selectedTabId === TabType.PAINT;
   const showDraggableObjects = () => [TabType.TEXT, TabType.STICKER, TabType.PAINT].includes(props.selectedTabId);
 
   onMount(() => {
@@ -68,6 +70,14 @@ export function ImageEditorPreview(props: ImagePreviewProps): JSX.Element {
             onImageChange={props.onImageChange}
             currentLayerIndex={props.currentLayerIndex}
             onActiveLayerChange={props.onActiveLayerChange}
+          />
+        </Show>
+        <Show when={isDrawTabSelected()}>
+          <DrawableSurface
+            isActive={true}
+            surface={draggingSurface()}
+            imageState={props.imageState}
+            onImageChange={props.onImageChange}
           />
         </Show>
       </DraggingSurfaceComponent>

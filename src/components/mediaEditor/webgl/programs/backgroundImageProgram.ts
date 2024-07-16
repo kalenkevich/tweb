@@ -19,14 +19,11 @@ const BackgroundImageShaders = {
 
     attribute vec2 a_position;
     attribute vec2 a_texCoord;
-    attribute vec4 a_color;
 
     varying vec2 v_texCoord;
-    varying vec4 v_color;
 
     void main() {
       v_texCoord = a_texCoord;
-      v_color = a_color;
 
       vec2 resolution = vec2(u_width, u_height);
       vec2 coords = (u_matrix * vec3(a_position, 1)).xy;
@@ -173,8 +170,8 @@ export class BackgroundImageProgram extends BaseWebglProgram {
   protected textureSizeUniform: WebGlUniform;
 
   // Attributes
+  protected positionBuffer: WebGlBuffer;
   protected textcoordBuffer: WebGlBuffer;
-  protected propertiesBuffer: WebGlBuffer;
 
   protected imageFilterUnifroms: {
     [key: string]: WebGlUniform;
@@ -234,9 +231,7 @@ export class BackgroundImageProgram extends BaseWebglProgram {
     }
   }
 
-  setTextureSize(width: number, height: number) {
-
-  }
+  setTextureSize(width: number, height: number) {}
 
   setupTextures() {
     const gl = this.gl;

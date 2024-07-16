@@ -1,10 +1,10 @@
 import {JSX, For} from 'solid-js';
-import {DrawLayer, DrawStyle, ImageChangeType, AttachmentChangeAction, ImageLayerType} from '../types';
-import {Color, ColorFormatType, anyColorToHexColor} from '../../../helpers/color';
+import {BrushStyle, ImageChangeType} from '../types';
+import {Color, ColorFormatType, anyColorToHexColor, anyColorToRgbaColor, ColorRgba} from '../../../helpers/color';
 import {ImageControlProps} from './imageControl';
 import {ColorPickerV2} from '../../colorPickerV2';
 import {i18n} from '../../../lib/langPack';
-import {DEFAULT_DRAW_LAYER, QUCIK_PALLETE_COLORS} from '../consts';
+import {QUCIK_PALLETE_COLORS} from '../consts';
 import {PEN_TOOL_SVG, ARROW_TOOL_SVG, BRUSH_TOOL_SVG, NEON_TOOL_SVG, ERASER_TOOL_SVG} from './paintToolsSvgImages';
 import RowTsx from '../../rowTsx';
 import {RangeSelectorTsx} from '../../rangeSelectorTsx';
@@ -14,28 +14,28 @@ export interface ImageDrawControlProps extends ImageControlProps {}
 const TOOL_CONTROL_CONFIGS = [{
   label: i18n('ImageEditor.DrawControl.Pen'),
   image: PEN_TOOL_SVG,
-  value: DrawStyle.pen
+  value: BrushStyle.pen
 }, {
   label: i18n('ImageEditor.DrawControl.Arrow'),
   image: ARROW_TOOL_SVG,
-  value: DrawStyle.arrow
+  value: BrushStyle.arrow
 }, {
   label: i18n('ImageEditor.DrawControl.Brush'),
   image: BRUSH_TOOL_SVG,
-  value: DrawStyle.brush
+  value: BrushStyle.brush
 }, {
   label: i18n('ImageEditor.DrawControl.Neon'),
   image: NEON_TOOL_SVG,
-  value: DrawStyle.neon
+  value: BrushStyle.neon
 }, {
   label: i18n('ImageEditor.DrawControl.Blur'),
   image: PEN_TOOL_SVG,
-  value: DrawStyle.blur,
+  value: BrushStyle.blur,
   skip: true
 }, {
   label: i18n('ImageEditor.DrawControl.Eraser'),
   image: ERASER_TOOL_SVG,
-  value: DrawStyle.eraser
+  value: BrushStyle.eraser
 }];
 
 enum DrawAttachmentProperty {
@@ -45,37 +45,41 @@ enum DrawAttachmentProperty {
 }
 
 export function ImageDrawControl(props: ImageDrawControlProps): JSX.Element {
-  const layer = () => props.imageState.layers.find(l => l.type === ImageLayerType.draw) as DrawLayer;
-  const color = () => layer()?.color || DEFAULT_DRAW_LAYER.color;
-  const size = () => layer()?.size || DEFAULT_DRAW_LAYER.size;
-  const style = () => layer()?.style || DEFAULT_DRAW_LAYER.style;
+  const layer = () => props.imageState.drawLayer;
+  const color = () => layer().color;
+  const size = () => layer().size;
+  const style = () => layer().style;
   const hexColor = () => anyColorToHexColor(color())
 
-  const onPropertyChange = (propertyType: DrawAttachmentProperty, value: Color | number | DrawStyle) => {
-    const isNew = !layer();
-    const newAttachmentState = {
-      ...(layer() || DEFAULT_DRAW_LAYER)
-    } as DrawLayer;
+  const onPropertyChange = (propertyType: DrawAttachmentProperty, value: Color | number | BrushStyle) => {
+    const newState = {
+      color: layer().color,
+      size: layer().size,
+      style: layer().style
+    };
 
     switch(propertyType) {
       case DrawAttachmentProperty.color: {
-        newAttachmentState.color = value as Color;
+        newState.color = {
+          type: ColorFormatType.rgba,
+          value: anyColorToRgbaColor(value as Color)
+        };
+        (newState.color.value as ColorRgba)[3] = 0.1 * 255;
         break;
       }
       case DrawAttachmentProperty.size: {
-        newAttachmentState.size = value as number;
+        newState.size = value as number;
         break;
       }
       case DrawAttachmentProperty.style: {
-        newAttachmentState.style = value as DrawStyle;
+        newState.style = value as BrushStyle;
         break;
       }
     }
 
     props.onImageChange({
-      type: ImageChangeType.layer,
-      layer: newAttachmentState,
-      action: isNew ? AttachmentChangeAction.create : AttachmentChangeAction.update
+      type: ImageChangeType.drawLayer,
+      layer: newState
     });
   };
 

@@ -227,6 +227,8 @@
     }
 
     .tool-control {
+      margin-top: 16px;
+
       &__label {
         height: 48px;
         display: flex;
@@ -239,6 +241,10 @@
         margin: 0 -8px;
         .row-body {
           display: flex;
+
+          &__label {
+            margin-left: 16px;
+          }
         }
       }
     }

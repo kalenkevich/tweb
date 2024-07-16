@@ -304,6 +304,10 @@ export function hexaToRgba(hexa: string) {
     }
   }
 
+  if(arr[3] === undefined) {
+    arr[3] = 255;
+  }
+
   return arr;
 }
 

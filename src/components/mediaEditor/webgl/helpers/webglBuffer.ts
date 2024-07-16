@@ -12,7 +12,7 @@ export interface CreateWebGlBufferParams {
 export interface WebGlBuffer {
   buffer: WebGLBuffer;
   location: number;
-  bufferData(data: Float32Array): void;
+  bufferData(data: Float32Array | Uint8ClampedArray): void;
 }
 
 /**

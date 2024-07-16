@@ -1,31 +1,5 @@
 import {Color, ColorFormatType} from '../../helpers/color';
-import {ImageAspectRatio, ImageState, TextLayer, DrawLayer, StickerLayer, ImageLayerType, TextAlignment, TextStyle, DrawStyle} from './types';
-
-export const DEFAULT_IMAGE_STATE: ImageState = {
-  width: 0,
-  height: 0,
-  originalWidth: 0,
-  originalHeight: 0,
-  filter: {
-    enhance: 0,
-    brightness: 0,
-    contrast: 0,
-    saturation: 0,
-    warmth: 0,
-    fade: 0,
-    highlights: 0,
-    shadows: 0,
-    vignette: 0,
-    grain: 0,
-    sharpen: 0
-  },
-  aspectRatio: ImageAspectRatio.original,
-  rotation: 0,
-  translation: [0, 0],
-  scale: [1, 1],
-  origin: [0, 0],
-  layers: []
-};
+import {ImageAspectRatio, ImageState, TextLayer, DrawLayer, StickerLayer, ObjectLayerType, TextAlignment, TextStyle, BrushStyle} from './types';
 
 export const WHITE_COLOR_HEX = {
   type: ColorFormatType.hexa,
@@ -81,7 +55,7 @@ export const QUCIK_PALLETE_COLORS: Color[] = [{
 
 export const DEFAULT_TEXT_LAYER: TextLayer = {
   id: 0,
-  type: ImageLayerType.text,
+  type: ObjectLayerType.text,
   isDirty: false,
   zIndex: 0,
   text: '',
@@ -112,23 +86,18 @@ export const DEFAULT_TEXT_LAYER: TextLayer = {
 
 export const DEFAULT_DRAW_LAYER: DrawLayer = {
   id: 0,
-  type: ImageLayerType.draw,
+  type: ObjectLayerType.draw,
   isDirty: false,
   zIndex: 0,
   color: QUCIK_PALLETE_COLORS[0],
   size: 15,
-  style: DrawStyle.pen,
-  width: 0,
-  height: 0,
-  rotation: 0,
-  translation: [0, 0],
-  scale: [1, 1],
-  origin: [0, 0]
+  style: BrushStyle.pen,
+  touches: []
 };
 
 export const DEFAULT_STICKER_LAYER: StickerLayer = {
   id: 0,
-  type: ImageLayerType.sticker,
+  type: ObjectLayerType.sticker,
   zIndex: 0,
   stickerId: '',
   width: 0,
@@ -138,3 +107,31 @@ export const DEFAULT_STICKER_LAYER: StickerLayer = {
   scale: [1, 1],
   origin: [0, 0]
 }
+
+export const DEFAULT_IMAGE_STATE: ImageState = {
+  type: ObjectLayerType.backgroundImage,
+  width: 0,
+  height: 0,
+  originalWidth: 0,
+  originalHeight: 0,
+  filter: {
+    enhance: 0,
+    brightness: 0,
+    contrast: 0,
+    saturation: 0,
+    warmth: 0,
+    fade: 0,
+    highlights: 0,
+    shadows: 0,
+    vignette: 0,
+    grain: 0,
+    sharpen: 0
+  },
+  aspectRatio: ImageAspectRatio.original,
+  rotation: 0,
+  translation: [0, 0],
+  scale: [1, 1],
+  origin: [0, 0],
+  layers: [],
+  drawLayer: DEFAULT_DRAW_LAYER
+};

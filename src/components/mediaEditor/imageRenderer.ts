@@ -1,11 +1,18 @@
-import {ImageState} from './types';
+import {ImageState, ObjectLayerType} from './types';
 
 export interface ImageRendererOptions {
   compileMode?: boolean;
 }
 
 export interface RenderOptions {
-  renderAllLayers?: boolean;
+  renderLayers?: ObjectLayerType[];
+}
+
+export const DEFAULT_RENDER_OPTIONS:RenderOptions = {
+  renderLayers: [
+    ObjectLayerType.backgroundImage,
+    ObjectLayerType.draw
+  ]
 }
 
 /**

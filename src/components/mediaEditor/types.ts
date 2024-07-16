@@ -9,13 +9,14 @@ export enum ImageAspectRatio {
   square = 'square'
 }
 
-export enum ImageLayerType {
+export enum ObjectLayerType {
+  backgroundImage = 'backgroundImage',
   text = 'text',
   sticker = 'sticker',
   draw = 'draw'
 }
 
-export type ImageLayer = TextLayer | DrawLayer | StickerLayer;
+export type ObjectLayer = TextLayer | StickerLayer;
 
 export enum TextAlignment {
   left = 'left',
@@ -29,13 +30,13 @@ export enum TextStyle {
   stroke = 'stroke',
 }
 
-export enum DrawStyle {
-  pen = 'pen',
-  arrow = 'arrow',
-  brush = 'brush',
-  neon = 'neon',
-  blur = 'blur',
-  eraser = 'eraser'
+export enum BrushStyle {
+  pen = 0,
+  arrow = 1,
+  brush = 2,
+  neon = 3,
+  blur = 4,
+  eraser = 5
 }
 
 export enum AttachmentChangeAction {
@@ -46,7 +47,7 @@ export enum AttachmentChangeAction {
 
 export interface TextLayer {
   id: number;
-  type: ImageLayerType.text;
+  type: ObjectLayerType.text;
   isDirty: boolean;
   zIndex: number;
   text: string;
@@ -71,26 +72,29 @@ export interface TextLayer {
   texture?: ImageElementTextureSource;
 }
 
+export interface DrawTouch {
+  color: Color;
+  size: number; // radius
+  style: BrushStyle;
+  x: number;
+  y: number;
+}
+
 export interface DrawLayer {
   id: number;
-  type: ImageLayerType.draw;
+  type: ObjectLayerType.draw;
   isDirty: boolean;
   zIndex: number;
   color: Color;
-  size: number;
-  style: DrawStyle;
-  width: number;
-  height: number;
-  rotation: number;
-  origin: [number, number],
-  translation: [number, number];
-  scale: [number, number];
+  size: number; // radius
+  style: BrushStyle;
+  touches: DrawTouch[];
   texture?: ImageElementTextureSource;
 }
 
 export interface StickerLayer {
   id: number;
-  type: ImageLayerType.sticker;
+  type: ObjectLayerType.sticker;
   zIndex: number;
   stickerId: string;
   width: number;
@@ -131,6 +135,7 @@ export interface ImageFilterState {
 }
 
 export interface ImageState {
+  type: ObjectLayerType.backgroundImage;
   source?: ImageSource;
   texture?: ImageElementTextureSource;
   width: number;
@@ -143,7 +148,9 @@ export interface ImageState {
   translation: [number, number];
   origin: [number, number];
   scale: [number, number];
-  layers: ImageLayer[];
+  layers: ObjectLayer[];
+  // keep draw layer separate as it only one per image.
+  drawLayer: DrawLayer;
 }
 
 export enum ImageChangeType {
@@ -155,6 +162,8 @@ export enum ImageChangeType {
   move,
   flipHorisontaly,
   layer,
+  drawLayer,
+  drawTouch
 }
 
 export type ImageChangeEvent = FilterImageChangeEvent
@@ -163,7 +172,9 @@ export type ImageChangeEvent = FilterImageChangeEvent
   | FlipImageChangeEvent
   | MoveChangeEvent
   | ResizeChangeEvent
-  | LayerChangeEvent;
+  | LayerChangeEvent
+  | DrawLayerChangeEvent
+  | DrawTouchEvent;
 
 export interface FilterImageChangeEvent {
   type: ImageChangeType.filter;
@@ -202,7 +213,22 @@ export interface ResizeChangeEvent {
 
 export interface LayerChangeEvent {
   type: ImageChangeType.layer;
-  layer: ImageLayer;
+  layer: ObjectLayer;
   action: AttachmentChangeAction;
   appearInRandomSpot?: boolean;
+}
+
+export interface DrawLayerChangeEvent {
+  type: ImageChangeType.drawLayer;
+  layer: {
+    color?: Color;
+    style?: BrushStyle;
+    size?: number;
+  };
+}
+
+export interface DrawTouchEvent {
+  type: ImageChangeType.drawTouch;
+  touchX: number;
+  touchY: number;
 }
