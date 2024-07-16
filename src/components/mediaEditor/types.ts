@@ -3,6 +3,11 @@ import {ImageElementTextureSource} from './webgl/helpers/webglTexture';
 
 export type ImageSource = HTMLImageElement;
 
+export enum FlipImageDirection {
+  vertical = 'vertical',
+  horisontal = 'horisontal'
+}
+
 export enum ImageAspectRatio {
   custom = 'custom',
   original = 'original',
@@ -160,7 +165,7 @@ export enum ImageChangeType {
   aspectRatio,
   resize,
   move,
-  flipHorisontaly,
+  flip,
   layer,
   drawLayer,
   drawTouch
@@ -194,7 +199,9 @@ export interface RotateImageChangeEvent {
 }
 
 export interface FlipImageChangeEvent {
-  type: ImageChangeType.flipHorisontaly;
+  type: ImageChangeType.flip;
+  alignment: FlipImageDirection;
+  animation?: boolean;
 }
 
 export interface MoveChangeEvent {

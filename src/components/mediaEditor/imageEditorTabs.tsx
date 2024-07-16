@@ -12,7 +12,7 @@ export enum TabType {
   ENHANCE,
   RESIZE,
   TEXT,
-  PAINT,
+  DRAW,
   STICKER
 }
 
@@ -61,7 +61,7 @@ export const TABS_CONFIG: ImageEditorTab[] = [{
     />
   )
 }, {
-  tabId: TabType.PAINT,
+  tabId: TabType.DRAW,
   name: i18n('ImageEditor.Paint'),
   icon: 'brush',
   asSvgIcon: true,

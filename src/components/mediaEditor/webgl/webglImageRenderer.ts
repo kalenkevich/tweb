@@ -1,12 +1,10 @@
-import {ObjectLayer, ObjectLayerType, ImageState} from '../types';
+import {ObjectLayer, ImageState, ObjectLayerType} from '../types';
 import {ImageRenderer, ImageRendererOptions, RenderOptions} from '../imageRenderer';
 import {CompatibleWebGLRenderingContext, makeCompatibleWebGLRenderingContext} from './webglContext';
 import {ObjectLayerProgram} from './programs/objectLayerProgram';
 import {BrushTouchProgram} from './programs/brushTouchProgram';
 import {BackgroundImageProgram} from './programs/backgroundImageProgram';
 import {FramebufferProgram} from './programs/framebufferProgram';
-import {WebGlFrameBuffer, createFrameBuffer} from './helpers/webglFramebuffer';
-import {createWebGlTexture} from './helpers/webglTexture';
 import {toImageDrawObject} from './drawObject/imageDrawObject';
 import {toBrushTouchDrawObject} from './drawObject/brushTouchDrawObject';
 import {Matrix3, createMatrix3, multiplyMatrix3, rotateMatrix3, translateMatrix3, scaleMatrix3} from '../helpers/matrixHelpers';
@@ -87,11 +85,28 @@ export class WebglImageRenderer implements ImageRenderer {
   }
 
   public render(imageState: ImageState, options?: RenderOptions) {
+    const renderAllLayers = options?.layers === 'all';
+    const renderBackgroundLayer = renderAllLayers || (options?.layers || []).includes(ObjectLayerType.backgroundImage);
+    const renderDrawLayer = renderAllLayers || (options?.layers || []).includes(imageState.drawLayer.type);
+    const renderTextLayer = renderAllLayers || (options?.layers || []).includes(ObjectLayerType.text);
+    const renderStickerLayer = renderAllLayers || (options?.layers || []).includes(ObjectLayerType.sticker);
     const projectionViewMatrix = getProjectionViewMatrix(imageState);
     const imageDrawObject = toImageDrawObject(imageState);
 
-    // render all brush touches first to framebuffer (texture)
-    if((options?.renderLayers || []).includes(imageState.drawLayer.type)) {
+    if(renderBackgroundLayer) {
+    // Render main image first
+      this.backgroundImageProgram.link();
+      this.backgroundImageProgram.setMatrix(projectionViewMatrix);
+      this.backgroundImageProgram.setWidth(this.canvas.width);
+      this.backgroundImageProgram.setHeight(this.canvas.height);
+      this.backgroundImageProgram.setDevicePixelRatio(this.devicePixelRatio);
+      this.backgroundImageProgram.setFilter(imageState.filter);
+      this.backgroundImageProgram.draw(imageDrawObject);
+      this.backgroundImageProgram.unlink();
+    }
+
+    if(renderDrawLayer) {
+      // render all brush touches first to framebuffer texture
       const brushTouchDrawObject = toBrushTouchDrawObject(imageState);
       this.brushTouchProgram.link();
       this.brushTouchProgram.setMatrix(projectionViewMatrix);
@@ -101,48 +116,41 @@ export class WebglImageRenderer implements ImageRenderer {
       this.brushTouchProgram.setupFramebuffer(this.canvas.width, this.canvas.height);
       this.brushTouchProgram.drawToFramebuffer(brushTouchDrawObject);
       this.brushTouchProgram.unlink();
+
+      // render all touches (as a texture) to canvas
+      this.framebufferProgram.link();
+      this.framebufferProgram.setMatrix(projectionViewMatrix);
+      this.framebufferProgram.setWidth(this.canvas.width);
+      this.framebufferProgram.setHeight(this.canvas.height);
+      this.framebufferProgram.setDevicePixelRatio(this.devicePixelRatio);
+      this.framebufferProgram.draw(this.brushTouchProgram.getFramebufferTexture());
+      this.framebufferProgram.unlink();
     }
 
-    // Render main image first
-    this.backgroundImageProgram.link();
-    this.backgroundImageProgram.setMatrix(projectionViewMatrix);
-    this.backgroundImageProgram.setWidth(this.canvas.width);
-    this.backgroundImageProgram.setHeight(this.canvas.height);
-    this.backgroundImageProgram.setDevicePixelRatio(this.devicePixelRatio);
-    this.backgroundImageProgram.setFilter(imageState.filter);
-    this.backgroundImageProgram.draw(imageDrawObject);
-    this.backgroundImageProgram.unlink();
-
-    // render all touches (as a texture) to canvas
-    this.framebufferProgram.link();
-    this.framebufferProgram.setMatrix(projectionViewMatrix);
-    this.framebufferProgram.setWidth(this.canvas.width);
-    this.framebufferProgram.setHeight(this.canvas.height);
-    this.framebufferProgram.setDevicePixelRatio(this.devicePixelRatio);
-    this.framebufferProgram.draw(this.brushTouchProgram.getFramebufferTexture());
-    this.framebufferProgram.unlink();
-
     // Render other layers if needed
-    if(options?.renderLayers) {
-      for(const layer of imageState.layers) {
-        if(options.renderLayers.includes(layer.type)) {
-          const projectionViewMatrix = getProjectionViewMatrix(layer);
-          const imageDrawObject = toImageDrawObject(layer);
-          this.imageProgram.link();
-          this.imageProgram.setMatrix(projectionViewMatrix);
-          this.imageProgram.setWidth(this.canvas.width);
-          this.imageProgram.setHeight(this.canvas.height);
-          this.imageProgram.setDevicePixelRatio(this.devicePixelRatio);
-          this.imageProgram.draw(imageDrawObject);
-          this.imageProgram.unlink();
-        }
+    if(!renderTextLayer && !renderStickerLayer) {
+      return;
+    }
+    for(const layer of imageState.layers) {
+      if(!renderAllLayers && !options.layers.includes(layer.type)) {
+        continue;
       }
+
+      const projectionViewMatrix = getProjectionViewMatrix(layer);
+      const imageDrawObject = toImageDrawObject(layer);
+      this.imageProgram.link();
+      this.imageProgram.setMatrix(projectionViewMatrix);
+      this.imageProgram.setWidth(this.canvas.width);
+      this.imageProgram.setHeight(this.canvas.height);
+      this.imageProgram.setDevicePixelRatio(this.devicePixelRatio);
+      this.imageProgram.draw(imageDrawObject);
+      this.imageProgram.unlink();
     }
   }
 
-  async compileImage(imageState: ImageState): Promise<Uint8Array> {
+  async compileImage(imageState: ImageState, renderOptions: RenderOptions): Promise<Uint8Array> {
     // Draw image first
-    this.render(imageState, {renderLayers: [ObjectLayerType.draw, ObjectLayerType.sticker, ObjectLayerType.text]});
+    this.render(imageState, renderOptions);
 
     return new Promise(resolve => {
       this.canvas.toBlob(async(blobResult) => {

@@ -1,5 +1,5 @@
 import {JSX, For, createSignal, onMount, Show, createEffect, on, onCleanup} from 'solid-js';
-import {ImageChangeType} from '../types';
+import {ImageChangeType, FlipImageDirection} from '../types';
 import {ImageControlProps} from './imageControl';
 import {ButtonIconTsx} from '../../buttonIconTsx';
 import {IconTsx} from '../../iconTsx';
@@ -160,7 +160,9 @@ export function ImageRotationControl(props: ImageRotationControlProps): JSX.Elem
           asSvgIcon={true}
           onClick={() => {
             props.onImageChange({
-              type: ImageChangeType.flipHorisontaly
+              type: ImageChangeType.flip,
+              alignment: FlipImageDirection.horisontal,
+              animation: true
             });
           }}
         />

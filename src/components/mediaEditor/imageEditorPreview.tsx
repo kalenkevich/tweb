@@ -23,8 +23,8 @@ export function ImageEditorPreview(props: ImagePreviewProps): JSX.Element {
   const [resizeObserver, setResizeObserver] = createSignal<ResizeObserver>();
   const [draggingSurface, setDraggingSurface] = createSignal<DraggingSurface>();
   const isResizeTabSelected = () => props.selectedTabId === TabType.RESIZE;
-  const isDrawTabSelected = () => props.selectedTabId === TabType.PAINT;
-  const showDraggableObjects = () => [TabType.TEXT, TabType.STICKER, TabType.PAINT].includes(props.selectedTabId);
+  const isDrawTabSelected = () => props.selectedTabId === TabType.DRAW;
+  const showDraggableObjects = () => [TabType.TEXT, TabType.STICKER, TabType.DRAW].includes(props.selectedTabId);
 
   onMount(() => {
     const [width, height] = [rootRef().offsetWidth, rootRef().offsetHeight];

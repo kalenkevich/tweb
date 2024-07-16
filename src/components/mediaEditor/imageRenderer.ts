@@ -5,11 +5,13 @@ export interface ImageRendererOptions {
 }
 
 export interface RenderOptions {
-  renderLayers?: ObjectLayerType[];
+  render?: boolean;
+  layers?: ObjectLayerType[] | 'all';
 }
 
-export const DEFAULT_RENDER_OPTIONS:RenderOptions = {
-  renderLayers: [
+export const DEFAULT_RENDER_OPTIONS: RenderOptions = {
+  render: true,
+  layers: [
     ObjectLayerType.backgroundImage,
     ObjectLayerType.draw
   ]
@@ -27,5 +29,5 @@ export interface ImageRenderer {
 
   render(imageState: ImageState, options?: RenderOptions): void;
 
-  compileImage(imageState: ImageState): Promise<Uint8Array>
+  compileImage(imageState: ImageState, options?: RenderOptions): Promise<Uint8Array>
 }

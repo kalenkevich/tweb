@@ -11,7 +11,6 @@ import {ImageEditorManager} from './imageEditorManager';
 import {ButtonIconTsx} from '../buttonIconTsx';
 import {fitImageIntoCanvas, ScaleMode} from './helpers/aspectRatioHelper';
 import {createImageElementTextureSource} from './webgl/helpers/webglTexture';
-import {renderTextLayer} from './helpers/textHelper';
 import {getLayerNextId, getRandomLayerStartPosition} from './helpers/layerHelper';
 
 export function createImageState(source: ImageSource): ImageState {
@@ -44,6 +43,7 @@ export function ImageEditor(props: MediaEditorProps) {
   const [imageState, setImageState] = createSignal(createImageState(props.imgSource));
   const [canRedo, setCanRedu] = createSignal(false);
   const [canUndo, setCanUndo] = createSignal(false);
+  const [layersToRender, setLayersToRender] = createSignal([ObjectLayerType.backgroundImage]);
   const [currentLayerIndex, setCurrentLayerIndex] = createSignal(-1);
   const [selectedTabId, setSelectedTabId] = createSignal(TABS_CONFIG[0].tabId);
 
@@ -53,6 +53,10 @@ export function ImageEditor(props: MediaEditorProps) {
     setImageState(newImageState);
     imageEditorManager().pushState(newImageState);
   }));
+
+  createEffect(() => {
+    imageEditorManager().triggerRerender({render: true, layers: layersToRender()});
+  });
 
   const onCanvasMounted = async(canvas: HTMLCanvasElement) => {
     imageEditorManager().init(canvas, imageState());
@@ -70,7 +74,7 @@ export function ImageEditor(props: MediaEditorProps) {
     // Move to center and fit the image
     imageEditorManager().origin(-(state.originalWidth / 2), -(state.originalHeight / 2), false);
     imageEditorManager().moveTo(canvas.width / 2, canvas.height / 2, false);
-    const newState = imageEditorManager().resize(scale[0], scale[1], false);
+    const newState = imageEditorManager().resize(scale[0], scale[1], false, {render: true, layers: layersToRender()});
 
     setImageState(newState);
   };
@@ -90,16 +94,16 @@ export function ImageEditor(props: MediaEditorProps) {
     );
 
     // Move to center and fit the image
-    imageEditorManager().origin(-(state.originalWidth / 2), -(state.originalHeight / 2), false);
-    imageEditorManager().moveTo(canvas.width / 2, canvas.height / 2, false);
-    imageEditorManager().resize(scaleX, scaleY, false);
+    imageEditorManager().origin(-(state.originalWidth / 2), -(state.originalHeight / 2), false, {render: true, layers: layersToRender()});
+    imageEditorManager().moveTo(canvas.width / 2, canvas.height / 2, false, {render: true, layers: layersToRender()});
+    imageEditorManager().resize(scaleX, scaleY, false, {render: true, layers: layersToRender()});
   };
 
   const handleChangeEvent = (event: ImageChangeEvent): ImageState => {
     const state = imageEditorManager().getCurrentImageState();
     switch(event.type) {
       case ImageChangeType.filter: {
-        return imageEditorManager().filter(event.value);
+        return imageEditorManager().filter(event.value, {render: true, layers: layersToRender()});
       }
       case ImageChangeType.aspectRatio: {
         const canvas = imageEditorManager().getCanvas();
@@ -112,20 +116,25 @@ export function ImageEditor(props: MediaEditorProps) {
           event.value
         );
 
-        return imageEditorManager().resize(scaleX, scaleY, event.animation);
+        return imageEditorManager().resize(scaleX, scaleY, event.animation, {render: true, layers: layersToRender()});
       }
       case ImageChangeType.rotate: {
-        return imageEditorManager().rotate(event.value, event.animation);
+        return imageEditorManager().rotate(event.value, event.animation, {render: true, layers: layersToRender()});
       }
       case ImageChangeType.move: {
         const state = imageEditorManager().getCurrentImageState();
-        return imageEditorManager().moveTo(state.translation[0] + event.deltaX, state.translation[1] + event.deltaY, event.animation);
+        return imageEditorManager().moveTo(
+          state.translation[0] + event.deltaX,
+          state.translation[1] + event.deltaY,
+          event.animation,
+          {render: true, layers: layersToRender()}
+        );
       }
       case ImageChangeType.resize: {
-        return imageEditorManager().resize(event.scaleX, event.scaleY, event.animation);
+        return imageEditorManager().resize(event.scaleX, event.scaleY, event.animation, {render: true, layers: layersToRender()});
       }
-      case ImageChangeType.flipHorisontaly: {
-        return imageEditorManager().flipHorisontaly();
+      case ImageChangeType.flip: {
+        return imageEditorManager().flipHorisontaly(event.animation, {render: true, layers: layersToRender()});
       }
       case ImageChangeType.layer: {
         const state = imageEditorManager().getCurrentImageState();
@@ -151,16 +160,6 @@ export function ImageEditor(props: MediaEditorProps) {
             ...state,
             layers: newLayers
           };
-
-          // if(event.layer.type === ImageLayerType.text && !!event.layer.text) {
-          //   renderTextLayer(event.layer.text, event.layer).then(texture => {
-          //     event.layer.texture = texture;
-          //     event.layer.origin = [-(texture.width / 2) / window.devicePixelRatio, -(texture.height / 2) / window.devicePixelRatio];
-
-          //     imageEditorManager().pushState(newState);
-          //     imageEditorManager().triggerRerender({renderAllLayers: true})
-          //   });
-          // }
         } else if(event.action === AttachmentChangeAction.delete) {
           const newLayers = state.layers.filter((l) => l.id !== event.layer.id);
           newState = {
@@ -169,7 +168,7 @@ export function ImageEditor(props: MediaEditorProps) {
           };
         }
 
-        imageEditorManager().pushState(newState);
+        imageEditorManager().pushState(newState, {render: false});
 
         return newState;
       }
@@ -181,12 +180,11 @@ export function ImageEditor(props: MediaEditorProps) {
             ...event.layer
           }
         };
-        imageEditorManager().pushState(newState);
+        imageEditorManager().pushState(newState, {render: false});
 
         return newState;
       }
       case ImageChangeType.drawTouch: {
-        console.log('draw touch');
         const state = imageState();
         const newTouch = {
           x: event.touchX,
@@ -202,8 +200,7 @@ export function ImageEditor(props: MediaEditorProps) {
             touches: [...state.drawLayer.touches, newTouch]
           }
         };
-        imageEditorManager().pushState(newState);
-        imageEditorManager().triggerRerender();
+        imageEditorManager().pushState(newState, {render: true, layers: layersToRender()});
 
         return newState;
       }
@@ -224,7 +221,7 @@ export function ImageEditor(props: MediaEditorProps) {
   };
 
   const handleSave = async() => {
-    const resultImage = await imageEditorManager().compileImage();
+    const resultImage = await imageEditorManager().compileImage({render: true, layers: 'all'});
 
     // props.onSave(resultImage);
   };
@@ -287,10 +284,16 @@ export function ImageEditor(props: MediaEditorProps) {
       newActiveLayerIndex = newState.layers.length - 1;
     }
 
+    const layersToRender = [ObjectLayerType.backgroundImage];
+    if([TabType.TEXT, TabType.DRAW, TabType.STICKER].includes(tabId)) {
+      layersToRender.push(ObjectLayerType.draw);
+    }
+
     batch(() => {
       setImageState(newState);
       setSelectedTabId(tabId);
       setCurrentLayerIndex(newActiveLayerIndex);
+      setLayersToRender(layersToRender);
     });
   };
 

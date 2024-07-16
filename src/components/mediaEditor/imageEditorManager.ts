@@ -41,10 +41,10 @@ export class ImageEditorManager {
     this.rerender(this.getCurrentImageState(), rerenderOptions);
   }
 
-  resizeCanvas(width: number, height: number) {
+  resizeCanvas(width: number, height: number, rerenderOptions?: RenderOptions) {
     this.renderer.resize(width, height);
     this.compiler.resize(width, height);
-    this.rerender();
+    this.rerender(this.getCurrentImageState(), rerenderOptions);
   }
 
   getCanvas(): HTMLCanvasElement {
@@ -55,7 +55,7 @@ export class ImageEditorManager {
     this.renderer.destroy();
   }
 
-  async compileImage(): Promise<Uint8Array> {
+  async compileImage(renderOptions: RenderOptions): Promise<Uint8Array> {
     const state = this.getCurrentImageState();
     const promises = [];
     for(const layer of state.layers) {
@@ -84,17 +84,19 @@ export class ImageEditorManager {
     }
     await Promise.all(promises);
 
-    return this.compiler.compileImage(state);
+    return this.compiler.compileImage(state, renderOptions);
   }
 
   canUndo(): boolean {
     return this.currentStateIndex > 0;
   }
 
-  undo(): ImageState {
+  undo(rerenderOptions?: RenderOptions): ImageState {
     if(this.canUndo()) {
       this.currentStateIndex--;
     }
+
+    this.rerender(this.getCurrentImageState(), rerenderOptions);
 
     return this.getCurrentImageState();
   }
@@ -103,33 +105,33 @@ export class ImageEditorManager {
     return this.currentStateIndex > 0 && this.currentStateIndex < this.imageStates.length - 1;
   }
 
-  redo(): ImageState {
+  redo(rerenderOptions?: RenderOptions): ImageState {
     if(this.canRedo()) {
       this.currentStateIndex++;
     }
 
+    this.rerender(this.getCurrentImageState(), rerenderOptions);
+
     return this.getCurrentImageState();
   }
 
-  pushState(state: ImageState, rerender: boolean = false): ImageState {
+  pushState(state: ImageState, rerenderOptions?: RenderOptions): ImageState {
     this.createNewImageState(state);
 
-    if(rerender) {
-      this.rerender();
-    }
+    this.rerender(this.getCurrentImageState(), rerenderOptions);
 
     return state;
   }
 
-  filter(filter: ImageFilterState) {
+  filter(filter: ImageFilterState, rerenderOptions?: RenderOptions) {
     const newImageState = this.createNewImageState({filter});
 
-    this.rerender();
+    this.rerender(this.getCurrentImageState(), rerenderOptions);
 
     return newImageState;
   }
 
-  origin(originX: number, originY: number, animation: boolean = false) {
+  origin(originX: number, originY: number, animation: boolean = false, rerenderOptions?: RenderOptions) {
     const state = this.getCurrentImageState();
     const newImageState = this.createNewImageState({
       origin: [originX, originY]
@@ -146,16 +148,16 @@ export class ImageEditorManager {
             state.translation[0] + (originX - fromOriginX) * progress,
             state.translation[1] + (originY - fromOriginY) * progress
           ]
-        });
+        }, rerenderOptions);
       });
     } else {
-      this.rerender();
+      this.rerender(this.getCurrentImageState(), rerenderOptions);
     }
 
     return newImageState;
   }
 
-  rotate(rotation: number, animation: boolean = false): ImageState {
+  rotate(rotation: number, animation: boolean = false, rerenderOptions?: RenderOptions): ImageState {
     const state = this.getCurrentImageState();
     const newImageState = this.createNewImageState({rotation});
 
@@ -167,16 +169,16 @@ export class ImageEditorManager {
         this.renderer.render({
           ...state,
           rotation: from + (to - from) * progress
-        });
+        }, rerenderOptions);
       });
     } else {
-      this.rerender();
+      this.rerender(this.getCurrentImageState(), rerenderOptions);
     }
 
     return newImageState;
   }
 
-  moveTo(translationX: number, translationY: number, animation: boolean = false) {
+  moveTo(translationX: number, translationY: number, animation: boolean = false, rerenderOptions?: RenderOptions) {
     const state = this.getCurrentImageState();
     const newImageState = this.createNewImageState({
       translation: [translationX, translationY]
@@ -193,16 +195,16 @@ export class ImageEditorManager {
             state.translation[0] + (translationX - fromTranslationX) * progress,
             state.translation[1] + (translationY - fromTranslationY) * progress
           ]
-        });
+        }, rerenderOptions);
       });
     } else {
-      this.rerender();
+      this.rerender(this.getCurrentImageState(), rerenderOptions);
     }
 
     return newImageState;
   }
 
-  resize(scaleX: number, scaleY: number, animation: boolean = false) {
+  resize(scaleX: number, scaleY: number, animation: boolean = false, rerenderOptions?: RenderOptions) {
     const state = this.getCurrentImageState();
     const newImageState = this.createNewImageState({
       scale: [scaleX, scaleY]
@@ -219,33 +221,29 @@ export class ImageEditorManager {
             fromScaleX + (scaleX - fromScaleX) * progress,
             fromScaleY + (scaleY - fromScaleY) * progress
           ]
-        });
+        }, rerenderOptions);
       });
     } else {
-      this.rerender();
+      this.rerender(this.getCurrentImageState(), rerenderOptions);
     }
 
     return newImageState;
   }
 
-  crop(): ImageState {
+  crop(fromX: number, fromY: number, width: number, height: number, animation: boolean = false, rerenderOptions?: RenderOptions): ImageState {
     return this.createNewImageState({});
   }
 
-  flipHorisontaly(): ImageState {
+  flipHorisontaly(animation: boolean = false, rerenderOptions?: RenderOptions): ImageState {
     const state = this.getCurrentImageState();
     const newImageState = this.createNewImageState({scale: [state.scale[0] * -1, 1]});
 
-    this.rerender();
+    this.rerender(newImageState, rerenderOptions);
 
     return newImageState;
   }
 
-  addTextLayer(textLayer: TextLayer): ImageState {
-    return this.createNewImageState({});
-  }
-
-  public getCurrentImageState(): ImageState {
+  getCurrentImageState(): ImageState {
     return this.imageStates[this.currentStateIndex];
   }
 
@@ -274,7 +272,7 @@ export class ImageEditorManager {
     state = this.getCurrentImageState(),
     rerenderOptions: RenderOptions = DEFAULT_RENDER_OPTIONS
   ): Promise<void> {
-    if(!this.ready) {
+    if(!this.ready || rerenderOptions.render === false) {
       return;
     }
 
