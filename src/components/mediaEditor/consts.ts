@@ -129,8 +129,9 @@ export const DEFAULT_DRAW_LAYER: DrawLayer = {
 export const DEFAULT_STICKER_LAYER: StickerLayer = {
   id: 0,
   type: ImageLayerType.sticker,
+  // subtype: StickerType.static,
   zIndex: 0,
-  imageSrc: '',
+  stickerId: '',
   width: 0,
   height: 0,
   rotation: 0,

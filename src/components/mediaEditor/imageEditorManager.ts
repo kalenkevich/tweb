@@ -6,6 +6,8 @@ import {RenderQueue} from './helpers/renderQueue';
 import {easyAnimation} from './helpers/animation';
 import {renderTextLayer} from './helpers/textHelper';
 import {createImageElementTextureSource} from './webgl/helpers/webglTexture';
+import rootScope from '../../lib/rootScope';
+import SuperStickerRenderer from '../emoticonsDropdown/tabs/SuperStickerRenderer';
 
 export class ImageEditorManager {
   private canvas?: HTMLCanvasElement;
@@ -18,7 +20,10 @@ export class ImageEditorManager {
   private compiler: ImageRenderer = new WebglImageRenderer();
   private ready: boolean = false;
 
-  constructor(private readonly stateSnapshowCounts = 10) {
+  constructor(
+    private readonly stickerRenderer: SuperStickerRenderer,
+    private readonly stateSnapshowCounts = 10
+  ) {
     this.shadowCanvas = document.createElement('canvas');
   }
 
@@ -60,15 +65,19 @@ export class ImageEditorManager {
           layer.origin = [-(texture.width / 2) / window.devicePixelRatio, -(texture.height / 2) / window.devicePixelRatio];
         }));
       } else if(layer.type === ImageLayerType.sticker) {
-        const img = new Image();
-        img.src = layer.imageSrc;
-        const promise = new Promise((resolve) => {
-          img.addEventListener('load', resolve);
-        }).then(() => {
-          layer.texture = createImageElementTextureSource(img)
-        });
-
-        promises.push(promise);
+        promises.push(
+          rootScope.managers.appDocsManager.getDoc(layer.stickerId).then(async(doc) => {
+            const el = document.createElement('div');
+            await new Promise<void>((resolve) => {
+              this.stickerRenderer.renderSticker(doc, el, [], undefined, () => {
+                resolve();
+              });
+            })
+            const texture = createImageElementTextureSource(el.children[0] as HTMLImageElement);
+            layer.texture = texture;
+            layer.origin = [-(layer.width / 2) / window.devicePixelRatio, -(layer.height / 2) / window.devicePixelRatio];
+          })
+        );
       }
     }
     await Promise.all(promises);

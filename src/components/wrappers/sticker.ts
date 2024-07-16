@@ -80,7 +80,7 @@ const getThumbFromContainer = (container: HTMLElement) => {
   return element;
 };
 
-export default async function wrapSticker({doc, div, middleware, loadStickerMiddleware, lazyLoadQueue, exportLoad, group, play, onlyThumb, emoji, width, height, withThumb, loop, loadPromises, needFadeIn, needUpscale, skipRatio, static: asStatic, managers = rootScope.managers, fullThumb, isOut, noPremium, withLock, relativeEffect, loopEffect, isCustomEmoji, syncedVideo, liteModeKey, isEffect, textColor, scrollable, showPremiumInfo, useCache}: {
+export default async function wrapSticker({doc, div, middleware, loadStickerMiddleware, lazyLoadQueue, exportLoad, group, play, onlyThumb, emoji, width, height, withThumb, loop, loadPromises, needFadeIn, needUpscale, skipRatio, static: asStatic, managers = rootScope.managers, fullThumb, isOut, noPremium, withLock, relativeEffect, loopEffect, isCustomEmoji, syncedVideo, liteModeKey, isEffect, textColor, scrollable, showPremiumInfo, useCache, onLoad}: {
   doc: MyDocument,
   div: HTMLElement | HTMLElement[],
   middleware?: Middleware,
@@ -114,7 +114,8 @@ export default async function wrapSticker({doc, div, middleware, loadStickerMidd
   textColor?: WrapSomethingOptions['textColor'],
   scrollable?: Scrollable
   showPremiumInfo?: () => void,
-  useCache?: boolean
+  useCache?: boolean,
+  onLoad?: (el: HTMLElement) => void
 }) {
   const options = arguments[0];
   div = Array.isArray(div) ? div : [div];
@@ -271,6 +272,8 @@ export default async function wrapSticker({doc, div, middleware, loadStickerMidd
       } else {
         loadThumbPromise.resolve();
       }
+
+      onLoad?.(div);
     };
 
     if('url' in thumb) {

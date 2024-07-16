@@ -1,4 +1,4 @@
-import {JSX, onMount, createSignal, Show, onCleanup} from 'solid-js';
+import {JSX, onMount, createSignal, Show, onCleanup, batch} from 'solid-js';
 import {ImageLayer} from './types';
 import {TabType} from './imageEditorTabs';
 import {ImageControlProps} from './controls/imageControl';
@@ -6,9 +6,11 @@ import {ImageRotationControl} from './controls/imageRotationControl';
 import {DraggableObjects} from './controls/draggableObjects';
 import {ImageConunterpartControl} from './controls/imageCounterpartControl';
 import {DraggingSurfaceComponent, DraggingSurface} from './draggable/surface';
+import SuperStickerRenderer from '../emoticonsDropdown/tabs/SuperStickerRenderer';
 
 export interface ImagePreviewProps extends ImageControlProps {
   selectedTabId: TabType;
+  stickerRenderer: SuperStickerRenderer;
   onCanvasMounted: (canvas: HTMLCanvasElement) => void;
   onCanvasResized: (width: number, height: number) => void;
   onActiveLayerChange: (layer?: ImageLayer) => void;
@@ -61,6 +63,7 @@ export function ImageEditorPreview(props: ImagePreviewProps): JSX.Element {
         <Show when={showDraggableObjects()}>
           <DraggableObjects
             surface={draggingSurface()}
+            stickerRenderer={props.stickerRenderer}
             imageState={props.imageState}
             onImageChange={props.onImageChange}
             currentLayerIndex={props.currentLayerIndex}

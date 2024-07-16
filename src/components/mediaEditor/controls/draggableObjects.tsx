@@ -1,16 +1,21 @@
-import {createSignal, For} from 'solid-js';
+import {createSignal, For, onMount} from 'solid-js';
 import {TextLayer, ImageLayer, ImageLayerType, StickerLayer} from '../types';
 import {ImageControlProps} from './imageControl';
 import {DraggingSurface} from '../draggable/surface';
 import {DraggableText} from './draggableText';
 import {DraggableSticker} from './draggableSticker';
+import rootScope from '../../../lib/rootScope';
+import LazyLoadQueue from '../../lazyLoadQueue';
+import SuperStickerRenderer from '../../emoticonsDropdown/tabs/SuperStickerRenderer';
 
 export interface DraggableObjectsProps extends ImageControlProps {
   surface: DraggingSurface;
+  stickerRenderer: SuperStickerRenderer;
   onActiveLayerChange: (layer?: ImageLayer) => void;
 }
 export function DraggableObjects(props: DraggableObjectsProps) {
   const [elRef, setElRef] = createSignal<HTMLDivElement>();
+  const [renderer, setRenderer] = createSignal<SuperStickerRenderer>()
   const textObjects = () => props.imageState.layers.filter(l => l.type === ImageLayerType.text) as TextLayer[];
   const stickerObjects = () => props.imageState.layers.filter(l => l.type === ImageLayerType.sticker) as StickerLayer[];
 
@@ -19,6 +24,16 @@ export function DraggableObjects(props: DraggableObjectsProps) {
       props.onActiveLayerChange(null);
     }
   };
+
+  onMount(() => {
+    setRenderer(
+      new SuperStickerRenderer({
+        regularLazyLoadQueue: new LazyLoadQueue(),
+        group: 'MEDIA-EDITOR',
+        managers: rootScope.managers
+      })
+    );
+  });
 
   return (
     <div class="image-editor__image-control draggable-objects"
@@ -39,6 +54,7 @@ export function DraggableObjects(props: DraggableObjectsProps) {
         {(layer: StickerLayer) => (
           <DraggableSticker
             surface={props.surface}
+            stickerRenderer={props.stickerRenderer}
             layer={layer as StickerLayer}
             isActive={layer === props.imageState.layers[props.currentLayerIndex]}
             onClick={() => props.onActiveLayerChange(layer)}

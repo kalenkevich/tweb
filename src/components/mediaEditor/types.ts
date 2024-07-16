@@ -88,11 +88,17 @@ export interface DrawLayer {
   texture?: ImageElementTextureSource;
 }
 
+// export enum StickerType {
+//   static = 'static',
+//   animated = 'animated'
+// }
 export interface StickerLayer {
   id: number;
   type: ImageLayerType.sticker;
+  // subtype: StickerType;
   zIndex: number;
-  imageSrc: string;
+  // imageSrc: string;
+  stickerId: string;
   width: number;
   height: number;
   rotation: number;

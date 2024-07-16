@@ -22,16 +22,18 @@ export function ImageStickerControl(props: ImageStickerControlProps): JSX.Elemen
         el.style.setProperty('--height', `${ref().offsetHeight}px`);
       },
       onMediaClicked: (e) => {
-        const sourceImage = (e.target as HTMLDivElement).children[0] as HTMLImageElement;
+        const el = e.target as HTMLDivElement;
+        const stickerId = el.dataset['docId'];
+        console.log(stickerId, 'added');
 
         props.onImageChange({
           type: ImageChangeType.layer,
           layer: {
             ...DEFAULT_STICKER_LAYER,
             id: getLayerNextId(),
-            width: sourceImage.width,
-            height: sourceImage.height,
-            imageSrc: sourceImage.src
+            width: el.offsetWidth,
+            height: el.offsetHeight,
+            stickerId
           },
           action: AttachmentChangeAction.create,
           appearInRandomSpot: true

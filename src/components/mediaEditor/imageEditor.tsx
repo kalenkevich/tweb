@@ -1,4 +1,8 @@
 import {createEffect, createSignal, on, batch} from 'solid-js';
+import rootScope from '../../lib/rootScope';
+import LazyLoadQueue from '../lazyLoadQueue';
+import SuperStickerRenderer from '../emoticonsDropdown/tabs/SuperStickerRenderer';
+
 import {ImageChangeType, ImageChangeEvent, ImageSource, ImageState, ImageLayer, AttachmentChangeAction, ImageLayerType} from './types';
 import {DEFAULT_DRAW_LAYER, DEFAULT_IMAGE_STATE, DEFAULT_TEXT_LAYER} from './consts';
 import {ImageEditorPreview} from './imageEditorPreview';
@@ -31,7 +35,12 @@ export interface MediaEditorProps {
 }
 
 export function ImageEditor(props: MediaEditorProps) {
-  const [imageEditorManager] = createSignal(new ImageEditorManager());
+  const [stickerRenderer, setStickerRenderer] = createSignal(new SuperStickerRenderer({
+    regularLazyLoadQueue: new LazyLoadQueue(),
+    group: 'MEDIA-EDITOR',
+    managers: rootScope.managers
+  }));
+  const [imageEditorManager] = createSignal(new ImageEditorManager(stickerRenderer()));
   const [imageState, setImageState] = createSignal(createImageState(props.imgSource));
   const [canRedo, setCanRedu] = createSignal(false);
   const [canUndo, setCanUndo] = createSignal(false);
@@ -265,6 +274,7 @@ export function ImageEditor(props: MediaEditorProps) {
         imageState={imageState()}
         currentLayerIndex={currentLayerIndex()}
         selectedTabId={selectedTabId()}
+        stickerRenderer={stickerRenderer()}
         onCanvasMounted={onCanvasMounted}
         onCanvasResized={onCanvasResized}
         onImageChange={onImageChange}
