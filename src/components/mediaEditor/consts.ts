@@ -134,3 +134,10 @@ export const DEFAULT_IMAGE_STATE: ImageState = {
   layers: [],
   drawLayer: DEFAULT_DRAW_LAYER
 };
+
+export const NEON_BRUSH_BORDER_COLOR: Color = {
+  type: ColorFormatType.rgba,
+  value: [255, 255, 255, 255]
+};
+
+export const NEON_BRUSH_BORDER_WIDTH = 5;

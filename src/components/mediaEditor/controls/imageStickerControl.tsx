@@ -24,7 +24,6 @@ export function ImageStickerControl(props: ImageStickerControlProps): JSX.Elemen
       onMediaClicked: (e) => {
         const el = e.target as HTMLDivElement;
         const stickerId = el.dataset['docId'];
-        console.log(stickerId, 'added');
 
         props.onImageChange({
           type: ImageChangeType.layer,

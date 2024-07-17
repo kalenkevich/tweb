@@ -1,4 +1,3 @@
-import {Accessor} from 'solid-js';
 import {ImageState, ImageChangeEvent} from '../types';
 
 export interface ImageControlProps {

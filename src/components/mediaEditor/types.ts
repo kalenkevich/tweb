@@ -81,6 +81,8 @@ export interface BrushTouch {
   color: Color;
   size: number; // radius
   style: BrushStyle;
+  borderColor: Color;
+  borderWidth: number;
   x: number;
   y: number;
 }

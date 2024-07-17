@@ -3,8 +3,8 @@ import rootScope from '../../lib/rootScope';
 import LazyLoadQueue from '../lazyLoadQueue';
 import SuperStickerRenderer from '../emoticonsDropdown/tabs/SuperStickerRenderer';
 
-import {ImageChangeType, ImageChangeEvent, ImageSource, ImageState, ObjectLayer, AttachmentChangeAction, ObjectLayerType} from './types';
-import {DEFAULT_IMAGE_STATE, DEFAULT_TEXT_LAYER} from './consts';
+import {ImageChangeType, ImageChangeEvent, ImageSource, ImageState, ObjectLayer, AttachmentChangeAction, ObjectLayerType, BrushStyle, BrushTouch} from './types';
+import {DEFAULT_IMAGE_STATE, DEFAULT_TEXT_LAYER, NEON_BRUSH_BORDER_COLOR, NEON_BRUSH_BORDER_WIDTH} from './consts';
 import {ImageEditorPreview} from './imageEditorPreview';
 import {ImageEditorTabs, TABS_CONFIG, TabType} from './imageEditorTabs';
 import {ImageEditorManager} from './imageEditorManager';
@@ -12,6 +12,7 @@ import {ButtonIconTsx} from '../buttonIconTsx';
 import {fitImageIntoCanvas, ScaleMode} from './helpers/aspectRatioHelper';
 import {createImageElementTextureSource} from './webgl/helpers/webglTexture';
 import {getLayerNextId, getRandomLayerStartPosition} from './helpers/layerHelper';
+import {anyColorToRgbaColor, ColorFormatType} from '../../helpers/color';
 
 export function createImageState(source: ImageSource): ImageState {
   const texture = createImageElementTextureSource(source, source.width, source.height);
@@ -193,13 +194,28 @@ export function ImageEditor(props: MediaEditorProps) {
       }
       case ImageChangeType.drawTouch: {
         const state = imageEditorManager().getCurrentImageState();
-        const newTouch = {
+        const newTouch: BrushTouch = {
           x: event.touchX,
           y: event.touchY,
           color: {...state.drawLayer.color},
           style: state.drawLayer.style,
-          size: state.drawLayer.size
+          size: state.drawLayer.size,
+          borderColor: NEON_BRUSH_BORDER_COLOR,
+          borderWidth: NEON_BRUSH_BORDER_WIDTH
         };
+        if(state.drawLayer.style === BrushStyle.brush) {
+          const rgba = anyColorToRgbaColor(newTouch.color);
+          newTouch.size *= 2;
+          rgba[3] /= 2;
+          newTouch.color = {
+            type: ColorFormatType.rgba,
+            value: rgba
+          };
+        }
+        if(state.drawLayer.style === BrushStyle.neon) {
+          newTouch.color = NEON_BRUSH_BORDER_COLOR;
+          newTouch.borderColor = {...state.drawLayer.color};
+        }
 
         return imageEditorManager().brushTouch(newTouch, {render: true, layers: layersToRender()});
       }

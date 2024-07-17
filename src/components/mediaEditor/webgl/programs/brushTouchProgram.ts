@@ -24,23 +24,26 @@ const BrushTouchProgramShaders = {
     uniform float u_device_pixel_ratio;
 
     attribute vec3 a_position;
-    attribute vec2 a_properties;
+    attribute vec3 a_properties;
     attribute vec4 a_color;
+    attribute vec4 a_border_color;
 
     varying vec4 v_color;
+    varying vec4 v_border_color;
     varying float v_radius;
     varying float v_style;
+    varying float v_border_width;
     varying vec2 v_center_point;
 
     void main() {
       float centerX = a_position[0];
       float centerY = a_position[1];
+      float vertexQuadPosition = a_position[2];
       float originalCenterX = centerX;
       float originalCenterY = centerY;
-      float diameter = a_properties[0];
+      float radius = a_properties[0];
       float style = a_properties[1];
-      float vertexQuadPosition = a_position[2];
-      float radius = diameter / 2.0;
+      float border_width = a_properties[2];
 
       if (vertexQuadPosition == VERTEX_QUAD_POSITION_TOP_LEFT) {
         centerX -= radius;
@@ -70,7 +73,9 @@ const BrushTouchProgramShaders = {
       v_center_point = centerClipped;
       v_radius = radiusScaled;
       v_style = style;
+      v_border_width = border_width;
       v_color = a_color;
+      v_border_color = a_border_color;
 
       gl_Position = vec4(clipped, 0.0, 1.0);
     }
@@ -89,8 +94,10 @@ const BrushTouchProgramShaders = {
     uniform float u_device_pixel_ratio;
 
     varying vec4 v_color;
+    varying vec4 v_border_color;
     varying float v_radius;
     varying float v_style;
+    varying float v_border_width;
     varying vec2 v_center_point;
 
     void main() {
@@ -116,6 +123,7 @@ export class BrushTouchProgram extends BaseWebglProgram {
   protected positionBuffer: WebGlBuffer;
   protected propertiesBuffer: WebGlBuffer;
   protected colorBuffer: WebGlBuffer;
+  protected borderColorBuffer: WebGlBuffer;
 
   // Framebuffer
   protected framebuffer: WebGlFrameBuffer;
@@ -132,9 +140,8 @@ export class BrushTouchProgram extends BaseWebglProgram {
   onLink(): void {
     const gl = this.gl;
 
-    gl.enable(gl.BLEND);
-    // !!!IMPORTANT SETTINH OTHERWISE ERASER EFFECT WILL NOT WORK
-    gl.blendFunc(gl.SRC_COLOR, gl.DST_ALPHA);
+    // !!!IMPORTANT SETTING OTHERWISE ERASER EFFECT WILL NOT WORK
+    gl.disable(gl.BLEND);
     gl.depthMask(false);
   }
 
@@ -150,8 +157,9 @@ export class BrushTouchProgram extends BaseWebglProgram {
     gl.bindVertexArray(this.vao);
 
     this.positionBuffer = createWebGlBuffer(gl, {location: 0, size: 3});  // [x, y, VERTEX_QUAD_POSITION]
-    this.propertiesBuffer = createWebGlBuffer(gl, {location: 1, size: 2}); // [size, style]
+    this.propertiesBuffer = createWebGlBuffer(gl, {location: 1, size: 3}); // [size, style, borderWidth]
     this.colorBuffer = createWebGlBuffer(gl, {location: 2, size: 4}); // color
+    this.borderColorBuffer = createWebGlBuffer(gl, {location: 3, size: 4}); // borderColor
 
     gl.bindVertexArray(null);
   }
@@ -163,7 +171,6 @@ export class BrushTouchProgram extends BaseWebglProgram {
       name: 'framebuffer_texture',
       // Replace texture with a new instance but use the same texture index
       textureIndex: this.framebufferTexture?.index,
-      // premultiplyAlpha: true,
       width,
       height,
       pixels: null,
@@ -192,6 +199,7 @@ export class BrushTouchProgram extends BaseWebglProgram {
     this.positionBuffer.bufferData(drawTouchesObject.position.buffer);
     this.propertiesBuffer.bufferData(drawTouchesObject.properties.buffer);
     this.colorBuffer.bufferData(drawTouchesObject.color.buffer);
+    this.borderColorBuffer.bufferData(drawTouchesObject.borderColor.buffer);
 
     gl.drawArrays(gl.TRIANGLES, 0, drawTouchesObject.numElements);
 

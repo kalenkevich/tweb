@@ -1,6 +1,6 @@
 import {JSX, For} from 'solid-js';
 import {BrushStyle, ImageChangeType} from '../types';
-import {Color, ColorFormatType, anyColorToHexColor, anyColorToRgbaColor, ColorRgba} from '../../../helpers/color';
+import {Color, ColorFormatType, anyColorToHexColor} from '../../../helpers/color';
 import {ImageControlProps} from './imageControl';
 import {ColorPickerV2} from '../../colorPickerV2';
 import {i18n} from '../../../lib/langPack';
@@ -102,7 +102,7 @@ export function ImageDrawControl(props: ImageDrawControlProps): JSX.Element {
             color={hexColor()}
             step={1}
             min={0}
-            max={64}
+            max={128}
             value={size()}
             trumpSize={20}
             onScrub={(value: number) => onPropertyChange(DrawAttachmentProperty.size, value)}

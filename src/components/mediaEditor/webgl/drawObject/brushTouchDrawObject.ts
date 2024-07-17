@@ -1,12 +1,13 @@
-import {BrushTouch} from '../../types';
-import {anyColorToRgbaColor} from '../../../../helpers/color';
+import {BrushStyle, BrushTouch} from '../../types';
+import {anyColorToRgbaColor, ColorRgba} from '../../../../helpers/color';
 import {DrawObject, DrawObjectAttribute, DrawObjectAttributeType, VERTEX_QUAD_POSITION} from './drawObject';
 
 export interface BrushTouchDrawObject extends DrawObject {
   numElements: number;
   position: DrawObjectAttribute<DrawObjectAttributeType.FLOAT, 3, Float32Array>;
-  properties: DrawObjectAttribute<DrawObjectAttributeType.FLOAT, 2, Float32Array>;
+  properties: DrawObjectAttribute<DrawObjectAttributeType.FLOAT, 3, Float32Array>;
   color: DrawObjectAttribute<DrawObjectAttributeType.FLOAT, 4, Float32Array>;
+  borderColor: DrawObjectAttribute<DrawObjectAttributeType.FLOAT, 4, Float32Array>;
 }
 
 export function toBrushTouchDrawObject(touches: BrushTouch[]): BrushTouchDrawObject {
@@ -15,9 +16,11 @@ export function toBrushTouchDrawObject(touches: BrushTouch[]): BrushTouchDrawObj
   const positionBuffer = [];
   const propertiesBuffer = [];
   const colorBuffer = [];
+  const borderColorBuffer = [];
 
   for(let i = 0; i < touches.length; i++) {
     const touch = touches[i];
+    const borderColorRgba = anyColorToRgbaColor(touch.borderColor).map(v => v / 255);
     const colorRgba = anyColorToRgbaColor(touch.color).map(v => v / 255);
 
     positionBuffer.push(
@@ -29,12 +32,12 @@ export function toBrushTouchDrawObject(touches: BrushTouch[]): BrushTouchDrawObj
       touch.x * ratio, touch.y * ratio, VERTEX_QUAD_POSITION.BOTTOM_RIGHT
     );
     propertiesBuffer.push(
-      touch.size * ratio, touch.style,
-      touch.size * ratio, touch.style,
-      touch.size * ratio, touch.style,
-      touch.size * ratio, touch.style,
-      touch.size * ratio, touch.style,
-      touch.size * ratio, touch.style
+      touch.size * ratio, touch.style, touch.borderWidth,
+      touch.size * ratio, touch.style, touch.borderWidth,
+      touch.size * ratio, touch.style, touch.borderWidth,
+      touch.size * ratio, touch.style, touch.borderWidth,
+      touch.size * ratio, touch.style, touch.borderWidth,
+      touch.size * ratio, touch.style, touch.borderWidth
     );
     colorBuffer.push(
       ...colorRgba,
@@ -43,6 +46,14 @@ export function toBrushTouchDrawObject(touches: BrushTouch[]): BrushTouchDrawObj
       ...colorRgba,
       ...colorRgba,
       ...colorRgba
+    );
+    borderColorBuffer.push(
+      ...borderColorRgba,
+      ...borderColorRgba,
+      ...borderColorRgba,
+      ...borderColorRgba,
+      ...borderColorRgba,
+      ...borderColorRgba
     );
     numElements += 6;
   }
@@ -58,13 +69,18 @@ export function toBrushTouchDrawObject(touches: BrushTouch[]): BrushTouchDrawObj
     },
     properties: {
       type: DrawObjectAttributeType.FLOAT,
-      size: 2,
+      size: 3,
       buffer: new Float32Array(propertiesBuffer)
     },
     color: {
       type: DrawObjectAttributeType.FLOAT,
       size: 4,
       buffer: new Float32Array(colorBuffer)
+    },
+    borderColor: {
+      type: DrawObjectAttributeType.FLOAT,
+      size: 4,
+      buffer: new Float32Array(borderColorBuffer)
     }
   };
 }

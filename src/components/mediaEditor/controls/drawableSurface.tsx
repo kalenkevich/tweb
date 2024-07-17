@@ -1,4 +1,4 @@
-import {createSignal, onMount, onCleanup, createEffect, on, Show} from 'solid-js';
+import {createSignal, onMount, onCleanup, createEffect, on} from 'solid-js';
 import {ImageChangeEvent, ImageState, ImageChangeType} from '../types';
 import {DraggingSurface, DragEventType, GrabEvent} from '../draggable/surface';
 import clamp from '../../../helpers/number/clamp';
@@ -7,7 +7,6 @@ import {anyColorToHexColor} from '../../../helpers/color';
 export interface DrawableSurfaceProps {
   surface: DraggingSurface;
   imageState: ImageState;
-  // isActive: boolean;
   onImageChange: (imageChangeEvent: ImageChangeEvent) => void;
 }
 
@@ -37,8 +36,6 @@ export function DrawableSurface(props: DrawableSurfaceProps) {
     props.imageState.drawLayer.size
   ], () => updateBrushStyle()));
 
-  // createEffect(on(() => props.isActive, () => setupBrushStyle()));
-
   const onMouseMove = (e: MouseEvent) => {
     const rootRect = surface().element.getBoundingClientRect();
     const mouseX = clamp(e.pageX - rootRect.left, 0, rootRect.width);
@@ -48,10 +45,6 @@ export function DrawableSurface(props: DrawableSurfaceProps) {
   };
 
   const emitTouchEvent = (e: GrabEvent) => {
-    // if(!isActive()) {
-    //   return;
-    // }
-
     const rootRect = surface().element.getBoundingClientRect();
     const touchX = clamp(e.x - rootRect.left, 0, rootRect.width);
     const touchY = clamp(e.y - rootRect.top, 0, rootRect.height);
@@ -66,9 +59,6 @@ export function DrawableSurface(props: DrawableSurfaceProps) {
   };
 
   const setupBrushStyle = () => {
-    // if(!isActive()) {
-    //   return;
-    // }
     const el = brushEl();
 
     el.style.position = 'absolute';
@@ -81,10 +71,6 @@ export function DrawableSurface(props: DrawableSurfaceProps) {
   };
 
   const updateBrushStyle = () => {
-    // if(!isActive()) {
-    //   return;
-    // }
-
     const el = brushEl();
     el.style.width = `${brushSize()}px`;
     el.style.height = `${brushSize()}px`;
@@ -92,10 +78,6 @@ export function DrawableSurface(props: DrawableSurfaceProps) {
   };
 
   const updateBrushPos = (x: number, y: number) => {
-    // if(!isActive()) {
-    //   return;
-    // }
-
     const el = brushEl();
     const halfSize = brushSize() / 2;
     el.style.display = 'block';
@@ -121,10 +103,8 @@ export function DrawableSurface(props: DrawableSurfaceProps) {
   };
 
   return (
-    // <Show when={isActive()}>
     <div ref={el => setBrushEl(el)}
       class="drawable-surface__brush">
     </div>
-    // </Show>
   );
 }
