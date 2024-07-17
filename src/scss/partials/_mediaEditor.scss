@@ -345,15 +345,54 @@
     width: 100%;
     height: 100%;
 
-    .draggable-sticker, .draggable-text {
+    .draggable-object {
       padding: 14px 6px;
       margin: -16px -8px;
       box-sizing: content-box;
       border: 2px dashed transparent;
       border-radius: 10px;
+
+      &__remove-icon-wrapper {
+        visibility: hidden;
+        position: absolute;
+        top: -23px;
+        right: -15px;
+        cursor: pointer;
+        background: #FFFFFF;
+        color: #000000;
+        border-radius: 50%;
+        font-size: 12px;
+        width: 16px;
+        height: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 2;
+      }
+
+      &__resize-icon-wrapper {
+        visibility: hidden;
+        position: absolute;
+        bottom: -23px;
+        left: -15px;
+        cursor: pointer;
+        background: #FFFFFF;
+        color: #000000;
+        border-radius: 50%;
+        font-size: 12px;
+        width: 16px;
+        height: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 2;
+      }
   
       &:hover, &.active {
         border: 2px dashed rgba(255, 255, 255, 0.5);
+        .draggable-object__remove-icon-wrapper, .draggable-object__resize-icon-wrapper {
+          visibility: visible;
+        }
       }
     }
   }

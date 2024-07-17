@@ -1,9 +1,10 @@
-import {createSignal, createEffect, on, onMount} from 'solid-js';
+import {createSignal, createEffect, on, onMount, Show, onCleanup} from 'solid-js';
 import {ImageChangeType, StickerLayer, AttachmentChangeAction, ImageChangeEvent} from '../types';
 import {Draggable} from '../draggable/draggable';
 import {DraggingSurface} from '../draggable/surface';
 import rootScope from '../../../lib/rootScope';
 import SuperStickerRenderer from '../../emoticonsDropdown/tabs/SuperStickerRenderer';
+import {IconTsx} from '../../iconTsx';
 
 export interface SuperStickerProps {
   stickerId: string;
@@ -48,21 +49,31 @@ export interface DraggableStickerProps {
 }
 export function DraggableSticker(props: DraggableStickerProps) {
   const [isActiveInternal, setActiveInternalState] = createSignal(props.isActive);
+  const [removeWrapperEl, setRemoveWrapperEl] = createSignal<HTMLDivElement>();
+  const draggingModeEnabled = () => isActiveInternal();
   const layer = () => props.layer;
 
   createEffect(on(() => props.isActive, (isActive) => {
     setActiveInternalState(isActive);
   }));
 
-  const onWrapperMouseDown = () => {
-    setActiveInternalState(true);
-    props.onClick();
+  const onWrapperMouseDown = (e: Event) => {
+    if(e.target === removeWrapperEl()) {
+      props.onImageChange({
+        type: ImageChangeType.layer,
+        layer: layer(),
+        action: AttachmentChangeAction.delete
+      });
+    } else {
+      setActiveInternalState(true);
+      props.onClick();
+    }
   };
 
   return (
     <Draggable
       surface={props.surface}
-      enabled={isActiveInternal()}
+      enabled={draggingModeEnabled()}
       translation={layer().translation}
       scale={layer().scale}
       rotation={layer().rotation}
@@ -75,11 +86,13 @@ export function DraggableSticker(props: DraggableStickerProps) {
           },
           action: AttachmentChangeAction.update
         });
-      }}
-    >
-      <div class="draggable-sticker"
+      }}>
+      <div class="draggable-object draggable-sticker"
         classList={{'active': isActiveInternal()}}
         onMouseDown={onWrapperMouseDown}>
+        <div class="draggable-object__remove-icon-wrapper" ref={el => setRemoveWrapperEl(el)}>
+          <IconTsx class="draggable-object__remove-icon" icon="close"/>
+        </div>
         <SuperSticker
           stickerRenderer={props.stickerRenderer}
           width={layer().width}
