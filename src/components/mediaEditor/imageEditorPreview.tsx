@@ -74,7 +74,6 @@ export function ImageEditorPreview(props: ImagePreviewProps): JSX.Element {
         </Show>
         <Show when={isDrawTabSelected()}>
           <DrawableSurface
-            isActive={true}
             surface={draggingSurface()}
             imageState={props.imageState}
             onImageChange={props.onImageChange}

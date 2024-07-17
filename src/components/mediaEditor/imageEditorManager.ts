@@ -1,4 +1,4 @@
-import {ImageState, ImageFilterState, TextLayer, ObjectLayerType} from './types';
+import {ImageState, ImageFilterState, TextLayer, ObjectLayerType, BrushTouch} from './types';
 import {DEFAULT_IMAGE_STATE} from './consts';
 import {ImageRenderer, RenderOptions, DEFAULT_RENDER_OPTIONS} from './imageRenderer';
 import {WebglImageRenderer} from './webgl/webglImageRenderer';
@@ -8,6 +8,7 @@ import {renderTextLayer} from './helpers/textHelper';
 import {createImageElementTextureSource} from './webgl/helpers/webglTexture';
 import rootScope from '../../lib/rootScope';
 import SuperStickerRenderer from '../emoticonsDropdown/tabs/SuperStickerRenderer';
+import {resetTextureIndex} from './webgl/helpers/webglTexture';
 
 export class ImageEditorManager {
   private canvas?: HTMLCanvasElement;
@@ -22,18 +23,20 @@ export class ImageEditorManager {
 
   constructor(
     private readonly stickerRenderer: SuperStickerRenderer,
+    initialImageState: ImageState = DEFAULT_IMAGE_STATE,
     private readonly stateSnapshowCounts = 10
   ) {
     this.shadowCanvas = document.createElement('canvas');
+    this.imageStates.push(initialImageState);
   }
 
-  init(canvas: HTMLCanvasElement, initialImageState: ImageState = DEFAULT_IMAGE_STATE) {
+  init(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
     this.shadowCanvas.width = canvas.width;
     this.shadowCanvas.height = canvas.height;
     this.renderer.init(canvas);
     this.compiler.init(this.shadowCanvas, {compileMode: true});
-    this.imageStates.push(initialImageState);
+
     this.ready = true;
   }
 
@@ -53,6 +56,8 @@ export class ImageEditorManager {
 
   destroy() {
     this.renderer.destroy();
+    this.compiler.destroy();
+    resetTextureIndex();
   }
 
   async compileImage(renderOptions: RenderOptions): Promise<Uint8Array> {
@@ -241,6 +246,20 @@ export class ImageEditorManager {
     this.rerender(newImageState, rerenderOptions);
 
     return newImageState;
+  }
+
+  brushTouch(brushTouch: BrushTouch, rerenderOptions?: RenderOptions): ImageState {
+    const state = this.getCurrentImageState();
+    const newState: ImageState = this.createNewImageState({
+      ...state,
+      drawLayer: {
+        ...state.drawLayer,
+        touches: [...state.drawLayer.touches, brushTouch]
+      }
+    });
+    this.renderer.renderBrushTouch(newState, brushTouch, rerenderOptions);
+
+    return newState;
   }
 
   getCurrentImageState(): ImageState {

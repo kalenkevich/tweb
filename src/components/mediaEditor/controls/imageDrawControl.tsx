@@ -5,7 +5,7 @@ import {ImageControlProps} from './imageControl';
 import {ColorPickerV2} from '../../colorPickerV2';
 import {i18n} from '../../../lib/langPack';
 import {QUCIK_PALLETE_COLORS} from '../consts';
-import {PEN_TOOL_SVG, ARROW_TOOL_SVG, BRUSH_TOOL_SVG, NEON_TOOL_SVG, ERASER_TOOL_SVG} from './paintToolsSvgImages';
+import {PEN_TOOL_SVG, ARROW_TOOL_SVG, BRUSH_TOOL_SVG, NEON_TOOL_SVG, BLUR_TOOL_SVG, ERASER_TOOL_SVG} from './paintToolsSvgImages';
 import RowTsx from '../../rowTsx';
 import {RangeSelectorTsx} from '../../rangeSelectorTsx';
 
@@ -29,9 +29,8 @@ const TOOL_CONTROL_CONFIGS = [{
   value: BrushStyle.neon
 }, {
   label: i18n('ImageEditor.DrawControl.Blur'),
-  image: PEN_TOOL_SVG,
-  value: BrushStyle.blur,
-  skip: true
+  image: BLUR_TOOL_SVG,
+  value: BrushStyle.blur
 }, {
   label: i18n('ImageEditor.DrawControl.Eraser'),
   image: ERASER_TOOL_SVG,
@@ -60,11 +59,7 @@ export function ImageDrawControl(props: ImageDrawControlProps): JSX.Element {
 
     switch(propertyType) {
       case DrawAttachmentProperty.color: {
-        newState.color = {
-          type: ColorFormatType.rgba,
-          value: anyColorToRgbaColor(value as Color)
-        };
-        (newState.color.value as ColorRgba)[3] = 0.1 * 255;
+        newState.color = value as Color;
         break;
       }
       case DrawAttachmentProperty.size: {
@@ -118,7 +113,7 @@ export function ImageDrawControl(props: ImageDrawControlProps): JSX.Element {
         <div class="tool-control__label">
           {i18n('ImageEditor.DrawControl.Tool')}
         </div>
-        <For each={TOOL_CONTROL_CONFIGS.filter(c => !c.skip)}>
+        <For each={TOOL_CONTROL_CONFIGS}>
           {(config) => (
             <div class="tool-control__row">
               <RowTsx

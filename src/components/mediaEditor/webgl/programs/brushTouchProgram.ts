@@ -33,12 +33,12 @@ const BrushTouchProgramShaders = {
     varying vec2 v_center_point;
 
     void main() {
-      float diameter = a_properties[0];
-      float style = a_properties[1];
       float centerX = a_position[0];
       float centerY = a_position[1];
       float originalCenterX = centerX;
       float originalCenterY = centerY;
+      float diameter = a_properties[0];
+      float style = a_properties[1];
       float vertexQuadPosition = a_position[2];
       float radius = diameter / 2.0;
 
@@ -97,13 +97,12 @@ const BrushTouchProgramShaders = {
       vec2 resolution = vec2(u_width, u_height) / u_device_pixel_ratio;
       vec2 current_point = (gl_FragCoord.xy / resolution) - (0.5 * u_device_pixel_ratio);
       float distanceToCenter = distance(v_center_point, current_point);
-      float alpha = 0.5;
 
       if (distanceToCenter <= v_radius) {
         if (v_style == BRUSH_STYLE_ERASER) {
           gl_FragColor = vec4(0.0, 0.0, 0.0, 0);
         } else {
-         gl_FragColor = vec4(v_color.rgb, 0.5);
+         gl_FragColor = v_color;
         }
       } else {
        discard;
@@ -164,6 +163,7 @@ export class BrushTouchProgram extends BaseWebglProgram {
       name: 'framebuffer_texture',
       // Replace texture with a new instance but use the same texture index
       textureIndex: this.framebufferTexture?.index,
+      // premultiplyAlpha: true,
       width,
       height,
       pixels: null,
@@ -178,6 +178,10 @@ export class BrushTouchProgram extends BaseWebglProgram {
 
   resetFramebuffer(width: number, height: number) {
     this.setupFramebuffer(width, height);
+  }
+
+  clearFramebuffer() {
+    this.framebuffer.clear([1, 1, 1, 0]);
   }
 
   draw(drawTouchesObject: BrushTouchDrawObject): void {

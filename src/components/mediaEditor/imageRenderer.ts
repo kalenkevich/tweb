@@ -1,4 +1,4 @@
-import {ImageState, ObjectLayerType} from './types';
+import {BrushTouch, ImageState, ObjectLayerType} from './types';
 
 export interface ImageRendererOptions {
   compileMode?: boolean;
@@ -7,6 +7,7 @@ export interface ImageRendererOptions {
 export interface RenderOptions {
   render?: boolean;
   layers?: ObjectLayerType[] | 'all';
+  clearBrushProgramFramebuffer?: boolean;
 }
 
 export const DEFAULT_RENDER_OPTIONS: RenderOptions = {
@@ -28,6 +29,8 @@ export interface ImageRenderer {
   resize(width: number, height: number): void;
 
   render(imageState: ImageState, options?: RenderOptions): void;
+
+  renderBrushTouch(imageState: ImageState, brushTouch: BrushTouch, options?: RenderOptions): void;
 
   compileImage(imageState: ImageState, options?: RenderOptions): Promise<Uint8Array>
 }

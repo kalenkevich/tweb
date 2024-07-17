@@ -1,4 +1,4 @@
-import {createEffect, createSignal, on, batch} from 'solid-js';
+import {createEffect, createSignal, on, batch, onCleanup} from 'solid-js';
 import rootScope from '../../lib/rootScope';
 import LazyLoadQueue from '../lazyLoadQueue';
 import SuperStickerRenderer from '../emoticonsDropdown/tabs/SuperStickerRenderer';
@@ -39,13 +39,17 @@ export function ImageEditor(props: MediaEditorProps) {
     group: 'MEDIA-EDITOR',
     managers: rootScope.managers
   }));
-  const [imageEditorManager] = createSignal(new ImageEditorManager(stickerRenderer()));
+  const [imageEditorManager] = createSignal(new ImageEditorManager(stickerRenderer(), createImageState(props.imgSource)));
   const [imageState, setImageState] = createSignal(createImageState(props.imgSource));
   const [canRedo, setCanRedu] = createSignal(false);
   const [canUndo, setCanUndo] = createSignal(false);
   const [layersToRender, setLayersToRender] = createSignal([ObjectLayerType.backgroundImage]);
   const [currentLayerIndex, setCurrentLayerIndex] = createSignal(-1);
   const [selectedTabId, setSelectedTabId] = createSignal(TABS_CONFIG[0].tabId);
+
+  onCleanup(() => {
+    imageEditorManager().destroy();
+  });
 
   createEffect(on(() => [props.imgSource], () => {
     const newImageState = createImageState(props.imgSource);
@@ -59,9 +63,9 @@ export function ImageEditor(props: MediaEditorProps) {
   });
 
   const onCanvasMounted = async(canvas: HTMLCanvasElement) => {
-    imageEditorManager().init(canvas, imageState());
+    imageEditorManager().init(canvas);
 
-    const state = imageState();
+    const state = imageEditorManager().getCurrentImageState();
     const scale = fitImageIntoCanvas(
       ScaleMode.contain,
       state.originalWidth,
@@ -72,9 +76,9 @@ export function ImageEditor(props: MediaEditorProps) {
     );
 
     // Move to center and fit the image
-    imageEditorManager().origin(-(state.originalWidth / 2), -(state.originalHeight / 2), false);
-    imageEditorManager().moveTo(canvas.width / 2, canvas.height / 2, false);
-    const newState = imageEditorManager().resize(scale[0], scale[1], false, {render: true, layers: layersToRender()});
+    imageEditorManager().origin(-state.originalWidth / 2, -state.originalHeight / 2, false);
+    const newState = imageEditorManager().moveTo(canvas.width / 2, canvas.height / 2, false);
+    // const newState = imageEditorManager().resize(scale[0], scale[1], false, {render: true, layers: layersToRender()});
 
     setImageState(newState);
   };
@@ -82,7 +86,7 @@ export function ImageEditor(props: MediaEditorProps) {
   const onCanvasResized = (canvasWidth: number, canvasHeight: number) => {
     imageEditorManager().resizeCanvas(canvasWidth, canvasHeight);
 
-    const state = imageState();
+    const state = imageEditorManager().getCurrentImageState();
     const canvas = imageEditorManager().getCanvas();
     const [scaleX, scaleY] = fitImageIntoCanvas(
       ScaleMode.contain,
@@ -94,9 +98,11 @@ export function ImageEditor(props: MediaEditorProps) {
     );
 
     // Move to center and fit the image
-    imageEditorManager().origin(-(state.originalWidth / 2), -(state.originalHeight / 2), false, {render: true, layers: layersToRender()});
-    imageEditorManager().moveTo(canvas.width / 2, canvas.height / 2, false, {render: true, layers: layersToRender()});
-    imageEditorManager().resize(scaleX, scaleY, false, {render: true, layers: layersToRender()});
+    imageEditorManager().origin(-state.originalWidth / 2, -state.originalHeight / 2, false, {render: true, layers: layersToRender()});
+    const newState = imageEditorManager().moveTo(canvas.width / 2, canvas.height / 2, false, {render: true, layers: layersToRender()});
+    // imageEditorManager().resize(scaleX, scaleY, false, {render: true, layers: layersToRender()});
+
+    setImageState(newState);
   };
 
   const handleChangeEvent = (event: ImageChangeEvent): ImageState => {
@@ -173,10 +179,11 @@ export function ImageEditor(props: MediaEditorProps) {
         return newState;
       }
       case ImageChangeType.drawLayer: {
+        const state = imageEditorManager().getCurrentImageState();
         const newState: ImageState = {
-          ...imageState(),
+          ...state,
           drawLayer: {
-            ...imageState().drawLayer,
+            ...state.drawLayer,
             ...event.layer
           }
         };
@@ -185,7 +192,7 @@ export function ImageEditor(props: MediaEditorProps) {
         return newState;
       }
       case ImageChangeType.drawTouch: {
-        const state = imageState();
+        const state = imageEditorManager().getCurrentImageState();
         const newTouch = {
           x: event.touchX,
           y: event.touchY,
@@ -193,16 +200,8 @@ export function ImageEditor(props: MediaEditorProps) {
           style: state.drawLayer.style,
           size: state.drawLayer.size
         };
-        const newState: ImageState = {
-          ...state,
-          drawLayer: {
-            ...state.drawLayer,
-            touches: [...state.drawLayer.touches, newTouch]
-          }
-        };
-        imageEditorManager().pushState(newState, {render: true, layers: layersToRender()});
 
-        return newState;
+        return imageEditorManager().brushTouch(newTouch, {render: true, layers: layersToRender()});
       }
     }
   };
@@ -210,9 +209,11 @@ export function ImageEditor(props: MediaEditorProps) {
   const onImageChange = (imageChangeEvent: ImageChangeEvent) => {
     const newState = handleChangeEvent(imageChangeEvent);
 
-    setImageState(newState);
-    setCanUndo(imageEditorManager().canUndo());
-    setCanRedu(imageEditorManager().canRedo());
+    batch(() => {
+      setImageState(newState);
+      setCanUndo(imageEditorManager().canUndo());
+      setCanRedu(imageEditorManager().canRedo());
+    });
   };
 
   const handleClose = () => {
@@ -228,40 +229,47 @@ export function ImageEditor(props: MediaEditorProps) {
 
   const handleUndo = () => {
     const newState = imageEditorManager().undo();
-    setImageState(newState);
-    setCanUndo(imageEditorManager().canUndo());
-    setCanRedu(imageEditorManager().canRedo());
+
+    batch(() => {
+      setImageState(newState);
+      setCanUndo(imageEditorManager().canUndo());
+      setCanRedu(imageEditorManager().canRedo());
+    });
   };
 
   const handleRedo = () => {
     const newState = imageEditorManager().redo();
-    setImageState(newState);
-    setCanUndo(imageEditorManager().canUndo());
-    setCanRedu(imageEditorManager().canRedo());
+
+    batch(() => {
+      setImageState(newState);
+      setCanUndo(imageEditorManager().canUndo());
+      setCanRedu(imageEditorManager().canRedo());
+    });
   };
 
   const onActiveLayerChange = (layer?: ObjectLayer) => {
     if(!layer) {
       setCurrentLayerIndex(-1);
-    } else {
-      const index = imageState().layers.findIndex(l => l === layer);
-
-      if(layer.type === ObjectLayerType.text) {
-        setSelectedTabId(TabType.TEXT);
-      } else if(layer.type === ObjectLayerType.sticker) {
-        setSelectedTabId(TabType.STICKER);
-      }
-
-      setCurrentLayerIndex(index);
+      return;
     }
+
+    const index = imageEditorManager().getCurrentImageState().layers.findIndex(l => l === layer);
+    if(layer.type === ObjectLayerType.text) {
+      setSelectedTabId(TabType.TEXT);
+    } else if(layer.type === ObjectLayerType.sticker) {
+      setSelectedTabId(TabType.STICKER);
+    }
+
+    setCurrentLayerIndex(index);
   };
 
   const handleTabSelection = (tabId: TabType) => {
+    const state = imageEditorManager().getCurrentImageState();
     let newActiveLayerIndex = -1;
-    let newState = imageState();
+    let newState = state;
 
     // remove all text layers if it was untouched
-    const currentLayers = [...imageState().layers];
+    const currentLayers = [...state.layers];
     for(const layer of currentLayers) {
       if(layer.type === ObjectLayerType.text && !layer.isDirty) {
         newState = handleChangeEvent({

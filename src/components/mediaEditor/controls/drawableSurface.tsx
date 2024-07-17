@@ -1,4 +1,4 @@
-import {createSignal, onMount, onCleanup, createEffect, on} from 'solid-js';
+import {createSignal, onMount, onCleanup, createEffect, on, Show} from 'solid-js';
 import {ImageChangeEvent, ImageState, ImageChangeType} from '../types';
 import {DraggingSurface, DragEventType, GrabEvent} from '../draggable/surface';
 import clamp from '../../../helpers/number/clamp';
@@ -7,59 +7,37 @@ import {anyColorToHexColor} from '../../../helpers/color';
 export interface DrawableSurfaceProps {
   surface: DraggingSurface;
   imageState: ImageState;
-  isActive: boolean;
+  // isActive: boolean;
   onImageChange: (imageChangeEvent: ImageChangeEvent) => void;
 }
 
 export function DrawableSurface(props: DrawableSurfaceProps) {
   const surface = () => props.surface;
-  const isActive = () => props.isActive;
   const brushColor = () => anyColorToHexColor(props.imageState.drawLayer.color);
   const brushSize = () => props.imageState.drawLayer.size;
   const [brushEl, setBrushEl] = createSignal<HTMLDivElement>();
 
   onMount(() => {
-    surface().subscribe(DragEventType.DragStart, onDragStart);
-    surface().subscribe(DragEventType.DragMove, onDragMove);
-    surface().subscribe(DragEventType.DragEnd, onDragEnd);
+    surface().subscribe(DragEventType.DragMove, emitTouchEvent);
     surface().element.addEventListener('mousemove', onMouseMove);
+    surface().element.addEventListener('mouseenter', setCursorStyle);
+    surface().element.addEventListener('mouseleave', restoreCursorStyle);
+    setupBrushStyle();
   });
 
   onCleanup(() => {
-    surface().unsubscribe(DragEventType.DragStart, onDragStart);
-    surface().unsubscribe(DragEventType.DragMove, onDragMove);
-    surface().unsubscribe(DragEventType.DragEnd, onDragEnd);
+    surface().unsubscribe(DragEventType.DragMove, emitTouchEvent);
     surface().element.removeEventListener('mousemove', onMouseMove);
+    surface().element.removeEventListener('mouseenter', setCursorStyle);
+    surface().element.removeEventListener('mouseleave', restoreCursorStyle);
   });
 
   createEffect(on(() => [
-    props.imageState.drawLayer.color,
+    props.imageState.drawLayer.color.value,
     props.imageState.drawLayer.size
-  ], () => {
-    updateBrushStyle();
-  }));
+  ], () => updateBrushStyle()));
 
-  const onDragStart = (e: GrabEvent) => {
-    if(!isActive()) {
-      return;
-    }
-
-    // emitTouchEvent(e);
-  };
-
-  const onDragMove = (e: GrabEvent) => {
-    if(!isActive()) {
-      return;
-    }
-
-    emitTouchEvent(e);
-  };
-
-  const onDragEnd = (e: GrabEvent) => {
-    if(!isActive()) {
-      return;
-    }
-  };
+  // createEffect(on(() => props.isActive, () => setupBrushStyle()));
 
   const onMouseMove = (e: MouseEvent) => {
     const rootRect = surface().element.getBoundingClientRect();
@@ -70,6 +48,10 @@ export function DrawableSurface(props: DrawableSurfaceProps) {
   };
 
   const emitTouchEvent = (e: GrabEvent) => {
+    // if(!isActive()) {
+    //   return;
+    // }
+
     const rootRect = surface().element.getBoundingClientRect();
     const touchX = clamp(e.x - rootRect.left, 0, rootRect.width);
     const touchY = clamp(e.y - rootRect.top, 0, rootRect.height);
@@ -83,11 +65,13 @@ export function DrawableSurface(props: DrawableSurfaceProps) {
     });
   };
 
-  const updateBrushStyle = () => {
+  const setupBrushStyle = () => {
+    // if(!isActive()) {
+    //   return;
+    // }
     const el = brushEl();
+
     el.style.position = 'absolute';
-    el.style.top = '0px';
-    el.style.left = '0px';
     el.style.display = 'block';
     el.style.width = `${brushSize()}px`;
     el.style.height = `${brushSize()}px`;
@@ -96,16 +80,51 @@ export function DrawableSurface(props: DrawableSurfaceProps) {
     el.style.border = `1px solid #000000`;
   };
 
+  const updateBrushStyle = () => {
+    // if(!isActive()) {
+    //   return;
+    // }
+
+    const el = brushEl();
+    el.style.width = `${brushSize()}px`;
+    el.style.height = `${brushSize()}px`;
+    el.style.backgroundColor = brushColor();
+  };
+
   const updateBrushPos = (x: number, y: number) => {
+    // if(!isActive()) {
+    //   return;
+    // }
+
     const el = brushEl();
     const halfSize = brushSize() / 2;
+    el.style.display = 'block';
     el.style.left = `${x - halfSize}px`;
     el.style.top = `${y - halfSize}px`;
   };
 
+  const setCursorStyle = () => {
+    const el = brushEl();
+    if(el) {
+      el.style.cursor = 'none';
+      document.documentElement.style.cursor = 'none';
+    }
+  };
+
+  const restoreCursorStyle = () => {
+    const el = brushEl();
+    if(el) {
+      el.style.display = 'none';
+    }
+
+    document.documentElement.style.cursor = 'auto';
+  };
+
   return (
+    // <Show when={isActive()}>
     <div ref={el => setBrushEl(el)}
       class="drawable-surface__brush">
     </div>
+    // </Show>
   );
 }

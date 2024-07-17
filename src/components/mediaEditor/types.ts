@@ -77,7 +77,7 @@ export interface TextLayer {
   texture?: ImageElementTextureSource;
 }
 
-export interface DrawTouch {
+export interface BrushTouch {
   color: Color;
   size: number; // radius
   style: BrushStyle;
@@ -88,12 +88,11 @@ export interface DrawTouch {
 export interface DrawLayer {
   id: number;
   type: ObjectLayerType.draw;
-  isDirty: boolean;
   zIndex: number;
   color: Color;
   size: number; // radius
   style: BrushStyle;
-  touches: DrawTouch[];
+  touches: BrushTouch[];
   texture?: ImageElementTextureSource;
 }
 

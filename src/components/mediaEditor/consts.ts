@@ -87,7 +87,6 @@ export const DEFAULT_TEXT_LAYER: TextLayer = {
 export const DEFAULT_DRAW_LAYER: DrawLayer = {
   id: 0,
   type: ObjectLayerType.draw,
-  isDirty: false,
   zIndex: 0,
   color: QUCIK_PALLETE_COLORS[0],
   size: 15,
