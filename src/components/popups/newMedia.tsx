@@ -850,14 +850,20 @@ export default class PopupNewMedia extends PopupElement {
             image.src = imageUrl;
           });
 
+          this.messageInputField.input.blur();
+          this.btnConfirm.setAttribute('disabled', 'disabled');
           wholeDialogManager.show(({hide}: ContentRenderProps) => (
             <ImageEditor
               imgSource={image}
               onSave={(resultImage) => {
                 // apply image instead.
                 hide();
+                this.btnConfirm.removeAttribute('disabled');
               }}
-              onClose={() => hide()}
+              onClose={() => {
+                hide();
+                this.btnConfirm.removeAttribute('disabled');
+              }}
             />
           ));
         }

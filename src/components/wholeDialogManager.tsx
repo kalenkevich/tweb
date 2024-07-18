@@ -31,30 +31,13 @@ export class WholeDialogManagerTsx {
   show(renderFn: (renderProps: ContentRenderProps) => JSX.Element) {
     render(() => {
       onMount(() => {
-        // TODO: investigate why it is not working
         this.overlayEl?.focus();
       });
 
       return (
         <div class="whole-dialog-manager__overlay"
-          tabindex="1"
+          tabindex="0"
           ref={this.overlayEl}
-          onClick={(e) => {
-            e.stopImmediatePropagation();
-            this.hide();
-          }}
-          onKeyPress={(e: KeyboardEvent) => {
-            e.stopImmediatePropagation();
-          }}
-          onKeyUp={(e: KeyboardEvent) => {
-            e.stopImmediatePropagation();
-          }}
-          onKeyDown={(e: KeyboardEvent) => {
-            e.stopImmediatePropagation();
-            if(e.key === 'Escape') {
-              this.hide();
-            }
-          }}
         >
           <div class="whole-dialog-manager__content" ref={this.contentEl}>
             <div class="whole-dialog-manager__content-wrapper"
