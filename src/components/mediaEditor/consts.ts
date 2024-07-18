@@ -57,7 +57,7 @@ export const DEFAULT_TEXT_LAYER: TextLayer = {
   id: 0,
   type: ObjectLayerType.text,
   isDirty: false,
-  zIndex: 0,
+  zIndex: 1,
   text: '',
   fontName: 'Roboto',
   fontSize: 24,
@@ -97,7 +97,7 @@ export const DEFAULT_DRAW_LAYER: DrawLayer = {
 export const DEFAULT_STICKER_LAYER: StickerLayer = {
   id: 0,
   type: ObjectLayerType.sticker,
-  zIndex: 0,
+  zIndex: 2,
   stickerId: '',
   width: 0,
   height: 0,
@@ -140,4 +140,13 @@ export const NEON_BRUSH_BORDER_COLOR: Color = {
   value: [255, 255, 255, 255]
 };
 
+export const TRANPARENT_COLOR: Color = {
+  type: ColorFormatType.rgba,
+  value: [0, 0, 0, 0]
+};
+
 export const NEON_BRUSH_BORDER_WIDTH = 5;
+
+export const DRAGGABLE_OBJECT_TOP_BOTTOM_PADDING = 14;
+
+export const DRAGGABLE_OBJECT_TOP_LEFT_RIGHT = 6;

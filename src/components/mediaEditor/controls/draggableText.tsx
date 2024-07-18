@@ -1,6 +1,7 @@
-import {createSignal, createEffect, on, Show} from 'solid-js';
+import {createSignal, createEffect, on} from 'solid-js';
 import {i18n} from '../../../lib/langPack';
 import {ImageChangeType, TextLayer, AttachmentChangeAction, ImageChangeEvent} from '../types';
+import {DRAGGABLE_OBJECT_TOP_BOTTOM_PADDING, DRAGGABLE_OBJECT_TOP_LEFT_RIGHT} from '../consts';
 import {Draggable} from '../draggable/draggable';
 import {DraggingSurface} from '../draggable/surface';
 import {getTextLayerInputElementStyles} from '../helpers/textHelper';
@@ -90,6 +91,7 @@ export function DraggableText(props: DraggableTextProps) {
     >
       <div class="draggable-object draggable-text"
         classList={{'active': isActiveInternal()}}
+        style={{'padding': `${DRAGGABLE_OBJECT_TOP_BOTTOM_PADDING}px ${DRAGGABLE_OBJECT_TOP_LEFT_RIGHT}px`}}
         onMouseDown={onWrapperMouseDown}>
         <div class="draggable-object__remove-icon-wrapper" ref={el => setRemoveWrapperEl(el)}>
           <IconTsx class="draggable-object__remove-icon" icon="close"/>

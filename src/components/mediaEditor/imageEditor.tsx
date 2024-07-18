@@ -4,7 +4,7 @@ import LazyLoadQueue from '../lazyLoadQueue';
 import SuperStickerRenderer from '../emoticonsDropdown/tabs/SuperStickerRenderer';
 
 import {ImageChangeType, ImageChangeEvent, ImageSource, ImageState, ObjectLayer, AttachmentChangeAction, ObjectLayerType, BrushStyle, BrushTouch} from './types';
-import {DEFAULT_IMAGE_STATE, DEFAULT_TEXT_LAYER, NEON_BRUSH_BORDER_COLOR, NEON_BRUSH_BORDER_WIDTH} from './consts';
+import {DEFAULT_IMAGE_STATE, DEFAULT_TEXT_LAYER, NEON_BRUSH_BORDER_COLOR, NEON_BRUSH_BORDER_WIDTH, TRANPARENT_COLOR} from './consts';
 import {ImageEditorPreview} from './imageEditorPreview';
 import {ImageEditorTabs, TABS_CONFIG, TabType} from './imageEditorTabs';
 import {ImageEditorManager} from './imageEditorManager';
@@ -66,48 +66,20 @@ export function ImageEditor(props: MediaEditorProps) {
   const onCanvasMounted = async(canvas: HTMLCanvasElement) => {
     imageEditorManager().init(canvas);
 
-    const state = imageEditorManager().getCurrentImageState();
-    const scale = fitImageIntoCanvas(
-      ScaleMode.contain,
-      state.originalWidth,
-      state.originalHeight,
-      canvas.width,
-      canvas.height,
-      DEFAULT_IMAGE_STATE.aspectRatio
-    );
-
-    // Move to center and fit the image
-    imageEditorManager().origin(-state.originalWidth / 2, -state.originalHeight / 2, false);
-    const newState = imageEditorManager().moveTo(canvas.width / 2, canvas.height / 2, false);
-    // const newState = imageEditorManager().resize(scale[0], scale[1], false, {render: true, layers: layersToRender()});
-
-    setImageState(newState);
+    onContainerResized(canvas.width, canvas.height);
   };
 
-  const onCanvasResized = (canvasWidth: number, canvasHeight: number) => {
+  const onContainerResized = (canvasWidth: number, canvasHeight: number) => {
     imageEditorManager().resizeCanvas(canvasWidth, canvasHeight);
-
-    const state = imageEditorManager().getCurrentImageState();
-    const canvas = imageEditorManager().getCanvas();
-    const [scaleX, scaleY] = fitImageIntoCanvas(
-      ScaleMode.contain,
-      state.originalWidth,
-      state.originalHeight,
-      canvas.width,
-      canvas.height,
-      state.aspectRatio
-    );
-
-    // Move to center and fit the image
-    imageEditorManager().origin(-state.originalWidth / 2, -state.originalHeight / 2, false, {render: true, layers: layersToRender()});
-    const newState = imageEditorManager().moveTo(canvas.width / 2, canvas.height / 2, false, {render: true, layers: layersToRender()});
-    // imageEditorManager().resize(scaleX, scaleY, false, {render: true, layers: layersToRender()});
+    imageEditorManager().origin(-canvasWidth / 2, -canvasHeight / 2, false, {render: false});
+    const newState = imageEditorManager().moveTo((canvasWidth / 2), (canvasHeight / 2), false, {render: true, layers: layersToRender()});
 
     setImageState(newState);
   };
 
   const handleChangeEvent = (event: ImageChangeEvent): ImageState => {
     const state = imageEditorManager().getCurrentImageState();
+
     switch(event.type) {
       case ImageChangeType.filter: {
         return imageEditorManager().filter(event.value, {render: true, layers: layersToRender()});
@@ -215,6 +187,9 @@ export function ImageEditor(props: MediaEditorProps) {
         if(state.drawLayer.style === BrushStyle.neon) {
           newTouch.color = NEON_BRUSH_BORDER_COLOR;
           newTouch.borderColor = {...state.drawLayer.color};
+        }
+        if(state.drawLayer.style === BrushStyle.eraser) {
+          newTouch.color = TRANPARENT_COLOR;
         }
 
         return imageEditorManager().brushTouch(newTouch, {render: true, layers: layersToRender()});
@@ -329,7 +304,7 @@ export function ImageEditor(props: MediaEditorProps) {
         selectedTabId={selectedTabId()}
         stickerRenderer={stickerRenderer()}
         onCanvasMounted={onCanvasMounted}
-        onCanvasResized={onCanvasResized}
+        onContainerResized={onContainerResized}
         onImageChange={onImageChange}
         onActiveLayerChange={onActiveLayerChange}
       />

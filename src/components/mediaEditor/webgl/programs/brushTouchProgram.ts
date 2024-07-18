@@ -36,14 +36,16 @@ const BrushTouchProgramShaders = {
     varying vec2 v_center_point;
 
     void main() {
+      vec2 resolution = vec2(u_width, u_height);
       float centerX = a_position[0];
       float centerY = a_position[1];
       float vertexQuadPosition = a_position[2];
       float originalCenterX = centerX;
       float originalCenterY = centerY;
-      float radius = a_properties[0];
+      float diameter = a_properties[0];
       float style = a_properties[1];
       float border_width = a_properties[2];
+      float radius = diameter / 2.0;
 
       if (vertexQuadPosition == VERTEX_QUAD_POSITION_TOP_LEFT) {
         centerX -= radius;
@@ -58,20 +60,13 @@ const BrushTouchProgramShaders = {
         centerX += radius;
         centerY -= radius;
       }
-
-      vec2 resolution = vec2(u_width, u_height);
+      
       vec2 coords = (u_matrix * vec3(centerX, centerY, 1)).xy;
       vec2 scaled = coords / resolution;
       vec2 clipped = clipSpace(scaled);
 
-      vec2 centerCoords = (u_matrix * vec3(originalCenterX, originalCenterY, 1)).xy;
-      vec2 centerScaled = centerCoords / resolution;
-      vec2 centerClipped = clipSpace(centerScaled);
-
-      float radiusScaled = radius / u_width;
-
-      v_center_point = centerClipped;
-      v_radius = radiusScaled;
+      v_center_point = vec2(originalCenterX, originalCenterY);
+      v_radius = radius;
       v_style = style;
       v_border_width = border_width;
       v_color = a_color;
@@ -101,18 +96,26 @@ const BrushTouchProgramShaders = {
     varying vec2 v_center_point;
 
     void main() {
-      vec2 resolution = vec2(u_width, u_height) / u_device_pixel_ratio;
-      vec2 current_point = (gl_FragCoord.xy / resolution) - (0.5 * u_device_pixel_ratio);
-      float distanceToCenter = distance(v_center_point, current_point);
-
-      if (distanceToCenter <= v_radius) {
-        if (v_style == BRUSH_STYLE_ERASER) {
-          gl_FragColor = vec4(0.0, 0.0, 0.0, 0);
-        } else {
-         gl_FragColor = v_color;
-        }
+      vec2 resolution = vec2(u_width, u_height);
+      vec2 center_point = vec2(v_center_point.x, resolution.y - v_center_point.y - 1.0) / resolution.xy;
+      vec2 current_point = gl_FragCoord.xy / resolution;
+      vec2 dist = center_point - current_point;
+      float scaleX = 1.0;
+      float scaleY = 1.0;
+      if (u_width > u_height) {
+        scaleX = u_width / u_height;
       } else {
-       discard;
+        scaleY = u_height / u_width;
+      }
+      dist.x *= scaleX;
+      dist.y *= scaleY;
+      float distance = length(dist);
+      float radius = v_radius / u_width;
+
+      if(distance <= radius) {
+        gl_FragColor = v_color;
+      } else {
+        discard;
       }
     }
   `
@@ -180,7 +183,7 @@ export class BrushTouchProgram extends BaseWebglProgram {
       wrapT: gl.CLAMP_TO_EDGE
     });
     this.framebuffer = createFrameBuffer(gl, {texture: this.framebufferTexture});
-    this.framebuffer.clear([1, 1, 1, 0]);
+    this.clearFramebuffer();
   }
 
   resetFramebuffer(width: number, height: number) {

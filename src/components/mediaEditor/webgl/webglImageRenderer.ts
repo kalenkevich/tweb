@@ -79,8 +79,8 @@ export class WebglImageRenderer implements ImageRenderer {
   }
 
   public resize(width: number, height: number) {
-    this.canvas.width = width * this.devicePixelRatio;
-    this.canvas.height = height * this.devicePixelRatio;
+    this.canvas.width = width;
+    this.canvas.height = height;
 
     if(!this.inited) {
       return;
@@ -116,7 +116,7 @@ export class WebglImageRenderer implements ImageRenderer {
     const renderAllLayers = options?.layers === 'all';
     const renderBackgroundLayer = renderAllLayers || (options?.layers || []).includes(ObjectLayerType.backgroundImage);
     const imageMatrix = getProjectionViewMatrix(imageState);
-    const imageDrawObject = toImageDrawObject(imageState);
+    const imageDrawObject = toImageDrawObject(imageState, this.canvas);
 
     if(!renderBackgroundLayer) {
       return;
@@ -189,7 +189,7 @@ export class WebglImageRenderer implements ImageRenderer {
         continue;
       }
       const objectLayerMatrix = getProjectionViewMatrix(object);
-      const imageDrawObject = toImageDrawObject(object);
+      const imageDrawObject = toImageDrawObject(object, this.canvas);
 
       this.imageProgram.setMatrix(objectLayerMatrix);
       this.imageProgram.draw(imageDrawObject);
@@ -218,10 +218,11 @@ export interface ProjectionProperties {
   origin: [number, number];
 }
 export function getProjectionViewMatrix(state: ProjectionProperties): Matrix3 {
-  const translationMatrix = translateMatrix3(createMatrix3(), state.translation);
+  const ratio = window.devicePixelRatio;
+  const translationMatrix = translateMatrix3(createMatrix3(), [state.translation[0], state.translation[1]]);
   const rotationMatrix = rotateMatrix3(createMatrix3(), degreesToRadians(state.rotation));
   const scaleMatrix = scaleMatrix3(createMatrix3(), state.scale);
-  const originMatrix = translateMatrix3(createMatrix3(), state.origin);
+  const originMatrix = translateMatrix3(createMatrix3(), [state.origin[0], state.origin[1]]);
 
   return multiplyMatrix3(
     multiplyMatrix3(

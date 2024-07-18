@@ -65,3 +65,32 @@ export const fitImageIntoCanvas = (
 
   return imageScale;
 };
+
+export const fitImageIntoElement = (
+  imageWidth: number,
+  imageHeight: number,
+  elWidth: number,
+  elHeight: number
+): [number, number] => {
+  if(imageWidth <= elWidth && imageHeight > elHeight) {
+    const aspect = elHeight / imageHeight;
+
+    return [imageWidth * aspect, imageHeight * aspect];
+  }
+
+  if(imageWidth > elWidth && imageHeight <= elHeight) {
+    const aspect = elWidth / imageWidth;
+
+    return [imageWidth * aspect, imageHeight * aspect];
+  }
+
+  if(imageWidth > elWidth && imageHeight > elHeight) {
+    const aspectW = elWidth / imageWidth;
+    const aspectH = elHeight / imageHeight;
+    const aspect = Math.min(aspectW, aspectH);
+
+    return [imageWidth * aspect, imageHeight * aspect];
+  }
+
+  return [imageWidth, imageHeight];
+};

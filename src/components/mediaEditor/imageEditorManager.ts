@@ -1,5 +1,5 @@
-import {ImageState, ImageFilterState, TextLayer, ObjectLayerType, BrushTouch} from './types';
-import {DEFAULT_IMAGE_STATE} from './consts';
+import {ImageState, ImageFilterState, ObjectLayerType, BrushTouch, ObjectLayer} from './types';
+import {DEFAULT_IMAGE_STATE, DRAGGABLE_OBJECT_TOP_BOTTOM_PADDING, DRAGGABLE_OBJECT_TOP_LEFT_RIGHT} from './consts';
 import {ImageRenderer, RenderOptions, DEFAULT_RENDER_OPTIONS} from './imageRenderer';
 import {WebglImageRenderer} from './webgl/webglImageRenderer';
 import {RenderQueue} from './helpers/renderQueue';
@@ -31,11 +31,11 @@ export class ImageEditorManager {
   }
 
   init(canvas: HTMLCanvasElement) {
+    const state = this.getCurrentImageState();
     this.canvas = canvas;
-    this.shadowCanvas.width = canvas.width;
-    this.shadowCanvas.height = canvas.height;
     this.renderer.init(canvas);
     this.compiler.init(this.shadowCanvas, {compileMode: true});
+    this.compiler.resize(state.originalWidth, state.originalHeight);
 
     this.ready = true;
   }
@@ -46,7 +46,6 @@ export class ImageEditorManager {
 
   resizeCanvas(width: number, height: number, rerenderOptions?: RenderOptions) {
     this.renderer.resize(width, height);
-    this.compiler.resize(width, height);
     this.rerender(this.getCurrentImageState(), rerenderOptions);
   }
 
@@ -67,9 +66,25 @@ export class ImageEditorManager {
       if(layer.type === ObjectLayerType.text && !!layer.text) {
         promises.push(renderTextLayer(layer.text, layer).then(texture => {
           layer.texture = texture;
-          layer.width = layer.texture.width;
-          layer.height = layer.texture.height;
-          layer.origin = [-(texture.width / 2) / window.devicePixelRatio, -(texture.height / 2) / window.devicePixelRatio];
+          const halfWidth = (texture.width) / 2;
+          const halfHeight = (texture.height) / 2;
+          const scaleX = state.originalWidth / this.canvas.width;
+          const scaleY = state.originalHeight / this.canvas.height;
+
+          return {
+            ...layer,
+            width: texture.width,
+            height: texture.height,
+            translation: [
+              (layer.translation[0] + (window.devicePixelRatio === 2 ? DRAGGABLE_OBJECT_TOP_LEFT_RIGHT : 0)) * scaleX,
+              (layer.translation[1] + (window.devicePixelRatio === 2 ? DRAGGABLE_OBJECT_TOP_BOTTOM_PADDING : 0)) * scaleY
+            ] as [number, number],
+            origin:[
+              -halfWidth / window.devicePixelRatio,
+              -halfHeight / window.devicePixelRatio
+            ] as [number, number],
+            scale: [scaleX, scaleY] as [number, number]
+          };
         }));
       } else if(layer.type === ObjectLayerType.sticker) {
         promises.push(
@@ -82,14 +97,33 @@ export class ImageEditorManager {
             })
             const texture = createImageElementTextureSource(el.children[0] as HTMLImageElement);
             layer.texture = texture;
-            layer.origin = [-(layer.width / 2) / window.devicePixelRatio, -(layer.height / 2) / window.devicePixelRatio];
+            const halfWidth = (texture.width) / 2;
+            const halfHeight = (texture.height) / 2;
+            const scaleX = state.originalWidth / this.canvas.width;
+            const scaleY = state.originalHeight / this.canvas.height;
+
+            return {
+              ...layer,
+              width: texture.width,
+              height: texture.height,
+              translation: [
+                (layer.translation[0] + (window.devicePixelRatio === 2 ? DRAGGABLE_OBJECT_TOP_LEFT_RIGHT : 0)) * scaleX,
+                (layer.translation[1] + (window.devicePixelRatio === 2 ? DRAGGABLE_OBJECT_TOP_BOTTOM_PADDING : 0)) * scaleY
+              ] as [number, number],
+              origin:[
+                -halfWidth / window.devicePixelRatio,
+                -halfHeight / window.devicePixelRatio
+              ] as [number, number],
+              scale: [scaleX, scaleY] as [number, number]
+            };
           })
         );
       }
     }
-    await Promise.all(promises);
+    const preparedLayers: ObjectLayer[] = await Promise.all(promises);
+    preparedLayers.sort((l1, l2) => l1.zIndex - l2.zIndex);
 
-    return this.compiler.compileImage(state, renderOptions);
+    return this.compiler.compileImage({...state, layers: preparedLayers}, renderOptions);
   }
 
   canUndo(): boolean {

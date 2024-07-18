@@ -1,6 +1,5 @@
 import {CompatibleWebGLRenderingContext} from '../webglContext';
 import {WebGlUniform, createWebGlUniform} from '../helpers/webglUniform';
-import {WebGlBuffer, createWebGlBuffer} from '../helpers/webglBuffer';
 import {DrawObject} from '../drawObject/drawObject';
 import {createProgram} from '../helpers/webglProgram';
 

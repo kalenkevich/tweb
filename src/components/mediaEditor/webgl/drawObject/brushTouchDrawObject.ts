@@ -22,22 +22,25 @@ export function toBrushTouchDrawObject(touches: BrushTouch[]): BrushTouchDrawObj
     const touch = touches[i];
     const borderColorRgba = anyColorToRgbaColor(touch.borderColor).map(v => v / 255);
     const colorRgba = anyColorToRgbaColor(touch.color).map(v => v / 255);
+    const x = touch.x * ratio;
+    const y = touch.y * ratio;
+    const diameter = touch.size * ratio;
 
     positionBuffer.push(
-      touch.x * ratio, touch.y * ratio, VERTEX_QUAD_POSITION.TOP_LEFT,
-      touch.x * ratio, touch.y * ratio, VERTEX_QUAD_POSITION.TOP_RIGHT,
-      touch.x * ratio, touch.y * ratio, VERTEX_QUAD_POSITION.BOTTOM_LEFT,
-      touch.x * ratio, touch.y * ratio, VERTEX_QUAD_POSITION.BOTTOM_LEFT,
-      touch.x * ratio, touch.y * ratio, VERTEX_QUAD_POSITION.TOP_RIGHT,
-      touch.x * ratio, touch.y * ratio, VERTEX_QUAD_POSITION.BOTTOM_RIGHT
+      x, y, VERTEX_QUAD_POSITION.TOP_LEFT,
+      x, y, VERTEX_QUAD_POSITION.TOP_RIGHT,
+      x, y, VERTEX_QUAD_POSITION.BOTTOM_LEFT,
+      x, y, VERTEX_QUAD_POSITION.BOTTOM_LEFT,
+      x, y, VERTEX_QUAD_POSITION.TOP_RIGHT,
+      x, y, VERTEX_QUAD_POSITION.BOTTOM_RIGHT
     );
     propertiesBuffer.push(
-      touch.size * ratio, touch.style, touch.borderWidth,
-      touch.size * ratio, touch.style, touch.borderWidth,
-      touch.size * ratio, touch.style, touch.borderWidth,
-      touch.size * ratio, touch.style, touch.borderWidth,
-      touch.size * ratio, touch.style, touch.borderWidth,
-      touch.size * ratio, touch.style, touch.borderWidth
+      diameter, touch.style, touch.borderWidth,
+      diameter, touch.style, touch.borderWidth,
+      diameter, touch.style, touch.borderWidth,
+      diameter, touch.style, touch.borderWidth,
+      diameter, touch.style, touch.borderWidth,
+      diameter, touch.style, touch.borderWidth
     );
     colorBuffer.push(
       ...colorRgba,
