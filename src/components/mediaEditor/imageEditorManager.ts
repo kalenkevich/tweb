@@ -291,6 +291,7 @@ export class ImageEditorManager {
         touches: [...state.drawLayer.touches, brushTouch]
       }
     });
+
     this.renderer.renderBrushTouch(newState, brushTouch, rerenderOptions);
 
     return newState;

@@ -78,6 +78,7 @@ export interface TextLayer {
 }
 
 export interface BrushTouch {
+  sequenceId: number;
   color: Color;
   size: number; // radius
   style: BrushStyle;
@@ -237,6 +238,6 @@ export interface DrawLayerChangeEvent {
 
 export interface DrawTouchEvent {
   type: ImageChangeType.drawTouch;
-  touchX: number;
-  touchY: number;
+  touch: {x: number; y: number} & Partial<BrushTouch>;
+  preventDrawingArrowCap?: boolean;
 }

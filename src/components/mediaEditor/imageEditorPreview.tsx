@@ -27,8 +27,6 @@ export function ImageEditorPreview(props: ImagePreviewProps): JSX.Element {
   const isResizeTabSelected = () => props.selectedTabId === TabType.RESIZE;
   const isDrawTabSelected = () => props.selectedTabId === TabType.DRAW;
   const showDraggableObjects = () => [TabType.TEXT, TabType.STICKER, TabType.DRAW].includes(props.selectedTabId);
-  const canvasWidth = () => canvasRef().width;
-  const canvasHeight = () => canvasRef().height;
 
   onMount(() => {
     fitCanvasIntoParent();

@@ -1,4 +1,4 @@
-import {createSignal, createEffect, on, onMount} from 'solid-js';
+import {createSignal, createEffect, on, onMount, onCleanup} from 'solid-js';
 import {ImageChangeType, StickerLayer, AttachmentChangeAction, ImageChangeEvent} from '../types';
 import {DRAGGABLE_OBJECT_TOP_BOTTOM_PADDING, DRAGGABLE_OBJECT_TOP_LEFT_RIGHT} from '../consts';
 import {Draggable} from '../draggable/draggable';
@@ -54,21 +54,41 @@ export function DraggableSticker(props: DraggableStickerProps) {
   const draggingModeEnabled = () => isActiveInternal();
   const layer = () => props.layer;
 
+  onMount(() => {
+    window.addEventListener('keyup', onKeyUp);
+  });
+
+  onCleanup(() => {
+    window.removeEventListener('keyup', onKeyUp);
+  });
+
   createEffect(on(() => props.isActive, (isActive) => {
     setActiveInternalState(isActive);
   }));
 
   const onWrapperMouseDown = (e: Event) => {
     if(e.target === removeWrapperEl()) {
-      props.onImageChange({
-        type: ImageChangeType.layer,
-        layer: layer(),
-        action: AttachmentChangeAction.delete
-      });
+      removeObject();
     } else {
       setActiveInternalState(true);
       props.onClick();
     }
+  };
+
+  const onKeyUp = (e: KeyboardEvent) => {
+    const isBackspaceKey = e.key === 'Backspace';
+
+    if(isBackspaceKey && isActiveInternal()) {
+      removeObject();
+    }
+  };
+
+  const removeObject = () => {
+    props.onImageChange({
+      type: ImageChangeType.layer,
+      layer: layer(),
+      action: AttachmentChangeAction.delete
+    });
   };
 
   return (
@@ -90,7 +110,6 @@ export function DraggableSticker(props: DraggableStickerProps) {
       }}>
       <div class="draggable-object draggable-sticker"
         classList={{'active': isActiveInternal()}}
-        style={{'padding': `${DRAGGABLE_OBJECT_TOP_BOTTOM_PADDING}px ${DRAGGABLE_OBJECT_TOP_LEFT_RIGHT}px`}}
         onMouseDown={onWrapperMouseDown}>
         <div class="draggable-object__remove-icon-wrapper" ref={el => setRemoveWrapperEl(el)}>
           <IconTsx class="draggable-object__remove-icon" icon="close"/>

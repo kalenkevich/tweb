@@ -63,9 +63,9 @@ export function Draggable(props: DraggableProps) {
 
     if(isDragging()) {
       moveHandler(pos.x, pos.y, false);
+      updateElement();
+      document.documentElement.style.cursor = elRef().style.cursor = 'grabbing';
     }
-    updateElement();
-    document.documentElement.style.cursor = elRef().style.cursor = 'grabbing';
   };
 
   const onDragEnd = (pos: GrabEvent) => {

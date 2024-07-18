@@ -53,8 +53,10 @@ export function DrawableSurface(props: DrawableSurfaceProps) {
 
     props.onImageChange({
       type: ImageChangeType.drawTouch,
-      touchX,
-      touchY
+      touch: {
+        x: touchX,
+        y: touchY
+      }
     });
   };
 

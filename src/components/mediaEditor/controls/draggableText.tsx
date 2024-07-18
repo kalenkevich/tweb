@@ -1,4 +1,4 @@
-import {createSignal, createEffect, on} from 'solid-js';
+import {createSignal, createEffect, on, onMount, onCleanup} from 'solid-js';
 import {i18n} from '../../../lib/langPack';
 import {ImageChangeType, TextLayer, AttachmentChangeAction, ImageChangeEvent} from '../types';
 import {DRAGGABLE_OBJECT_TOP_BOTTOM_PADDING, DRAGGABLE_OBJECT_TOP_LEFT_RIGHT} from '../consts';
@@ -23,6 +23,14 @@ export function DraggableText(props: DraggableTextProps) {
   const [removeWrapperEl, setRemoveWrapperEl] = createSignal<HTMLDivElement>();
   const layer = () => props.layer;
   const inputStyles = () => getTextLayerInputElementStyles(textValueInternal(), layer(), PLACEHOLDER);
+
+  onMount(() => {
+    window.addEventListener('keyup', onKeyUp);
+  });
+
+  onCleanup(() => {
+    window.removeEventListener('keyup', onKeyUp);
+  });
 
   createEffect(on(() => props.isActive, (isActive) => {
     if(isActive) {
@@ -60,15 +68,27 @@ export function DraggableText(props: DraggableTextProps) {
 
   const onWrapperMouseDown = (e: Event) => {
     if(e.target === removeWrapperEl()) {
-      props.onImageChange({
-        type: ImageChangeType.layer,
-        layer: layer(),
-        action: AttachmentChangeAction.delete
-      });
+      removeObject();
     } else {
       setActiveInternalState(true);
       props.onClick();
     }
+  };
+
+  const onKeyUp = (e: KeyboardEvent) => {
+    const isBackspaceKey = e.key === 'Backspace';
+
+    if(isBackspaceKey && isActiveInternal()) {
+      removeObject();
+    }
+  };
+
+  const removeObject = () => {
+    props.onImageChange({
+      type: ImageChangeType.layer,
+      layer: layer(),
+      action: AttachmentChangeAction.delete
+    });
   };
 
   return (
@@ -91,7 +111,6 @@ export function DraggableText(props: DraggableTextProps) {
     >
       <div class="draggable-object draggable-text"
         classList={{'active': isActiveInternal()}}
-        style={{'padding': `${DRAGGABLE_OBJECT_TOP_BOTTOM_PADDING}px ${DRAGGABLE_OBJECT_TOP_LEFT_RIGHT}px`}}
         onMouseDown={onWrapperMouseDown}>
         <div class="draggable-object__remove-icon-wrapper" ref={el => setRemoveWrapperEl(el)}>
           <IconTsx class="draggable-object__remove-icon" icon="close"/>

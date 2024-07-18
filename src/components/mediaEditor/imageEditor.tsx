@@ -4,7 +4,7 @@ import LazyLoadQueue from '../lazyLoadQueue';
 import SuperStickerRenderer from '../emoticonsDropdown/tabs/SuperStickerRenderer';
 
 import {ImageChangeType, ImageChangeEvent, ImageSource, ImageState, ObjectLayer, AttachmentChangeAction, ObjectLayerType, BrushStyle, BrushTouch} from './types';
-import {DEFAULT_IMAGE_STATE, DEFAULT_TEXT_LAYER, NEON_BRUSH_BORDER_COLOR, NEON_BRUSH_BORDER_WIDTH, TRANPARENT_COLOR} from './consts';
+import {DEFAULT_IMAGE_STATE, DEFAULT_TEXT_LAYER, NEON_BRUSH_BORDER_COLOR, NEON_BRUSH_BORDER_WIDTH, TRANPARENT_COLOR, DRAW_ARROW_CAP_AFTER_MS} from './consts';
 import {ImageEditorPreview} from './imageEditorPreview';
 import {ImageEditorTabs, TABS_CONFIG, TabType} from './imageEditorTabs';
 import {ImageEditorManager} from './imageEditorManager';
@@ -13,6 +13,8 @@ import {fitImageIntoCanvas, ScaleMode} from './helpers/aspectRatioHelper';
 import {createImageElementTextureSource} from './webgl/helpers/webglTexture';
 import {getLayerNextId, getRandomLayerStartPosition} from './helpers/layerHelper';
 import {anyColorToRgbaColor, ColorFormatType} from '../../helpers/color';
+import debounce from '../../helpers/schedulers/debounce';
+import {canDrawArrow, getArrowCapTouches} from './helpers/arrowBrushHelper';
 
 export function createImageState(source: ImageSource): ImageState {
   const texture = createImageElementTextureSource(source, source.width, source.height);
@@ -47,6 +49,7 @@ export function ImageEditor(props: MediaEditorProps) {
   const [layersToRender, setLayersToRender] = createSignal([ObjectLayerType.backgroundImage]);
   const [currentLayerIndex, setCurrentLayerIndex] = createSignal(-1);
   const [selectedTabId, setSelectedTabId] = createSignal(TABS_CONFIG[0].tabId);
+  const [currentBrushSequence, setCurrentBrushSequence] = createSignal(0);
 
   onCleanup(() => {
     imageEditorManager().destroy();
@@ -167,14 +170,17 @@ export function ImageEditor(props: MediaEditorProps) {
       case ImageChangeType.drawTouch: {
         const state = imageEditorManager().getCurrentImageState();
         const newTouch: BrushTouch = {
-          x: event.touchX,
-          y: event.touchY,
+          sequenceId: currentBrushSequence(),
           color: {...state.drawLayer.color},
           style: state.drawLayer.style,
           size: state.drawLayer.size,
           borderColor: NEON_BRUSH_BORDER_COLOR,
-          borderWidth: NEON_BRUSH_BORDER_WIDTH
+          borderWidth: NEON_BRUSH_BORDER_WIDTH,
+          ...event.touch
         };
+        if(state.drawLayer.style === BrushStyle.arrow && !event.preventDrawingArrowCap) {
+          drawArrowCapIfNeededDebounced();
+        }
         if(state.drawLayer.style === BrushStyle.brush) {
           const rgba = anyColorToRgbaColor(newTouch.color);
           newTouch.size *= 2;
@@ -191,11 +197,36 @@ export function ImageEditor(props: MediaEditorProps) {
         if(state.drawLayer.style === BrushStyle.eraser) {
           newTouch.color = TRANPARENT_COLOR;
         }
+        updateCurrentBrushSequenceBounced();
 
         return imageEditorManager().brushTouch(newTouch, {render: true, layers: layersToRender()});
       }
     }
   };
+
+  const drawArrowCapIfNeededDebounced = debounce(() => {
+    const state = imageEditorManager().getCurrentImageState();
+    const brushTouches = state.drawLayer.touches;
+    const shouldDrawArrow = canDrawArrow(brushTouches);
+
+    if(!shouldDrawArrow) {
+      return;
+    }
+
+    const arrowCapTouches = getArrowCapTouches(state.drawLayer, brushTouches);
+    for(const touch of arrowCapTouches) {
+      handleChangeEvent({
+        type: ImageChangeType.drawTouch,
+        touch,
+        // to not create an infinity loop of arrow cap drawings.
+        preventDrawingArrowCap: true
+      });
+    }
+  }, DRAW_ARROW_CAP_AFTER_MS, false, true);
+
+  const updateCurrentBrushSequenceBounced = debounce(() => {
+    setCurrentBrushSequence(v => v + 1);
+  }, DRAW_ARROW_CAP_AFTER_MS, false, true);
 
   const onImageChange = (imageChangeEvent: ImageChangeEvent) => {
     const newState = handleChangeEvent(imageChangeEvent);
