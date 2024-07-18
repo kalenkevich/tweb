@@ -16,6 +16,7 @@ export function ImageStickerControl(props: ImageStickerControlProps): JSX.Elemen
       customParentElement: ref(),
       tabsToRender: [new StickersTab(rootScope.managers)],
       stayAlwaysOpen: true,
+      fullHeight: true,
       onMount: (el) => {
         el.style.height = `${ref().offsetHeight}px`;
         el.style.maxHeight = `${ref().offsetHeight}px`;

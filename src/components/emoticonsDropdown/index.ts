@@ -45,6 +45,9 @@ import ButtonIcon from '../buttonIcon';
 import StickersTabCategory from './category';
 import {Middleware} from '../../helpers/middleware';
 
+const DROPDOWN_WIDTH = '23.875rem';
+const DROPDOWN_HEIGHT = '23.875rem';
+
 export const EMOTICONSSTICKERGROUP: AnimationItemGroup = 'emoticons-dropdown';
 
 export interface EmoticonsTab {
@@ -133,7 +136,8 @@ export class EmoticonsDropdown extends DropdownHover {
     customOnSelect?: (emoji: {element: HTMLElement} & ReturnType<typeof getEmojiFromElement>) => void,
     onMount?: (el: HTMLElement) => void,
     onMediaClicked?: (options: Parameters<ChatInput['sendMessageWithDocument']>[0]) => void,
-    stayAlwaysOpen?: boolean
+    stayAlwaysOpen?: boolean,
+    fullHeight?: boolean
   } = {}) {
     super({
       element: renderEmojiDropdownElement(),
@@ -145,7 +149,14 @@ export class EmoticonsDropdown extends DropdownHover {
 
     this.listenerSetter = new ListenerSetter();
     this.isStandalone = !!options?.tabsToRender;
-    this.element.classList.toggle('is-standalone', this.isStandalone)
+    this.element.classList.toggle('is-standalone', this.isStandalone);
+
+    this.element.style.setProperty('--width', DROPDOWN_WIDTH);
+    this.element.style.width = 'var(--width)';
+    if(!options.fullHeight) {
+      this.element.style.setProperty('--height', DROPDOWN_HEIGHT);
+      this.element.style.height = 'var(--height)';
+    }
 
     this.rights = {
       send_gifs: undefined,
