@@ -102,22 +102,27 @@ export function correctAngle(angle: number, direction: Direction): number {
   return angle;
 }
 
+export function distance(p1: [number, number], p2: [number, number]): number {
+  return Math.sqrt(Math.pow(p1[0] - p2[0], 2) + Math.pow(p1[1] - p2[1], 2));
+}
+
 export function getArrowCapTouches(drawLayer: DrawLayer, touches: BrushTouch[]): BrushTouch[] {
   const capTouches: BrushTouch[] = [];
   const lastTouch = touches[touches.length - 1];
   let index = touches.length - 2;
+  const step = drawLayer.size / 4;
+  const arrowCapWidth = step * ARROW_CAP_SIZE;
   while(
     index > 0 &&
     touches[index].sequenceId === lastTouch.sequenceId &&
-    touches[index].style === BrushStyle.arrow) {
+    touches[index].style === BrushStyle.arrow &&
+    distance([touches[index].x, touches[index].y], [lastTouch.x, lastTouch.y]) < arrowCapWidth) {
     index--;
   }
   const fistTouch = touches[++index];
-
   const angle = getAngleBetweenLines([fistTouch.x, fistTouch.y, lastTouch.x, lastTouch.y], [0, 0, 1, 0]);
   const direction = getDirection([fistTouch.x, fistTouch.y], [lastTouch.x, lastTouch.y]);
   const correctedAngle = correctAngle(angle, direction);
-  const step = drawLayer.size / 4;
 
   let currentTouch = {...lastTouch};
   for(let i = 0; i < ARROW_CAP_SIZE; i++) {
