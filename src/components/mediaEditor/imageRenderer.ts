@@ -32,5 +32,5 @@ export interface ImageRenderer {
 
   renderBrushTouch(imageState: ImageState, brushTouch: BrushTouch, options?: RenderOptions): void;
 
-  compileImage(imageState: ImageState, options?: RenderOptions): Promise<Uint8Array>
+  compileImage(imageState: ImageState, options?: RenderOptions): Promise<Blob>
 }

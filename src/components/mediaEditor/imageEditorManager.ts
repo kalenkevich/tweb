@@ -59,7 +59,7 @@ export class ImageEditorManager {
     resetTextureIndex();
   }
 
-  async compileImage(renderOptions: RenderOptions): Promise<Uint8Array> {
+  async compileImage(renderOptions: RenderOptions): Promise<Blob> {
     const state = this.getCurrentImageState();
     const promises = [];
     for(const layer of state.layers) {

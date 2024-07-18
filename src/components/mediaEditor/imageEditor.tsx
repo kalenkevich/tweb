@@ -33,7 +33,7 @@ export function createImageState(source: ImageSource): ImageState {
 export interface MediaEditorProps {
   imgSource: ImageSource;
   onClose: () => void;
-  onSave: (editedImage: ImageSource) => void;
+  onSave: (compiledImage: Blob) => void;
 }
 
 export function ImageEditor(props: MediaEditorProps) {
@@ -246,7 +246,7 @@ export function ImageEditor(props: MediaEditorProps) {
   const handleSave = async() => {
     const resultImage = await imageEditorManager().compileImage({render: true, layers: 'all'});
 
-    // props.onSave(resultImage);
+    props.onSave(resultImage);
   };
 
   const handleUndo = () => {

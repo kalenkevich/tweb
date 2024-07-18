@@ -198,14 +198,14 @@ export class WebglImageRenderer implements ImageRenderer {
     this.imageProgram.unlink();
   }
 
-  async compileImage(imageState: ImageState, renderOptions: RenderOptions): Promise<Uint8Array> {
+  async compileImage(imageState: ImageState, renderOptions: RenderOptions): Promise<Blob> {
     // Draw image first
     this.render(imageState, renderOptions);
 
     return new Promise(resolve => {
       this.canvas.toBlob(async(blobResult) => {
         saveBlobAsFile(blobResult, 'result_image');
-        resolve(await readBlobAsUint8Array(blobResult));
+        resolve(blobResult);
       });
     });
   }

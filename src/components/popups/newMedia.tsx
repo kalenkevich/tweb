@@ -855,14 +855,26 @@ export default class PopupNewMedia extends PopupElement {
           wholeDialogManager.show(({hide}: ContentRenderProps) => (
             <ImageEditor
               imgSource={image}
-              onSave={(resultImage) => {
-                // apply image instead.
-                hide();
+              onSave={async(editedImage: Blob) => {
+                const newFile = new File([editedImage], params.file.name);
+                params.file = newFile;
+                const url = params.objectURL = await apiManagerProxy.invoke('createObjectURL', newFile);
+                await renderImageFromUrlPromise(img, url);
+                const mimeType = params.file.type as MTMimeType;
+                const scaled = await this.scaleImageForTelegram(img, mimeType, true);
+                if(scaled) {
+                  params.objectURL = scaled.url;
+                  params.scaledBlob = scaled.blob;
+                }
+                params.width = img.naturalWidth;
+                params.height = img.naturalHeight;
+
                 this.btnConfirm.removeAttribute('disabled');
+                hide();
               }}
               onClose={() => {
-                hide();
                 this.btnConfirm.removeAttribute('disabled');
+                hide();
               }}
             />
           ));
