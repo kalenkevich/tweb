@@ -59,4 +59,8 @@ export const getImageFromCanvas = async(canvas: HTMLCanvasElement | OffscreenCan
   return img;
 }
 
-export const getCanvas2DFontStyle = ({fontName, fontSize, fontWeight}: {fontName: string; fontSize: number; fontWeight:number}) => `${fontWeight} ${fontSize}px "${fontName}"`;
+export const getCanvas2DFontStyle = (options: {
+  fontName: string;
+  fontSize: number;
+  fontWeight:number
+}) => `${options.fontWeight} ${options.fontSize}px "${options.fontName}"`;

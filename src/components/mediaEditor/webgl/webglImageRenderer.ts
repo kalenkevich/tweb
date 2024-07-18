@@ -8,7 +8,6 @@ import {FramebufferProgram} from './programs/framebufferProgram';
 import {toImageDrawObject} from './drawObject/imageDrawObject';
 import {toBrushTouchDrawObject} from './drawObject/brushTouchDrawObject';
 import {Matrix3, createMatrix3, multiplyMatrix3, rotateMatrix3, translateMatrix3, scaleMatrix3} from '../helpers/matrixHelpers';
-import readBlobAsUint8Array from '../../../helpers/blob/readBlobAsUint8Array';
 
 const a = document.createElement('a');
 document.body.appendChild(a);
@@ -199,12 +198,11 @@ export class WebglImageRenderer implements ImageRenderer {
   }
 
   async compileImage(imageState: ImageState, renderOptions: RenderOptions): Promise<Blob> {
-    // Draw image first
     this.render(imageState, renderOptions);
 
     return new Promise(resolve => {
-      this.canvas.toBlob(async(blobResult) => {
-        saveBlobAsFile(blobResult, 'result_image');
+      this.canvas.toBlob((blobResult) => {
+        // saveBlobAsFile(blobResult, 'result_image');
         resolve(blobResult);
       });
     });
