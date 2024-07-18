@@ -120,6 +120,12 @@ export function getArrowCapTouches(drawLayer: DrawLayer, touches: BrushTouch[]):
     index--;
   }
   const fistTouch = touches[++index];
+  if(fistTouch.style !== BrushStyle.arrow ||
+    fistTouch.sequenceId !== lastTouch.sequenceId ||
+    distance([fistTouch.x, fistTouch.y], [lastTouch.x, lastTouch.y]) < arrowCapWidth / 2) {
+    return [];
+  }
+
   const angle = getAngleBetweenLines([fistTouch.x, fistTouch.y, lastTouch.x, lastTouch.y], [0, 0, 1, 0]);
   const direction = getDirection([fistTouch.x, fistTouch.y], [lastTouch.x, lastTouch.y]);
   const correctedAngle = correctAngle(angle, direction);
