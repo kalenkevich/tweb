@@ -8,17 +8,17 @@ export interface ImageFilterControlProps extends ImageControlProps {}
 
 const IMAGE_FILTER_CONTROLS_CONFIG = [{
   label: i18n('ImageEditor.EnhanceControl.Enhance'),
-  value: (props: ImageFilterControlProps) => Math.round(props.imageState.filter.enhance * 100),
+  value: (props: ImageFilterControlProps) => Math.round(props.imageState.filter.sharpness * 100),
   component: (props: ImageFilterControlProps) => (
     <RangeSelectorTsx
       step={1}
       min={0}
       max={100}
-      value={Math.round(props.imageState.filter.enhance * 100)}
+      value={Math.round(props.imageState.filter.sharpness * 100)}
       trumpSize={20}
       onScrub={(value: number) => props.onImageChange({
         type: ImageChangeType.filter,
-        value: {...props.imageState.filter, enhance: value / 100}
+        value: {...props.imageState.filter, sharpness: value / 100}
       })}
     />
   )

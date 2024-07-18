@@ -114,7 +114,7 @@ export const DEFAULT_IMAGE_STATE: ImageState = {
   originalWidth: 0,
   originalHeight: 0,
   filter: {
-    enhance: 0,
+    sharpness: 0,
     brightness: 0,
     contrast: 0,
     saturation: 0,

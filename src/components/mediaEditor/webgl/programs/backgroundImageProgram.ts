@@ -37,7 +37,7 @@ const BackgroundImageShaders = {
     precision highp float;
 
     struct ImageFilter {
-      float enhance;
+      float sharpness;
       float brightness;
       float contrast;
       float saturation;
@@ -82,15 +82,46 @@ const BackgroundImageShaders = {
       return mix(grayscaleColor, color, 1.0 + saturation);
     }
 
-    vec3 shadowsHighlights(vec3 color, float shadows, float highlights) {
+    vec3 highlights(vec3 color, float highlights) {
+      const float a = 1.357697966704323E-01;
+      const float b = 1.006045552016985E+00;
+      const float c = 4.674339906510876E-01;
+      const float d = 8.029414702292208E-01;
+      const float e = 1.127806558508491E-01;
+
+      float maxx = max(color.r, max(color.g, color.b));
+      float minx = min(color.r, min(color.g, color.b));
+      float lum = (maxx+minx)/2.0;
+      float x1 = abs(highlights);
+      float x2 = lum;
+      float lum_new =  lum < 0.5 ? lum : lum+ a * sign(highlights) * exp(-0.5 * (((x1-b)/c)*((x1-b)/c) + ((x2-d)/e)*((x2-d)/e)));
+
+      return vec3(color * lum_new / lum);
+    }
+
+    vec3 shadows(vec3 color, float shadows) {
+      const float highlights = 0.0;
       const vec3 luminanceWeighting = vec3(0.3, 0.3, 0.3);
       mediump float luminance = dot(color, luminanceWeighting);
+      shadows += 1.0;
 
-      mediump float shadow = clamp((pow(luminance, 1.0 / (shadows + 1.0)) + (-0.76) * pow(luminance, 2.0 / (shadows + 1.0))) - luminance, 0.0, 1.0);
-      mediump float highlight = clamp((1.0 - (pow(1.0 - luminance, 1.0 / (1.0 - highlights)) + (-0.8) * pow(1.0 - luminance, 2.0 / (1.0 - highlights)))) - luminance, -1.0, 0.0);
-      lowp vec3 result = vec3(0.0, 0.0, 0.0) + ((luminance + shadow + highlight) - 0.0) * ((color - vec3(0.0, 0.0, 0.0)) / (luminance - 0.0));
+      mediump float shadow = clamp((pow(luminance, 1.0/shadows) + (-0.76)*pow(luminance, 2.0/shadows)) - luminance, 0.0, 1.0);
+      mediump float highlight = clamp((1.0 - (pow(1.0-luminance, 1.0/(2.0-highlights)) + (-0.8)*pow(1.0-luminance, 2.0/(2.0-highlights)))) - luminance, -1.0, 0.0);
+      lowp vec3 result = vec3(0.0, 0.0, 0.0) + ((luminance + shadow + highlight) - 0.0) * ((color.rgb - vec3(0.0, 0.0, 0.0))/(luminance - 0.0));
 
-      return result;
+      // blend toward white if highlights is more than 1
+      mediump float contrastedLuminance = ((luminance - 0.5) * 1.5) + 0.5;
+      mediump float whiteInterp = contrastedLuminance*contrastedLuminance*contrastedLuminance;
+      mediump float whiteTarget = clamp(highlights, 1.0, 2.0) - 1.0;
+      result = mix(result, vec3(1.0), whiteInterp*whiteTarget);
+
+      // blend toward black if shadows is less than 1
+      mediump float invContrastedLuminance = 1.0 - contrastedLuminance;
+      mediump float blackInterp = invContrastedLuminance*invContrastedLuminance*invContrastedLuminance;
+      mediump float blackTarget = 1.0 - clamp(shadows, 0.0, 1.0);
+      result = mix(result, vec3(0.0), blackInterp*blackTarget);
+
+      return result.rgb;
     }
 
     vec3 warmthTint(vec3 color, float warmth, float tint) {
@@ -131,16 +162,57 @@ const BackgroundImageShaders = {
     }
 
     vec4 sharpen(vec4 color, float sharpen) {
-      float dx = 1.0 / u_textureSize.x;
-      float dy = 1.0 / u_textureSize.y;
-      vec4 sum = vec4(0.0);
-      sum += -1. * texture2D(u_texture, v_texCoord + vec2( -1.0 * dx , 0.0 * dy));
-      sum += -1. * texture2D(u_texture, v_texCoord + vec2( 0.0 * dx , -1.0 * dy));
-      sum +=  9. * texture2D(u_texture, v_texCoord + vec2( 0.0 * dx , 0.0 * dy));
-      sum += -1. * texture2D(u_texture, v_texCoord + vec2( 0.0 * dx , 1.0 * dy));
-      sum += -1. * texture2D(u_texture, v_texCoord + vec2( 1.0 * dx , 0.0 * dy));
+      float u_sharpen_kernel[9];
+      u_sharpen_kernel[0] = -1.0;
+      u_sharpen_kernel[1] = -1.0;
+      u_sharpen_kernel[2] = -1.0;
+      u_sharpen_kernel[3] = -1.0;
+      u_sharpen_kernel[4] = 9.0;
+      u_sharpen_kernel[5] = -1.0;
+      u_sharpen_kernel[6] = -1.0;
+      u_sharpen_kernel[7] = -1.0;
+      u_sharpen_kernel[8] = -1.0;
 
-      return mix(color, sum, sharpen);
+      vec2 onePixel = vec2(1.0, 1.0) / u_textureSize;
+      vec4 colorSum =
+       texture2D(u_texture, v_texCoord + onePixel * vec2(-1, -1)) * u_sharpen_kernel[0] +
+       texture2D(u_texture, v_texCoord + onePixel * vec2( 0, -1)) * u_sharpen_kernel[1] +
+       texture2D(u_texture, v_texCoord + onePixel * vec2( 1, -1)) * u_sharpen_kernel[2] +
+       texture2D(u_texture, v_texCoord + onePixel * vec2(-1,  0)) * u_sharpen_kernel[3] +
+       texture2D(u_texture, v_texCoord + onePixel * vec2( 0,  0)) * u_sharpen_kernel[4] +
+       texture2D(u_texture, v_texCoord + onePixel * vec2( 1,  0)) * u_sharpen_kernel[5] +
+       texture2D(u_texture, v_texCoord + onePixel * vec2(-1,  1)) * u_sharpen_kernel[6] +
+       texture2D(u_texture, v_texCoord + onePixel * vec2( 0,  1)) * u_sharpen_kernel[7] +
+       texture2D(u_texture, v_texCoord + onePixel * vec2( 1,  1)) * u_sharpen_kernel[8] ;
+
+      return mix(color, colorSum, sharpen);
+    }
+
+    vec4 sharpness(vec4 color, float sharpness) {
+      float u_sharpness_kernel[9];
+      u_sharpness_kernel[0] = 0.0;
+      u_sharpness_kernel[1] = -1.0;
+      u_sharpness_kernel[2] = 0.0;
+      u_sharpness_kernel[3] = -1.0;
+      u_sharpness_kernel[4] = 5.0;
+      u_sharpness_kernel[5] = -1.0;
+      u_sharpness_kernel[6] = 0.0;
+      u_sharpness_kernel[7] = -1.0;
+      u_sharpness_kernel[8] = 0.0;
+
+      vec2 onePixel = vec2(1.0, 1.0) / u_textureSize;
+      vec4 colorSum =
+        texture2D(u_texture, v_texCoord + onePixel * vec2(-1, -1)) * u_sharpness_kernel[0] +
+        texture2D(u_texture, v_texCoord + onePixel * vec2( 0, -1)) * u_sharpness_kernel[1] +
+        texture2D(u_texture, v_texCoord + onePixel * vec2( 1, -1)) * u_sharpness_kernel[2] +
+        texture2D(u_texture, v_texCoord + onePixel * vec2(-1,  0)) * u_sharpness_kernel[3] +
+        texture2D(u_texture, v_texCoord + onePixel * vec2( 0,  0)) * u_sharpness_kernel[4] +
+        texture2D(u_texture, v_texCoord + onePixel * vec2( 1,  0)) * u_sharpness_kernel[5] +
+        texture2D(u_texture, v_texCoord + onePixel * vec2(-1,  1)) * u_sharpness_kernel[6] +
+        texture2D(u_texture, v_texCoord + onePixel * vec2( 0,  1)) * u_sharpness_kernel[7] +
+        texture2D(u_texture, v_texCoord + onePixel * vec2( 1,  1)) * u_sharpness_kernel[8] ;
+
+      return mix(color, colorSum, sharpness);
     }
 
     void main() {
@@ -148,11 +220,13 @@ const BackgroundImageShaders = {
       vec2 uv = gl_FragCoord.xy / resolution;
       vec4 color = texture2D(u_texture, v_texCoord);
 
+      color = sharpness(color, u_filter.sharpness);
       color.rgb = brightness(color.rgb, u_filter.brightness);
       color.rgb = contrast(color.rgb, u_filter.contrast);
       color.rgb = saturation(color.rgb, u_filter.saturation);
       color.rgb = fade(color.rgb, u_filter.fade);
-      color.rgb = shadowsHighlights(color.rgb, u_filter.shadows, u_filter.highlights);
+      color.rgb = shadows(color.rgb, u_filter.shadows);
+      color.rgb = highlights(color.rgb, u_filter.highlights);
       color.rgb = warmthTint(color.rgb, u_filter.warmth, 0.0);
       color = vignette(color, uv, u_filter.vignette);
       color = grain(color, uv, u_filter.grain);

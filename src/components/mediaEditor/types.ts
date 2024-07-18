@@ -114,7 +114,7 @@ export interface StickerLayer {
 }
 
 export const IMAGE_FILTER_NAMES = [
-  'enhance',
+  'sharpness',
   'brightness',
   'contrast',
   'saturation',
@@ -128,7 +128,8 @@ export const IMAGE_FILTER_NAMES = [
 ];
 
 export interface ImageFilterState {
-  enhance: number;
+  // "Enhance" filter
+  sharpness: number;
   brightness: number;
   contrast: number;
   saturation: number;
