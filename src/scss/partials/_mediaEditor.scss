@@ -477,7 +477,10 @@
   }
 
   .stickers-image-control {
-    position: relative;
+    // position: relative;
+    // top: 0;
+    // left: 0;
+    width: 100%;
   }
 
   .range-selector.mobile {
@@ -497,6 +500,8 @@
       width: var(--range-selector-mobile-width);
       background: var(--surface-color);
       border-bottom: 1px solid var(--secondary-color);
+      border-top-left-radius: 10px;
+      border-top-right-radius: 10px;
     }
 
     .range-selector--value {

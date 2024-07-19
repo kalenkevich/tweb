@@ -7,8 +7,10 @@ function getRandomValue(min: number, max: number): number {
 }
 
 export const getRandomLayerStartPosition = (
-  canvasWidth: number,
-  canvasHeight: number
+  fromX: number,
+  fromY: number,
+  toX: number,
+  toY: number
 ): [number, number] => {
-  return [getRandomValue(0, canvasWidth), getRandomValue(0, canvasHeight)];
+  return [getRandomValue(fromX, toX), getRandomValue(fromY, toY)];
 }

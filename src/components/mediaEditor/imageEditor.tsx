@@ -56,7 +56,7 @@ export interface MediaEditorProps {
 }
 
 export function ImageEditor(props: MediaEditorProps) {
-  const [isMobile, setIsMobile] = createSignal(false);
+  const [isMobile, setIsMobile] = createSignal(window.innerWidth <= IMAGE_EDITOR_MOBILE_WIDTH_THRESHOLD || mediaSizes.isMobile);
   const [stickerRenderer] = createSignal(new SuperStickerRenderer({
     regularLazyLoadQueue: new LazyLoadQueue(),
     group: 'MEDIA-EDITOR',
@@ -72,11 +72,12 @@ export function ImageEditor(props: MediaEditorProps) {
   const [canUndo, setCanUndo] = createSignal(false);
 
   onMount(() => {
-    mediaSizes.addEventListener('resize', onScreenResized);
+    window.addEventListener('resize', onScreenResized);
+    onScreenResized();
   });
 
   onCleanup(() => {
-    mediaSizes.removeEventListener('resize', onScreenResized);
+    window.removeEventListener('resize', onScreenResized);
     imageEditorManager().destroy();
   });
 
@@ -92,7 +93,7 @@ export function ImageEditor(props: MediaEditorProps) {
   });
 
   const onScreenResized = () => {
-    setIsMobile(window.innerWidth <= IMAGE_EDITOR_MOBILE_WIDTH_THRESHOLD);
+    setIsMobile(window.innerWidth <= IMAGE_EDITOR_MOBILE_WIDTH_THRESHOLD || mediaSizes.isMobile);
   };
 
   const onCanvasMounted = async(canvas: HTMLCanvasElement) => {
@@ -158,7 +159,12 @@ export function ImageEditor(props: MediaEditorProps) {
           };
           if(event.appearInRandomSpot) {
             const canvas = imageEditorManager().getCanvas();
-            newLayerState.translation = getRandomLayerStartPosition(canvas.width, canvas.height);
+            newLayerState.translation = getRandomLayerStartPosition(
+              canvas.width / 4,
+              canvas.height / 4,
+              canvas.width - canvas.width / 4,
+              canvas.height - canvas.height / 2
+            );
           }
           const newLayers = [...state.layers, newLayerState];
           newState = {
@@ -307,7 +313,7 @@ export function ImageEditor(props: MediaEditorProps) {
     const index = imageEditorManager().getCurrentImageState().layers.findIndex(l => l === layer);
     if(layer.type === ObjectLayerType.text) {
       setSelectedTabId(TabType.TEXT);
-    } else if(layer.type === ObjectLayerType.sticker) {
+    } else if(!isMobile() && layer.type === ObjectLayerType.sticker) {
       setSelectedTabId(TabType.STICKER);
     }
 
@@ -344,7 +350,7 @@ export function ImageEditor(props: MediaEditorProps) {
     }
 
     const layersToRender = [ObjectLayerType.backgroundImage];
-    if([TabType.TEXT, TabType.DRAW, TabType.STICKER].includes(tabId)) {
+    if(!tabId || [TabType.TEXT, TabType.DRAW, TabType.STICKER].includes(tabId)) {
       layersToRender.push(ObjectLayerType.draw);
     }
 

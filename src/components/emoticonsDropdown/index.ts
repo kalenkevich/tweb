@@ -45,8 +45,10 @@ import ButtonIcon from '../buttonIcon';
 import StickersTabCategory from './category';
 import {Middleware} from '../../helpers/middleware';
 
-const DROPDOWN_WIDTH = '23.875rem';
-const DROPDOWN_HEIGHT = '23.875rem';
+// '23.875rem'
+export const DROPDOWN_WIDTH = 382;
+// '23.875rem'
+export const DROPDOWN_HEIGHT = 382;
 
 export const EMOTICONSSTICKERGROUP: AnimationItemGroup = 'emoticons-dropdown';
 
@@ -137,6 +139,8 @@ export class EmoticonsDropdown extends DropdownHover {
     onMount?: (el: HTMLElement) => void,
     onMediaClicked?: (options: Parameters<ChatInput['sendMessageWithDocument']>[0]) => void,
     stayAlwaysOpen?: boolean,
+    customWidth?: number,
+    customHeight?: number,
     fullHeight?: boolean
   } = {}) {
     super({
@@ -151,10 +155,10 @@ export class EmoticonsDropdown extends DropdownHover {
     this.isStandalone = !!options?.tabsToRender;
     this.element.classList.toggle('is-standalone', this.isStandalone);
 
-    this.element.style.setProperty('--width', DROPDOWN_WIDTH);
+    this.element.style.setProperty('--width', `${options.customWidth || DROPDOWN_WIDTH}px`);
     this.element.style.width = 'var(--width)';
     if(!options.fullHeight) {
-      this.element.style.setProperty('--height', DROPDOWN_HEIGHT);
+      this.element.style.setProperty('--height', `${options.customHeight || DROPDOWN_HEIGHT}px`);
       this.element.style.height = 'var(--height)';
     }
 
