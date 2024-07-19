@@ -24,6 +24,7 @@ export interface DraggingSurface {
 }
 
 export interface DraggingSurfaceProps {
+  isMobile: boolean;
   children: JSX.Element;
   onSurfaceReady: (surface: DraggingSurface) => void;
 }

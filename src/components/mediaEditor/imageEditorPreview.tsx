@@ -11,7 +11,7 @@ import SuperStickerRenderer from '../emoticonsDropdown/tabs/SuperStickerRenderer
 import {fitImageIntoElement} from './helpers/aspectRatioHelper';
 
 export interface ImagePreviewProps extends ImageControlProps {
-  selectedTabId: TabType;
+  selectedTabId: TabType | undefined;
   stickerRenderer: SuperStickerRenderer;
   onCanvasMounted: (canvas: HTMLCanvasElement) => void;
   onContainerResized: (width: number, height: number) => void;
@@ -26,7 +26,7 @@ export function ImageEditorPreview(props: ImagePreviewProps): JSX.Element {
   const [draggingSurface, setDraggingSurface] = createSignal<DraggingSurface>();
   const isResizeTabSelected = () => props.selectedTabId === TabType.RESIZE;
   const isDrawTabSelected = () => props.selectedTabId === TabType.DRAW;
-  const showDraggableObjects = () => [TabType.TEXT, TabType.STICKER, TabType.DRAW].includes(props.selectedTabId);
+  const showDraggableObjects = () => !props.selectedTabId || [TabType.TEXT, TabType.STICKER, TabType.DRAW].includes(props.selectedTabId);
 
   onMount(() => {
     fitCanvasIntoParent();
@@ -70,13 +70,14 @@ export function ImageEditorPreview(props: ImagePreviewProps): JSX.Element {
     <div class="image-editor__preview-container" ref={el => setRootRef(el)}>
       <div class="preview-container-working-area--wrapper">
         <div class="preview-container-working-area" ref={el => setCanvasWrapperRef(el)}>
-          <DraggingSurfaceComponent onSurfaceReady={setDraggingSurface}>
+          <DraggingSurfaceComponent isMobile={props.isMobile} onSurfaceReady={setDraggingSurface}>
             <canvas
               class="preview-container-canvas"
               ref={(el) => setCanvasRef(el)}>
             </canvas>
             <Show when={isResizeTabSelected()}>
               <ImageConunterpartControl
+                isMobile={props.isMobile}
                 surface={draggingSurface()}
                 imageState={props.imageState}
                 onImageChange={props.onImageChange}
@@ -85,6 +86,7 @@ export function ImageEditorPreview(props: ImagePreviewProps): JSX.Element {
             </Show>
             <Show when={showDraggableObjects()}>
               <DraggableObjects
+                isMobile={props.isMobile}
                 surface={draggingSurface()}
                 stickerRenderer={props.stickerRenderer}
                 imageState={props.imageState}
@@ -95,6 +97,7 @@ export function ImageEditorPreview(props: ImagePreviewProps): JSX.Element {
             </Show>
             <Show when={isDrawTabSelected()}>
               <DrawableSurface
+                isMobile={props.isMobile}
                 surface={draggingSurface()}
                 imageState={props.imageState}
                 onImageChange={props.onImageChange}
@@ -105,6 +108,7 @@ export function ImageEditorPreview(props: ImagePreviewProps): JSX.Element {
       </div>
       <Show when={isResizeTabSelected()}>
         <ImageRotationControl
+          isMobile={props.isMobile}
           imageState={props.imageState}
           onImageChange={props.onImageChange}
           currentLayerIndex={props.currentLayerIndex}

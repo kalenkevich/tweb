@@ -5,6 +5,7 @@ import clamp from '../../../helpers/number/clamp';
 import {anyColorToHexColor} from '../../../helpers/color';
 
 export interface DrawableSurfaceProps {
+  isMobile: boolean;
   surface: DraggingSurface;
   imageState: ImageState;
   onImageChange: (imageChangeEvent: ImageChangeEvent) => void;

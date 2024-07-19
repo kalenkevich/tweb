@@ -53,3 +53,48 @@
     overflow: visible !important;
   }
 }
+
+.color-picker-v2.mobile {
+  position: relative;
+
+  .quick-pallete {
+    padding: 0 8px;
+    background: var(--surface-color);
+    position: absolute;
+    top: -55px;
+    left: var(--color-picker-v2-mobile-left);
+    z-index: 1;
+    height: 40px;
+    justify-content: flex-start;
+    flex-wrap: nowrap;
+    width: var(--color-picker-v2-mobile-width);
+  }
+
+  .advance-pallete {
+    padding: 0 8px;
+    background: var(--surface-color);
+    position: absolute;
+    top: -200px;
+    left: var(--color-picker-v2-mobile-left);
+    z-index: 1;
+    height: 200px;
+    width: var(--color-picker-v2-mobile-width);
+
+    .color-slider-container {
+      margin-left: 8px;
+      justify-content: flex-start;
+    }
+
+    .color-sliders {
+      margin-right: 8px;
+    }
+
+    .color-input {
+      margin: 0 0 12px 8px;
+
+      input {
+        width: 140px;
+      }
+    }
+  }
+}

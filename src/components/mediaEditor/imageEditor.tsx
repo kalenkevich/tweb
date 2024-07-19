@@ -1,19 +1,37 @@
-import {createEffect, createSignal, on, batch, onCleanup} from 'solid-js';
-import rootScope from '../../lib/rootScope';
+import {createEffect, createSignal, on, batch, onCleanup, onMount, Show} from 'solid-js';
 import LazyLoadQueue from '../lazyLoadQueue';
+import {ButtonIconTsx} from '../buttonIconTsx';
 import SuperStickerRenderer from '../emoticonsDropdown/tabs/SuperStickerRenderer';
-
-import {ImageChangeType, ImageChangeEvent, ImageSource, ImageState, ObjectLayer, AttachmentChangeAction, ObjectLayerType, BrushStyle, BrushTouch} from './types';
-import {DEFAULT_IMAGE_STATE, DEFAULT_TEXT_LAYER, NEON_BRUSH_BORDER_COLOR, NEON_BRUSH_BORDER_WIDTH, TRANPARENT_COLOR, DRAW_ARROW_CAP_AFTER_MS} from './consts';
+import rootScope from '../../lib/rootScope';
+import mediaSizes from '../../helpers/mediaSizes';
+import debounce from '../../helpers/schedulers/debounce';
+import {anyColorToRgbaColor, ColorFormatType} from '../../helpers/color';
+import {
+  ImageChangeType,
+  ImageChangeEvent,
+  ImageSource,
+  ImageState,
+  ObjectLayer,
+  AttachmentChangeAction,
+  ObjectLayerType,
+  BrushStyle,
+  BrushTouch
+} from './types';
+import {
+  DEFAULT_IMAGE_STATE,
+  DEFAULT_TEXT_LAYER,
+  NEON_BRUSH_BORDER_COLOR,
+  NEON_BRUSH_BORDER_WIDTH,
+  TRANPARENT_COLOR,
+  DRAW_ARROW_CAP_AFTER_MS
+} from './consts';
+import {NavigationBar} from './navigationBar';
+import {ImageEditorManager} from './imageEditorManager';
 import {ImageEditorPreview} from './imageEditorPreview';
 import {ImageEditorTabs, TABS_CONFIG, TabType} from './imageEditorTabs';
-import {ImageEditorManager} from './imageEditorManager';
-import {ButtonIconTsx} from '../buttonIconTsx';
-import {fitImageIntoCanvas, ScaleMode} from './helpers/aspectRatioHelper';
 import {createImageElementTextureSource} from './webgl/helpers/webglTexture';
 import {getLayerNextId, getRandomLayerStartPosition} from './helpers/layerHelper';
-import {anyColorToRgbaColor, ColorFormatType} from '../../helpers/color';
-import debounce from '../../helpers/schedulers/debounce';
+import {fitImageIntoCanvas, ScaleMode} from './helpers/aspectRatioHelper';
 import {canDrawArrow, getArrowCapTouches} from './helpers/arrowBrushHelper';
 
 export function createImageState(source: ImageSource): ImageState {
@@ -37,21 +55,27 @@ export interface MediaEditorProps {
 }
 
 export function ImageEditor(props: MediaEditorProps) {
-  const [stickerRenderer, setStickerRenderer] = createSignal(new SuperStickerRenderer({
+  const [isMobile, setIsMobile] = createSignal(mediaSizes.isMobile);
+  const [stickerRenderer] = createSignal(new SuperStickerRenderer({
     regularLazyLoadQueue: new LazyLoadQueue(),
     group: 'MEDIA-EDITOR',
     managers: rootScope.managers
   }));
   const [imageEditorManager] = createSignal(new ImageEditorManager(stickerRenderer(), createImageState(props.imgSource)));
   const [imageState, setImageState] = createSignal(createImageState(props.imgSource));
-  const [canRedo, setCanRedu] = createSignal(false);
-  const [canUndo, setCanUndo] = createSignal(false);
   const [layersToRender, setLayersToRender] = createSignal([ObjectLayerType.backgroundImage]);
   const [currentLayerIndex, setCurrentLayerIndex] = createSignal(-1);
-  const [selectedTabId, setSelectedTabId] = createSignal(TABS_CONFIG[0].tabId);
+  const [selectedTabId, setSelectedTabId] = createSignal(mediaSizes.isMobile ? undefined : TABS_CONFIG[0].tabId);
   const [currentBrushSequence, setCurrentBrushSequence] = createSignal(0);
+  const [canRedo, setCanRedu] = createSignal(false);
+  const [canUndo, setCanUndo] = createSignal(false);
+
+  onMount(() => {
+    mediaSizes.addEventListener('resize', onScreenResized);
+  });
 
   onCleanup(() => {
+    mediaSizes.removeEventListener('resize', onScreenResized);
     imageEditorManager().destroy();
   });
 
@@ -65,6 +89,8 @@ export function ImageEditor(props: MediaEditorProps) {
   createEffect(() => {
     imageEditorManager().triggerRerender({render: true, layers: layersToRender()});
   });
+
+  const onScreenResized = () => setIsMobile(mediaSizes.isMobile);
 
   const onCanvasMounted = async(canvas: HTMLCanvasElement) => {
     imageEditorManager().init(canvas);
@@ -328,8 +354,19 @@ export function ImageEditor(props: MediaEditorProps) {
   };
 
   return (
-    <div class="image-editor">
+    <div class="image-editor" classList={{'mobile': isMobile()}}>
+      <Show when={isMobile()}>
+        <NavigationBar
+          canUndo={canUndo()}
+          canRedo={canRedo()}
+          onUndo={handleUndo}
+          onRedo={handleRedo}
+          onSave={handleSave}
+          onClose={handleClose}
+        />
+      </Show>
       <ImageEditorPreview
+        isMobile={isMobile()}
         imageState={imageState()}
         currentLayerIndex={currentLayerIndex()}
         selectedTabId={selectedTabId()}
@@ -340,6 +377,7 @@ export function ImageEditor(props: MediaEditorProps) {
         onActiveLayerChange={onActiveLayerChange}
       />
       <ImageEditorTabs
+        isMobile={isMobile()}
         selectedTabId={selectedTabId()}
         canUndo={canUndo()}
         canRedo={canRedo()}
@@ -351,13 +389,15 @@ export function ImageEditor(props: MediaEditorProps) {
         onImageChange={onImageChange}
         onTabSelected={handleTabSelection}
       />
-      <div class="image-editor__save-button">
-        <ButtonIconTsx
-          class="btn-circle btn-corner"
-          icon="check"
-          onClick={handleSave}
-        />
-      </div>
+      <Show when={!isMobile()}>
+        <div class="image-editor__save-button">
+          <ButtonIconTsx
+            class="btn-circle btn-corner"
+            icon="check"
+            onClick={handleSave}
+          />
+        </div>
+      </Show>
     </div>
   )
 }

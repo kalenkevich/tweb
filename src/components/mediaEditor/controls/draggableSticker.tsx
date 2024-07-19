@@ -110,6 +110,7 @@ export function DraggableSticker(props: DraggableStickerProps) {
       }}>
       <div class="draggable-object draggable-sticker"
         classList={{'active': isActiveInternal()}}
+        onTouchStart={onWrapperMouseDown}
         onMouseDown={onWrapperMouseDown}>
         <div class="draggable-object__remove-icon-wrapper" ref={el => setRemoveWrapperEl(el)}>
           <IconTsx class="draggable-object__remove-icon" icon="close"/>

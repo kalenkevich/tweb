@@ -1,13 +1,15 @@
-import {JSX, For} from 'solid-js';
+import {JSX, For, Show} from 'solid-js';
 import {BrushStyle, ImageChangeType} from '../types';
 import {Color, ColorFormatType, anyColorToHexColor} from '../../../helpers/color';
 import {ImageControlProps} from './imageControl';
-import {ColorPickerV2} from '../../colorPickerV2';
+import {ColorPickerV2, ColorPickerV2Mobile} from '../../colorPickerV2';
 import {i18n} from '../../../lib/langPack';
 import {QUCIK_PALLETE_COLORS} from '../consts';
 import {PEN_TOOL_SVG, ARROW_TOOL_SVG, BRUSH_TOOL_SVG, NEON_TOOL_SVG, BLUR_TOOL_SVG, ERASER_TOOL_SVG} from './paintToolsSvgImages';
 import RowTsx from '../../rowTsx';
 import {RangeSelectorTsx} from '../../rangeSelectorTsx';
+import {Select} from '../common/select';
+import {MobileRangeSelector} from '../common/mobileRangeSelector';
 
 export interface ImageDrawControlProps extends ImageControlProps {}
 
@@ -79,26 +81,75 @@ export function ImageDrawControl(props: ImageDrawControlProps): JSX.Element {
   };
 
   return (
-    <div class="image-editor__image-control draw-image-control">
-      <div class="color-picker-container">
-        <ColorPickerV2
-          color={color()}
-          quickPallete={QUCIK_PALLETE_COLORS}
-          outputColorFormat={ColorFormatType.hex}
-          onChange={(selectedColor) => onPropertyChange(DrawAttachmentProperty.color, selectedColor)}
-        />
-      </div>
-      <div class="brush-size-control">
-        <div class="brush-size-control__label">
-          <div class="brush-size-control__name">
-            {i18n('ImageEditor.TextControl.Size')}
+    <>
+      <Show when={!props.isMobile}>
+        <div class="image-editor__image-control draw-image-control">
+          <div class="color-picker-container">
+            <ColorPickerV2
+              color={color()}
+              quickPallete={QUCIK_PALLETE_COLORS}
+              outputColorFormat={ColorFormatType.hex}
+              onChange={(selectedColor) => onPropertyChange(DrawAttachmentProperty.color, selectedColor)}
+            />
           </div>
-          <div class="brush-size-control__value">
-            {size()}
+          <div class="brush-size-control">
+            <div class="brush-size-control__label">
+              <div class="brush-size-control__name">
+                {i18n('ImageEditor.TextControl.Size')}
+              </div>
+              <div class="brush-size-control__value">
+                {size()}
+              </div>
+            </div>
+            <div>
+              <RangeSelectorTsx
+                color={hexColor()}
+                step={1}
+                min={0}
+                max={128}
+                value={size()}
+                trumpSize={20}
+                onScrub={(value: number) => onPropertyChange(DrawAttachmentProperty.size, value)}
+              />
+            </div>
+          </div>
+          <div class="tool-control">
+            <div class="tool-control__label">
+              {i18n('ImageEditor.DrawControl.Tool')}
+            </div>
+            <For each={TOOL_CONTROL_CONFIGS}>
+              {(config) => (
+                <div class="tool-control__row">
+                  <RowTsx
+                    title={(
+                      <div class="row-body">
+                        <div class="row-body__image">{config.image}</div>
+                        <div class="row-body__label">{config.label}</div>
+                      </div>
+                    )}
+                    classList={{'selected': style() === config.value}}
+                    clickable={() => onPropertyChange(DrawAttachmentProperty.style, config.value)}
+                  />
+                </div>
+              )}
+            </For>
           </div>
         </div>
-        <div>
-          <RangeSelectorTsx
+      </Show>
+      <Show when={props.isMobile}>
+        <div class="image-editor__image-control draw-image-control">
+          <ColorPickerV2Mobile
+            color={color()}
+            quickPallete={QUCIK_PALLETE_COLORS}
+            outputColorFormat={ColorFormatType.hexa}
+            onChange={(color) => onPropertyChange(DrawAttachmentProperty.color, color)}
+          />
+          <Select
+            value={style()}
+            options={TOOL_CONTROL_CONFIGS}
+            onClick={(config) => onPropertyChange(DrawAttachmentProperty.style, config.value)}
+          />
+          <MobileRangeSelector
             color={hexColor()}
             step={1}
             min={0}
@@ -108,28 +159,7 @@ export function ImageDrawControl(props: ImageDrawControlProps): JSX.Element {
             onScrub={(value: number) => onPropertyChange(DrawAttachmentProperty.size, value)}
           />
         </div>
-      </div>
-      <div class="tool-control">
-        <div class="tool-control__label">
-          {i18n('ImageEditor.DrawControl.Tool')}
-        </div>
-        <For each={TOOL_CONTROL_CONFIGS}>
-          {(config) => (
-            <div class="tool-control__row">
-              <RowTsx
-                title={(
-                  <div class="row-body">
-                    <div class="row-body__image">{config.image}</div>
-                    <div class="row-body__label">{config.label}</div>
-                  </div>
-                )}
-                classList={{'selected': style() === config.value}}
-                clickable={() => onPropertyChange(DrawAttachmentProperty.style, config.value)}
-              />
-            </div>
-          )}
-        </For>
-      </div>
-    </div>
+      </Show>
+    </>
   );
 }

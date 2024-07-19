@@ -1,7 +1,6 @@
-import {createSignal, createEffect, on, onMount, onCleanup} from 'solid-js';
+import {createSignal, createEffect, on} from 'solid-js';
 import {i18n} from '../../../lib/langPack';
 import {ImageChangeType, TextLayer, AttachmentChangeAction, ImageChangeEvent} from '../types';
-import {DRAGGABLE_OBJECT_TOP_BOTTOM_PADDING, DRAGGABLE_OBJECT_TOP_LEFT_RIGHT} from '../consts';
 import {Draggable} from '../draggable/draggable';
 import {DraggingSurface} from '../draggable/surface';
 import {getTextLayerInputElementStyles} from '../helpers/textHelper';
@@ -23,14 +22,6 @@ export function DraggableText(props: DraggableTextProps) {
   const [removeWrapperEl, setRemoveWrapperEl] = createSignal<HTMLDivElement>();
   const layer = () => props.layer;
   const inputStyles = () => getTextLayerInputElementStyles(textValueInternal(), layer(), PLACEHOLDER);
-
-  onMount(() => {
-    window.addEventListener('keyup', onKeyUp);
-  });
-
-  onCleanup(() => {
-    window.removeEventListener('keyup', onKeyUp);
-  });
 
   createEffect(on(() => props.isActive, (isActive) => {
     if(isActive) {
@@ -75,14 +66,6 @@ export function DraggableText(props: DraggableTextProps) {
     }
   };
 
-  const onKeyUp = (e: KeyboardEvent) => {
-    const isBackspaceKey = e.key === 'Backspace';
-
-    if(isBackspaceKey && isActiveInternal()) {
-      removeObject();
-    }
-  };
-
   const removeObject = () => {
     props.onImageChange({
       type: ImageChangeType.layer,
@@ -111,6 +94,7 @@ export function DraggableText(props: DraggableTextProps) {
     >
       <div class="draggable-object draggable-text"
         classList={{'active': isActiveInternal()}}
+        onTouchStart={onWrapperMouseDown}
         onMouseDown={onWrapperMouseDown}>
         <div class="draggable-object__remove-icon-wrapper" ref={el => setRemoveWrapperEl(el)}>
           <IconTsx class="draggable-object__remove-icon" icon="close"/>

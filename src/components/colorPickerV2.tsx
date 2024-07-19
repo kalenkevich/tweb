@@ -1,4 +1,4 @@
-import {createEffect, createSignal, For, on, onMount} from 'solid-js';
+import {createEffect, createSignal, For, on, onMount, Show} from 'solid-js';
 import {Color, ColorFormatType, anyColorToHexColor, anyColorToHslaColor, anyColorToHsvColor, anyColorToRgbaColor, rbgToString, hslaToString} from '../helpers/color';
 import {ButtonIconTsx} from './buttonIconTsx';
 import {InputState} from './inputField';
@@ -23,7 +23,9 @@ export function PalleteSwitchButton(props: PalleteSwitchButtonProps) {
 }
 
 export interface QuickPalleteProps {
+  isMobile: boolean;
   colors: Color[];
+  onClose: () => void;
   onColorClick: (color: Color) => void;
   onPalleteSwitchClick: () => void;
 }
@@ -39,7 +41,15 @@ export function QuickPallete(props: QuickPalleteProps) {
           </ButtonIconTsx>
         )}
       </For>
-      <PalleteSwitchButton onClick={() => props.onPalleteSwitchClick()}/>
+      <Show when={!props.isMobile}>
+        <PalleteSwitchButton onClick={props.onPalleteSwitchClick}/>
+      </Show>
+      <Show when={props.isMobile}>
+        <ButtonIconTsx
+          icon='plus'
+          onClick={props.onPalleteSwitchClick}
+        />
+      </Show>
     </div>
   );
 }
@@ -295,9 +305,11 @@ export function ColorPalleteBox(props: ColorPalleteBoxProps) {
 // patched https://stackoverflow.com/a/34029238/6758968
 const rgbRegExp = /^(?:rgb)?\(?([01]?\d\d?|2[0-4]\d|25[0-5])(?:\W+)([01]?\d\d?|2[0-4]\d|25[0-5])\W+(?:([01]?\d\d?|2[0-4]\d|25[0-5])\)?)$/;
 export interface AdvancedPalleteProps {
+  isMobile: boolean;
   color?: Color;
   onChange: (color: Color) => void;
   onPalleteSwitchClick: () => void;
+  onClose: () => void;
 }
 export function AdvancedPallete(props: AdvancedPalleteProps) {
   const [hexInputValue, setHexInputValue] = createSignal(anyColorToHexColor(props.color));
@@ -346,7 +358,12 @@ export function AdvancedPallete(props: AdvancedPalleteProps) {
           color={props.color}
           onChange={(color) => props.onChange(color)}
         />
-        <PalleteSwitchButton onClick={() => props.onPalleteSwitchClick()}/>
+        <Show when={!props.isMobile}>
+          <PalleteSwitchButton onClick={() => props.onPalleteSwitchClick()}/>
+        </Show>
+        <Show when={props.isMobile}>
+          <ButtonIconTsx icon="check" onClick={props.onClose}/>
+        </Show>
       </div>
       <div class="box-pallete-container">
         <ColorPalleteBox
@@ -425,16 +442,101 @@ export function ColorPickerV2(props: ColorPickerProps) {
     <div class="color-picker-v2">
       { advansedPalleteOpened() ?
         <AdvancedPallete
+          isMobile={false}
           color={props.color}
           onChange={(selectedColor) => handleColorChange(selectedColor)}
           onPalleteSwitchClick={() => setAdvansedPalleteOpened(false)}
+          onClose={() => {}}
         /> :
         <QuickPallete
+          isMobile={false}
           colors={props.quickPallete}
           onColorClick={(selectedColor) => handleColorChange(selectedColor)}
           onPalleteSwitchClick={() => setAdvansedPalleteOpened(true)}
+          onClose={() => {}}
         />
       }
     </div>
   )
+}
+
+export enum MobileColorPickerView {
+  icon = 'icon',
+  quickPallete = 'quickPallete',
+  advansedPallete = 'advansedPallete'
+}
+export function ColorPickerV2Mobile(props: ColorPickerProps) {
+  const [elRef, setElRef] = createSignal<HTMLDivElement>();
+  const [currentView, setCurrentView] = createSignal(MobileColorPickerView.icon);
+  const showQuickPallete = () => currentView() === MobileColorPickerView.quickPallete;
+  const showAdvancedPallete = () => currentView() === MobileColorPickerView.advansedPallete;
+
+  onMount(() => {
+    const width = window.innerWidth;
+    elRef().style.setProperty('--color-picker-v2-mobile-width', `${width}px`);
+    elRef().style.setProperty('--color-picker-v2-mobile-left', `${-elRef().offsetLeft}px`);
+  });
+
+  const handleColorChange = (color: Color): void => {
+    let resultColor = color;
+
+    switch(props.outputColorFormat) {
+      case (ColorFormatType.hexa): {
+        resultColor = {
+          type: ColorFormatType.hexa,
+          value: anyColorToHexColor(color)
+        };
+        break;
+      }
+      case (ColorFormatType.rgba): {
+        resultColor = {
+          type: ColorFormatType.rgba,
+          value: anyColorToRgbaColor(color)
+        };
+        break;
+      }
+      case (ColorFormatType.hsla): {
+        resultColor = {
+          type: ColorFormatType.hsla,
+          value: anyColorToHslaColor(color)
+        };
+        break;
+      }
+      case (ColorFormatType.hsv): {
+        resultColor = {
+          type: ColorFormatType.hsv,
+          value: anyColorToHsvColor(color)
+        };
+        break;
+      }
+    }
+
+    props.onChange(resultColor);
+  }
+
+  return (
+    <div class="color-picker-v2 mobile" ref={el => setElRef(el)}>
+      <PalleteSwitchButton
+        onClick={() => setCurrentView(v => v === MobileColorPickerView.icon ? MobileColorPickerView.quickPallete : MobileColorPickerView.icon)}
+      />
+      <Show when={showQuickPallete()}>
+        <QuickPallete
+          isMobile={true}
+          colors={props.quickPallete}
+          onColorClick={(selectedColor) => handleColorChange(selectedColor)}
+          onPalleteSwitchClick={() => setCurrentView(MobileColorPickerView.advansedPallete)}
+          onClose={() => setCurrentView(MobileColorPickerView.icon)}
+        />
+      </Show>
+      <Show when={showAdvancedPallete()}>
+        <AdvancedPallete
+          isMobile={true}
+          color={props.color}
+          onChange={(selectedColor) => handleColorChange(selectedColor)}
+          onPalleteSwitchClick={() => setCurrentView(MobileColorPickerView.icon)}
+          onClose={() => setCurrentView(MobileColorPickerView.icon)}
+        />
+      </Show>
+    </div>
+  );
 }
