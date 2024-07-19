@@ -144,20 +144,28 @@ export function ImageDrawControl(props: ImageDrawControlProps): JSX.Element {
             outputColorFormat={ColorFormatType.hexa}
             onChange={(color) => onPropertyChange(DrawAttachmentProperty.color, color)}
           />
+          <div class="tool-control__label">
+            {i18n('ImageEditor.DrawControl.Tool')}
+          </div>
           <Select
             value={style()}
             options={TOOL_CONTROL_CONFIGS}
             onClick={(config) => onPropertyChange(DrawAttachmentProperty.style, config.value)}
           />
-          <MobileRangeSelector
-            color={hexColor()}
-            step={1}
-            min={0}
-            max={128}
-            value={size()}
-            trumpSize={20}
-            onScrub={(value: number) => onPropertyChange(DrawAttachmentProperty.size, value)}
-          />
+          <div class="brush-size-control__label">
+            <div class="brush-size-control__name">
+              {i18n('ImageEditor.TextControl.Size')}
+            </div>
+            <MobileRangeSelector
+              color={hexColor()}
+              step={1}
+              min={0}
+              max={128}
+              value={size()}
+              trumpSize={20}
+              onScrub={(value: number) => onPropertyChange(DrawAttachmentProperty.size, value)}
+            />
+          </div>
         </div>
       </Show>
     </>

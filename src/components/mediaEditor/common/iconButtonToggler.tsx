@@ -14,18 +14,18 @@ export interface IconButtonTogglerProps {
 }
 
 export function IconButtonToggler(props: IconButtonTogglerProps) {
-  const [selectedIconIndex, setSelctedIconIndex] = createSignal(0);
+  const [selectedIconIndex, setSelectedIconIndex] = createSignal(0);
   const selectedIcon = () => props.icons[selectedIconIndex()];
   const handleClick = () => {
-    props.onClick(selectedIcon());
-
-    setSelctedIconIndex(index => {
+    setSelectedIconIndex(index => {
       if(props.icons.length === index + 1) {
         return 0;
       }
 
       return index + 1;
     });
+
+    props.onClick(selectedIcon());
   };
 
   return (

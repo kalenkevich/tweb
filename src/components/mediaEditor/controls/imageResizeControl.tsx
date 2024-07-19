@@ -1,9 +1,10 @@
-import {JSX, For, createSignal} from 'solid-js';
+import {JSX, For, createSignal, Show} from 'solid-js';
 import {i18n} from '../../../lib/langPack';
 import {ImageAspectRatio, ImageChangeType} from '../types';
 import {ImageControlProps} from './imageControl';
 import {SvgIconType} from '../../iconSvg';
 import RowTsx from '../../rowTsx';
+import {Select} from '../common/select';
 
 export interface ImageResizeControlProps extends ImageControlProps {}
 
@@ -92,30 +93,50 @@ export function ImageResizeControl(props: ImageResizeControlProps): JSX.Element 
   const [selectedValue, setSelectedValue] = createSignal(ASTECT_RATIO_CONFIGS[1]);
 
   return (
-    <div class="image-editor__image-control resize-image-control">
-      <div class="resize-image-control__name">
-        {i18n('ImageEditor.ResizeControl.AspectRatio')}
-      </div>
-      <div class="resize-image-control__options">
-        <For each={ASTECT_RATIO_CONFIGS}>
-          {(config) => (
-            <RowTsx
-              classList={{
-                'aspect-row-full': config.fullWidth,
-                'aspect-row-half': !config.fullWidth,
-                'aspect-row-selected': selectedValue() === config
-              }}
-              icon={config.icon as SvgIconType}
-              asSvgIcon={config.asSvgIcon}
-              title={config.label}
-              clickable={() => {
-                setSelectedValue(config);
-                props.onImageChange({type: ImageChangeType.aspectRatio, value: config.value, animation: true});
-              }}
-            />
-          )}
-        </For>
-      </div>
-    </div>
+    <>
+      <Show when={!props.isMobile}>
+        <div class="image-editor__image-control resize-image-control">
+          <div class="resize-image-control__name">
+            {i18n('ImageEditor.ResizeControl.AspectRatio')}
+          </div>
+          <div class="resize-image-control__options">
+            <For each={ASTECT_RATIO_CONFIGS}>
+              {(config) => (
+                <RowTsx
+                  classList={{
+                    'aspect-row-full': config.fullWidth,
+                    'aspect-row-half': !config.fullWidth,
+                    'aspect-row-selected': selectedValue() === config
+                  }}
+                  icon={config.icon as SvgIconType}
+                  asSvgIcon={config.asSvgIcon}
+                  title={config.label}
+                  clickable={() => {
+                    setSelectedValue(config);
+                    props.onImageChange({type: ImageChangeType.aspectRatio, value: config.value, animation: true});
+                  }}
+                />
+              )}
+            </For>
+          </div>
+        </div>
+      </Show>
+      <Show when={props.isMobile}>
+        <div class="image-editor__image-control resize-image-control">
+          <div class="resize-image-control__name">
+            {i18n('ImageEditor.ResizeControl.AspectRatio')}
+          </div>
+          <Select
+            value={selectedValue().value}
+            options={ASTECT_RATIO_CONFIGS}
+            onClick={(option) => {
+              const config = ASTECT_RATIO_CONFIGS.find(c => c.value === option.value);
+
+              setSelectedValue(config);
+              props.onImageChange({type: ImageChangeType.aspectRatio, value: config.value, animation: true});
+            }}/>
+        </div>
+      </Show>
+    </>
   );
 }

@@ -61,16 +61,20 @@
     padding: 0 8px;
     background: var(--surface-color);
     position: absolute;
-    top: -55px;
+    top: -72px;
     left: var(--color-picker-v2-mobile-left);
     z-index: 1;
-    height: 40px;
-    justify-content: flex-start;
+    height: 56px;
+    justify-content: center;
     flex-wrap: nowrap;
     width: var(--color-picker-v2-mobile-width);
+    border-bottom: 1px solid var(--secondary-color);
   }
 
   .advance-pallete {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     padding: 0 8px;
     background: var(--surface-color);
     position: absolute;
@@ -79,6 +83,7 @@
     z-index: 1;
     height: 200px;
     width: var(--color-picker-v2-mobile-width);
+    border-bottom: 1px solid var(--secondary-color);
 
     .color-slider-container {
       margin-left: 8px;

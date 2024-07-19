@@ -113,18 +113,32 @@ export interface StickerLayer {
   texture?: ImageElementTextureSource;
 }
 
+export enum ImageFilterType {
+  sharpness = 'sharpness',
+  brightness = 'brightness',
+  contrast = 'contrast',
+  saturation = 'saturation',
+  warmth = 'warmth',
+  fade = 'fade',
+  highlights = 'highlights',
+  shadows = 'shadows',
+  vignette = 'vignette',
+  grain = 'grain',
+  sharpen = 'sharpen'
+}
+
 export const IMAGE_FILTER_NAMES = [
-  'sharpness',
-  'brightness',
-  'contrast',
-  'saturation',
-  'warmth',
-  'fade',
-  'highlights',
-  'shadows',
-  'vignette',
-  'grain',
-  'sharpen'
+  ImageFilterType.sharpness,
+  ImageFilterType.brightness,
+  ImageFilterType.contrast,
+  ImageFilterType.saturation,
+  ImageFilterType.warmth,
+  ImageFilterType.fade,
+  ImageFilterType.highlights,
+  ImageFilterType.shadows,
+  ImageFilterType.vignette,
+  ImageFilterType.grain,
+  ImageFilterType.sharpen
 ];
 
 export interface ImageFilterState {

@@ -1,4 +1,4 @@
-import {createEffect, createSignal, For, on, onMount, Show} from 'solid-js';
+import {createEffect, createSignal, For, on, onMount, onCleanup, Show} from 'solid-js';
 import {Color, ColorFormatType, anyColorToHexColor, anyColorToHslaColor, anyColorToHsvColor, anyColorToRgbaColor, rbgToString, hslaToString} from '../helpers/color';
 import {ButtonIconTsx} from './buttonIconTsx';
 import {InputState} from './inputField';
@@ -472,10 +472,19 @@ export function ColorPickerV2Mobile(props: ColorPickerProps) {
   const showAdvancedPallete = () => currentView() === MobileColorPickerView.advansedPallete;
 
   onMount(() => {
+    window.addEventListener('resize', handleResize);
+    handleResize();
+  });
+
+  onCleanup(() => {
+    window.removeEventListener('resize', handleResize);
+  });
+
+  const handleResize = () => {
     const width = window.innerWidth;
     elRef().style.setProperty('--color-picker-v2-mobile-width', `${width}px`);
     elRef().style.setProperty('--color-picker-v2-mobile-left', `${-elRef().offsetLeft}px`);
-  });
+  };
 
   const handleColorChange = (color: Color): void => {
     let resultColor = color;

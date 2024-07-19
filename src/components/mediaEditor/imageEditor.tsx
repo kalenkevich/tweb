@@ -23,7 +23,8 @@ import {
   NEON_BRUSH_BORDER_COLOR,
   NEON_BRUSH_BORDER_WIDTH,
   TRANPARENT_COLOR,
-  DRAW_ARROW_CAP_AFTER_MS
+  DRAW_ARROW_CAP_AFTER_MS,
+  IMAGE_EDITOR_MOBILE_WIDTH_THRESHOLD
 } from './consts';
 import {NavigationBar} from './navigationBar';
 import {ImageEditorManager} from './imageEditorManager';
@@ -55,7 +56,7 @@ export interface MediaEditorProps {
 }
 
 export function ImageEditor(props: MediaEditorProps) {
-  const [isMobile, setIsMobile] = createSignal(mediaSizes.isMobile);
+  const [isMobile, setIsMobile] = createSignal(false);
   const [stickerRenderer] = createSignal(new SuperStickerRenderer({
     regularLazyLoadQueue: new LazyLoadQueue(),
     group: 'MEDIA-EDITOR',
@@ -65,7 +66,7 @@ export function ImageEditor(props: MediaEditorProps) {
   const [imageState, setImageState] = createSignal(createImageState(props.imgSource));
   const [layersToRender, setLayersToRender] = createSignal([ObjectLayerType.backgroundImage]);
   const [currentLayerIndex, setCurrentLayerIndex] = createSignal(-1);
-  const [selectedTabId, setSelectedTabId] = createSignal(mediaSizes.isMobile ? undefined : TABS_CONFIG[0].tabId);
+  const [selectedTabId, setSelectedTabId] = createSignal(isMobile() ? undefined : TABS_CONFIG[0].tabId);
   const [currentBrushSequence, setCurrentBrushSequence] = createSignal(0);
   const [canRedo, setCanRedu] = createSignal(false);
   const [canUndo, setCanUndo] = createSignal(false);
@@ -90,7 +91,9 @@ export function ImageEditor(props: MediaEditorProps) {
     imageEditorManager().triggerRerender({render: true, layers: layersToRender()});
   });
 
-  const onScreenResized = () => setIsMobile(mediaSizes.isMobile);
+  const onScreenResized = () => {
+    setIsMobile(window.innerWidth <= IMAGE_EDITOR_MOBILE_WIDTH_THRESHOLD);
+  };
 
   const onCanvasMounted = async(canvas: HTMLCanvasElement) => {
     imageEditorManager().init(canvas);

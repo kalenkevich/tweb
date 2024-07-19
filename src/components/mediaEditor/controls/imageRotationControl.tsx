@@ -6,9 +6,9 @@ import {IconTsx} from '../../iconTsx';
 import clamp from '../../../helpers/number/clamp';
 import attachGrabListeners from '../../../helpers/dom/attachGrabListeners';
 
-export const ROTATE_CARUSEL_HEIGHT = 40;
-export const ROTATE_CARUSEL_PADDING_BOTTOM = 20;
-export const ROTATE_CARUSEL_ACTUAL_HEIGHT = ROTATE_CARUSEL_HEIGHT + ROTATE_CARUSEL_PADDING_BOTTOM;
+export const ROTATE_CARUSEL_HEIGHT = 60;
+export const ROTATE_CARUSEL_PADDING = 20;
+export const ROTATE_CARUSEL_ACTUAL_HEIGHT = ROTATE_CARUSEL_HEIGHT + ROTATE_CARUSEL_PADDING;
 
 const getRangeBasedOnWidth = (width: number): number => {
   if(width >= 0 && width <= 400) {
@@ -66,8 +66,15 @@ export function ImageRotationControl(props: ImageRotationControlProps): JSX.Elem
   onMount(() => {
     window.addEventListener('resize', updateSteps);
 
-    rootRef().style.height = `${ROTATE_CARUSEL_HEIGHT}px`;
-    rootRef().style.paddingBottom = `${ROTATE_CARUSEL_PADDING_BOTTOM}px`;
+    rootRef().style.setProperty('--rotation-control-height', `${ROTATE_CARUSEL_HEIGHT}px`);
+
+    if(props.isMobile) {
+      rootRef().style.setProperty('--rotation-control-padding-top', `${ROTATE_CARUSEL_PADDING / 2}px`);
+      rootRef().style.setProperty('--rotation-control-padding-bottom', `${ROTATE_CARUSEL_PADDING / 2}px`);
+    } else {
+      rootRef().style.setProperty('--rotation-control-padding-top', `${0}px`);
+      rootRef().style.setProperty('--rotation-control-padding-bottom', `${ROTATE_CARUSEL_PADDING}px`);
+    }
 
     attachGrabListeners(caruselRef() as any, (pos) => {
       onGrabStart();

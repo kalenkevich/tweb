@@ -9,11 +9,11 @@ import {ImageDrawControl} from './controls/imageDrawControl';
 import {ImageStickerControl} from './controls/imageStickerControl';
 
 export enum TabType {
-  ENHANCE,
-  RESIZE,
-  TEXT,
-  DRAW,
-  STICKER
+  ENHANCE = 'enhance',
+  RESIZE = 'resize',
+  TEXT = 'text',
+  DRAW = 'draw',
+  STICKER = 'sticker'
 }
 
 export interface ImageEditorTab {
@@ -104,102 +104,85 @@ export interface ImageEditorTabsProps extends ImageControlProps {
 
 export function ImageEditorTabs(props: ImageEditorTabsProps) {
   const selectedTabId = () => props.selectedTabId;
-  const selectedTab = () => TABS_CONFIG.find(t => t.tabId === props.selectedTabId);
-
-  return (
-    <Show when={!props.isMobile} fallback={
-      <ImageEditorTabsMobile
-        isMobile={props.isMobile}
-        selectedTabId={props.selectedTabId}
-        canUndo={props.canUndo}
-        canRedo={props.canRedo}
-        onUndo={props.onUndo}
-        onRedo={props.onRedo}
-        onClose={props.onClose}
-        imageState={props.imageState}
-        currentLayerIndex={props.currentLayerIndex}
-        onImageChange={props.onImageChange}
-        onTabSelected={props.onTabSelected}
-      />
-    }>
-      <div class="image-editor__tabs-container">
-        <div class="tabs-header">
-          <ButtonIconTsx
-            class="tabs-header__close"
-            icon="close"
-            onClick={() => props.onClose()}
-          />
-          <h3 class="tabs-header__title">
-            {i18n('ImageEditor.Edit')}
-          </h3>
-          <div class="tabs-header__undo-redu-buttons">
-            <ButtonIconTsx
-              icon="undo"
-              disabled={!props.canUndo}
-              asSvgIcon={true}
-              onClick={() => props.onUndo()}
-            />
-            <ButtonIconTsx
-              icon="redo"
-              disabled={!props.canRedo}
-              asSvgIcon={true}
-              onClick={() => props.onRedo()}
-            />
-          </div>
-        </div>
-        <div class="tab-icons">
-          <For each={TABS_CONFIG}>
-            {(tabConfig) => (
-              <div class="tab-icon__container" classList={{'tab-icon__selected': tabConfig.tabId === selectedTabId()}}>
-                <ButtonIconTsx
-                  icon={tabConfig.icon}
-                  asSvgIcon={tabConfig.asSvgIcon}
-                  onClick={() => {
-                    props.onTabSelected(tabConfig.tabId);
-                  }}
-                />
-                <div class="tab-icon__highlight"></div>
-              </div>
-            )}
-          </For>
-        </div>
-        <div class="tab-body">
-          {selectedTab().component(props)}
-        </div>
-      </div>
-    </Show>
-  );
-}
-
-export function ImageEditorTabsMobile(props: ImageEditorTabsProps) {
   const isTabSelected = () => !!props.selectedTabId;
   const isTabNotSelected = () => !props.selectedTabId;
   const selectedTab = () => TABS_CONFIG.find(t => t.tabId === props.selectedTabId);
 
   return (
-    <div class="image-editor__tabs-container">
-      <Show when={isTabSelected()}>
-        <div class="tab-content">
-          <ButtonIconTsx
-            icon="arrow_prev"
-            onClick={() => props.onTabSelected(undefined)}
-          />
-          {selectedTab()?.component(props)}
-        </div>
-      </Show>
-      <Show when={isTabNotSelected()}>
-        <div class="tabs-header">
-          <For each={TABS_CONFIG}>
-            {(config) => (
+    <>
+      <Show when={!props.isMobile}>
+        <div class="image-editor__tabs-container">
+          <div class="tabs-header">
+            <ButtonIconTsx
+              class="tabs-header__close"
+              icon="close"
+              onClick={() => props.onClose()}
+            />
+            <h3 class="tabs-header__title">
+              {i18n('ImageEditor.Edit')}
+            </h3>
+            <div class="tabs-header__undo-redu-buttons">
               <ButtonIconTsx
-                icon={config.icon}
-                asSvgIcon={config.asSvgIcon}
-                onClick={() => props.onTabSelected(config.tabId)}
+                icon="undo"
+                disabled={!props.canUndo}
+                asSvgIcon={true}
+                onClick={() => props.onUndo()}
               />
-            )}
-          </For>
+              <ButtonIconTsx
+                icon="redo"
+                disabled={!props.canRedo}
+                asSvgIcon={true}
+                onClick={() => props.onRedo()}
+              />
+            </div>
+          </div>
+          <div class="tab-icons">
+            <For each={TABS_CONFIG}>
+              {(tabConfig) => (
+                <div class="tab-icon__container" classList={{'tab-icon__selected': tabConfig.tabId === selectedTabId()}}>
+                  <ButtonIconTsx
+                    icon={tabConfig.icon}
+                    asSvgIcon={tabConfig.asSvgIcon}
+                    onClick={() => {
+                      props.onTabSelected(tabConfig.tabId);
+                    }}
+                  />
+                  <div class="tab-icon__highlight"></div>
+                </div>
+              )}
+            </For>
+          </div>
+          <div class="tab-body">
+            {selectedTab().component(props)}
+          </div>
         </div>
       </Show>
-    </div>
+      <Show when={props.isMobile}>
+        <div class="image-editor__tabs-container">
+          <Show when={isTabSelected()}>
+            <div class="tab-content">
+              <ButtonIconTsx
+                icon="arrow_prev"
+                onClick={() => props.onTabSelected(undefined)}
+              />
+              {selectedTab()?.component(props)}
+            </div>
+          </Show>
+          <Show when={isTabNotSelected()}>
+            <div class="tabs-header">
+              <For each={TABS_CONFIG}>
+                {(config) => (
+                  <ButtonIconTsx
+                    icon={config.icon}
+                    asSvgIcon={config.asSvgIcon}
+                    onClick={() => props.onTabSelected(config.tabId)}
+                  />
+                )}
+              </For>
+            </div>
+          </Show>
+        </div>
+      </Show>
+    </>
   );
 }

@@ -15,9 +15,13 @@ export function ImageStickerControl(props: ImageStickerControlProps): JSX.Elemen
     const emoticonsDropdown = new EmoticonsDropdown({
       customParentElement: ref(),
       tabsToRender: [new StickersTab(rootScope.managers)],
-      stayAlwaysOpen: true,
-      fullHeight: true,
+      stayAlwaysOpen: !props.isMobile,
+      fullHeight: !props.isMobile,
       onMount: (el) => {
+        if(props.isMobile) {
+          return;
+        }
+
         el.style.height = `${ref().offsetHeight}px`;
         el.style.maxHeight = `${ref().offsetHeight}px`;
         el.style.setProperty('--height', `${ref().offsetHeight}px`);

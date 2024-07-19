@@ -2850,6 +2850,7 @@ const lang = {
   'ImageEditor.Text': 'Text',
   'ImageEditor.Paint': 'Draw',
   'ImageEditor.Stickers': 'Stickers',
+  'ImageEditor.EnhanceControl.Label': 'Filter',
   'ImageEditor.EnhanceControl.Enhance': 'Enhance',
   'ImageEditor.EnhanceControl.Brightness': 'Brightness',
   'ImageEditor.EnhanceControl.Contrast': 'Contrast',
