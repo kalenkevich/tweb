@@ -29,6 +29,7 @@ export function DraggableObjects(props: DraggableObjectsProps) {
       <For each={textObjects()}>
         {(layer: TextLayer) => (
           <DraggableText
+            isMobile={props.isMobile}
             surface={props.surface}
             layer={layer as TextLayer}
             isActive={layer === props.imageState.layers[props.currentLayerIndex]}
@@ -40,6 +41,7 @@ export function DraggableObjects(props: DraggableObjectsProps) {
       <For each={stickerObjects()}>
         {(layer: StickerLayer) => (
           <DraggableSticker
+            isMobile={props.isMobile}
             surface={props.surface}
             stickerRenderer={props.stickerRenderer}
             layer={layer as StickerLayer}

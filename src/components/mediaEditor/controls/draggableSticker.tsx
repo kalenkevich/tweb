@@ -41,6 +41,7 @@ export function SuperSticker(props: SuperStickerProps) {
 }
 
 export interface DraggableStickerProps {
+  isMobile: boolean;
   surface: DraggingSurface;
   stickerRenderer: SuperStickerRenderer;
   layer: StickerLayer;

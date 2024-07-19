@@ -13,14 +13,14 @@ export interface SelectProps {
 
 export function Select(props: SelectProps) {
   return (
-    <select value={props.value} onChange={(e) => {
+    <select class="custom-select" value={props.value} onChange={(e) => {
       const option = props.options.find(op => `${op.value}` === e.target.value);
 
       props.onClick(option);
     }}>
       <For each={props.options}>
         {(option) => (
-          <option value={option.value}>
+          <option class="custom-select-option" value={option.value}>
             {option.label}
           </option>
         )}

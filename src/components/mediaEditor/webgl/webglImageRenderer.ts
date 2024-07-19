@@ -97,6 +97,18 @@ export class WebglImageRenderer implements ImageRenderer {
     const error = this.gl.getError();
     if(error) {
       console.log(error);
+      // const div = document.createElement('div');
+      // div.innerText = `GL ERROR: ${error}`;
+      // div.style.position = 'fixed';
+      // div.style.fontSize = '32px';
+      // div.style.color = 'red';
+      // div.style.top = '25%';
+      // div.style.left = '25%';
+      // div.style.zIndex = '999999';
+      // div.style.width = '300px';
+      // div.style.height = '300px';
+      // div.style.background = 'white';
+      // document.body.appendChild(div);
     }
   }
 

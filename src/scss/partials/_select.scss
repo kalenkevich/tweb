@@ -1,0 +1,24 @@
+.custom-select {
+  --height: 54px;
+  --border-radius: #{$border-radius-medium};
+  --padding: 1rem;
+  --padding-horizontal: 1rem;
+  --border-width: 1px;
+  
+  cursor: pointer;
+  border: var(--border-width) solid var(--input-search-border-color);
+  border-radius: var(--border-radius);
+  background-color: var(--surface-color);
+  padding: calc(var(--padding) - var(--border-width)) calc(var(--padding-horizontal) - var(--border-width));
+  box-sizing: border-box;
+  width: 100%;
+  min-height: var(--height);
+  transition: 0s border-color;
+  position: relative;
+  z-index: 1;
+  line-height: var(--line-height);
+
+  &-option {
+
+  }
+}

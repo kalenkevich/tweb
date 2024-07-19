@@ -1,4 +1,4 @@
-import {createSignal, createEffect, on} from 'solid-js';
+import {createSignal, createEffect, on, onMount} from 'solid-js';
 import {i18n} from '../../../lib/langPack';
 import {ImageChangeType, TextLayer, AttachmentChangeAction, ImageChangeEvent} from '../types';
 import {Draggable} from '../draggable/draggable';
@@ -9,6 +9,7 @@ import {IconTsx} from '../../iconTsx';
 const PLACEHOLDER = i18n('ImageEditor.TextControl.AddText').innerText;
 
 export interface DraggableTextProps {
+  isMobile: boolean;
   surface: DraggingSurface;
   layer: TextLayer;
   isActive: boolean;
@@ -23,12 +24,14 @@ export function DraggableText(props: DraggableTextProps) {
   const layer = () => props.layer;
   const inputStyles = () => getTextLayerInputElementStyles(textValueInternal(), layer(), PLACEHOLDER);
 
+  onMount(() => {
+    if(props.isActive && !props.isMobile) {
+      inputRef().focus();
+    }
+  });
+
   createEffect(on(() => props.isActive, (isActive) => {
-    if(isActive) {
-      if(document.activeElement !== inputRef()) {
-        inputRef().focus();
-      }
-    } else {
+    if(!isActive) {
       inputRef().blur();
     }
 

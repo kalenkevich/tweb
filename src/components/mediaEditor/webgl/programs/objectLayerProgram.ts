@@ -6,7 +6,7 @@ import {WebGlTexture, createWebGlTexture, TextureSourceType} from '../helpers/we
 import {ImageDrawObject} from '../drawObject/imageDrawObject';
 
 const ObjectLayerProgramShaders = {
-  vertext: `
+  vertext: `#version 300 es
     precision highp float;
 
     ${SHADER_CLIP_UTILS}
@@ -16,10 +16,10 @@ const ObjectLayerProgramShaders = {
     uniform float u_width;
     uniform float u_height;
 
-    attribute vec2 a_position;
-    attribute vec2 a_texCoord;
+    in vec2 a_position;
+    in vec2 a_texCoord;
 
-    varying vec2 v_texCoord;
+    out vec2 v_texCoord;
 
     void main() {
       v_texCoord = a_texCoord;
@@ -32,14 +32,16 @@ const ObjectLayerProgramShaders = {
       gl_Position = vec4(clipped, 0.0, 1.0);
     }
   `,
-  fragment: `
+  fragment: `#version 300 es
     precision highp float;
 
     uniform sampler2D u_texture;
-    varying vec2 v_texCoord;
+    in vec2 v_texCoord;
+
+    out vec4 fragColor;
 
     void main() {
-      gl_FragColor = texture2D(u_texture, v_texCoord);
+      fragColor = texture(u_texture, v_texCoord);
     }
   `
 };

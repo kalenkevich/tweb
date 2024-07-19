@@ -7,8 +7,20 @@ import {BrushTouchDrawObject} from '../drawObject/brushTouchDrawObject';
 import {WebGlFrameBuffer, createFrameBuffer} from '../helpers/webglFramebuffer';
 import {WebGlTexture, createWebGlTexture} from '../helpers/webglTexture';
 
+function isPowerOfTwo(x: number) {
+  return (x & (x - 1)) == 0;
+}
+
+function nextHighestPowerOfTwo(x: number) {
+  --x;
+  for(var i = 1; i < 32; i <<= 1) {
+    x = x | x >> i;
+  }
+  return x + 1;
+}
+
 const BrushTouchProgramShaders = {
-  vertext: `
+  vertext: `#version 300 es
     precision highp float;
     #define VERTEX_QUAD_POSITION_TOP_LEFT ${VERTEX_QUAD_POSITION.TOP_LEFT}.0
     #define VERTEX_QUAD_POSITION_TOP_RIGHT ${VERTEX_QUAD_POSITION.TOP_RIGHT}.0
@@ -23,17 +35,17 @@ const BrushTouchProgramShaders = {
     uniform float u_height;
     uniform float u_device_pixel_ratio;
 
-    attribute vec3 a_position;
-    attribute vec3 a_properties;
-    attribute vec4 a_color;
-    attribute vec4 a_border_color;
+    in vec3 a_position;
+    in vec3 a_properties;
+    in vec4 a_color;
+    in vec4 a_border_color;
 
-    varying vec4 v_color;
-    varying vec4 v_border_color;
-    varying float v_radius;
-    varying float v_style;
-    varying float v_border_width;
-    varying vec2 v_center_point;
+    out vec4 v_color;
+    out vec4 v_border_color;
+    out float v_radius;
+    out float v_style;
+    out float v_border_width;
+    out vec2 v_center_point;
 
     void main() {
       vec2 resolution = vec2(u_width, u_height);
@@ -75,7 +87,7 @@ const BrushTouchProgramShaders = {
       gl_Position = vec4(clipped, 0.0, 1.0);
     }
   `,
-  fragment: `
+  fragment: `#version 300 es
     precision highp float;
     #define BRUSH_STYLE_PEN ${BrushStyle.pen}.0
     #define BRUSH_STYLE_ARROW ${BrushStyle.arrow}.0
@@ -88,12 +100,14 @@ const BrushTouchProgramShaders = {
     uniform float u_height;
     uniform float u_device_pixel_ratio;
 
-    varying vec4 v_color;
-    varying vec4 v_border_color;
-    varying float v_radius;
-    varying float v_style;
-    varying float v_border_width;
-    varying vec2 v_center_point;
+    in vec4 v_color;
+    in vec4 v_border_color;
+    in float v_radius;
+    in float v_style;
+    in float v_border_width;
+    in vec2 v_center_point;
+
+    out vec4 fragColor;
 
     void main() {
       vec2 resolution = vec2(u_width, u_height);
@@ -113,7 +127,7 @@ const BrushTouchProgramShaders = {
       float radius = v_radius / u_width;
 
       if(distance <= radius) {
-        gl_FragColor = v_color;
+        fragColor = v_color;
       } else {
         discard;
       }
@@ -170,6 +184,11 @@ export class BrushTouchProgram extends BaseWebglProgram {
   setupFramebuffer(width: number, height: number) {
     const gl = this.gl;
 
+    // if(!isPowerOfTwo(width) || !isPowerOfTwo(height)) {
+    //   width = nextHighestPowerOfTwo(width);
+    //   height = nextHighestPowerOfTwo(height);
+    // }
+
     this.framebufferTexture = createWebGlTexture(gl, {
       name: 'framebuffer_texture',
       // Replace texture with a new instance but use the same texture index
@@ -177,13 +196,23 @@ export class BrushTouchProgram extends BaseWebglProgram {
       width,
       height,
       pixels: null,
-      minFilter: gl.NEAREST,
-      magFilter: gl.NEAREST,
+      minFilter: gl.LINEAR,
+      magFilter: gl.LINEAR,
       wrapS: gl.CLAMP_TO_EDGE,
       wrapT: gl.CLAMP_TO_EDGE
     });
     this.framebuffer = createFrameBuffer(gl, {texture: this.framebufferTexture});
     this.clearFramebuffer();
+  }
+
+  setWidth(width: number) {
+    // width = nextHighestPowerOfTwo(width);
+    this.widthUniform.setFloat(width);
+  }
+
+  setHeight(height: number) {
+    // height = nextHighestPowerOfTwo(height);
+    this.heightUniform.setFloat(height);
   }
 
   resetFramebuffer(width: number, height: number) {

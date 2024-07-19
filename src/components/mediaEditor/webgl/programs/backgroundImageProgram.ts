@@ -7,7 +7,7 @@ import {ImageDrawObject} from '../drawObject/imageDrawObject';
 import {ImageFilterState, IMAGE_FILTER_NAMES} from '../../types';
 
 const BackgroundImageShaders = {
-  vertext: `
+  vertext: `#version 300 es
     precision highp float;
 
     ${SHADER_CLIP_UTILS}
@@ -17,10 +17,10 @@ const BackgroundImageShaders = {
     uniform float u_width;
     uniform float u_height;
 
-    attribute vec2 a_position;
-    attribute vec2 a_texCoord;
+    in vec2 a_position;
+    in vec2 a_texCoord;
 
-    varying vec2 v_texCoord;
+    out vec2 v_texCoord;
 
     void main() {
       v_texCoord = a_texCoord;
@@ -33,7 +33,7 @@ const BackgroundImageShaders = {
       gl_Position = vec4(clipped, 0.0, 1.0);
     }
   `,
-  fragment: `
+  fragment: `#version 300 es
     precision highp float;
 
     struct ImageFilter {
@@ -56,8 +56,10 @@ const BackgroundImageShaders = {
     uniform vec2 u_textureSize;
     uniform ImageFilter u_filter;
 
-    varying vec2 v_texCoord;
-    varying vec4 v_color;
+    in vec2 v_texCoord;
+    in vec4 v_color;
+
+    out vec4 fragColor;
 
     float rand(vec2 co){
       return fract(sin(dot(co.xy, vec2(12.9898, 78.233))) * 43758.5453);
@@ -175,15 +177,15 @@ const BackgroundImageShaders = {
 
       vec2 onePixel = vec2(1.0, 1.0) / u_textureSize;
       vec4 colorSum =
-       texture2D(u_texture, v_texCoord + onePixel * vec2(-1, -1)) * u_sharpen_kernel[0] +
-       texture2D(u_texture, v_texCoord + onePixel * vec2( 0, -1)) * u_sharpen_kernel[1] +
-       texture2D(u_texture, v_texCoord + onePixel * vec2( 1, -1)) * u_sharpen_kernel[2] +
-       texture2D(u_texture, v_texCoord + onePixel * vec2(-1,  0)) * u_sharpen_kernel[3] +
-       texture2D(u_texture, v_texCoord + onePixel * vec2( 0,  0)) * u_sharpen_kernel[4] +
-       texture2D(u_texture, v_texCoord + onePixel * vec2( 1,  0)) * u_sharpen_kernel[5] +
-       texture2D(u_texture, v_texCoord + onePixel * vec2(-1,  1)) * u_sharpen_kernel[6] +
-       texture2D(u_texture, v_texCoord + onePixel * vec2( 0,  1)) * u_sharpen_kernel[7] +
-       texture2D(u_texture, v_texCoord + onePixel * vec2( 1,  1)) * u_sharpen_kernel[8] ;
+       texture(u_texture, v_texCoord + onePixel * vec2(-1, -1)) * u_sharpen_kernel[0] +
+       texture(u_texture, v_texCoord + onePixel * vec2( 0, -1)) * u_sharpen_kernel[1] +
+       texture(u_texture, v_texCoord + onePixel * vec2( 1, -1)) * u_sharpen_kernel[2] +
+       texture(u_texture, v_texCoord + onePixel * vec2(-1,  0)) * u_sharpen_kernel[3] +
+       texture(u_texture, v_texCoord + onePixel * vec2( 0,  0)) * u_sharpen_kernel[4] +
+       texture(u_texture, v_texCoord + onePixel * vec2( 1,  0)) * u_sharpen_kernel[5] +
+       texture(u_texture, v_texCoord + onePixel * vec2(-1,  1)) * u_sharpen_kernel[6] +
+       texture(u_texture, v_texCoord + onePixel * vec2( 0,  1)) * u_sharpen_kernel[7] +
+       texture(u_texture, v_texCoord + onePixel * vec2( 1,  1)) * u_sharpen_kernel[8] ;
 
       return mix(color, colorSum, sharpen);
     }
@@ -202,15 +204,15 @@ const BackgroundImageShaders = {
 
       vec2 onePixel = vec2(1.0, 1.0) / u_textureSize;
       vec4 colorSum =
-        texture2D(u_texture, v_texCoord + onePixel * vec2(-1, -1)) * u_sharpness_kernel[0] +
-        texture2D(u_texture, v_texCoord + onePixel * vec2( 0, -1)) * u_sharpness_kernel[1] +
-        texture2D(u_texture, v_texCoord + onePixel * vec2( 1, -1)) * u_sharpness_kernel[2] +
-        texture2D(u_texture, v_texCoord + onePixel * vec2(-1,  0)) * u_sharpness_kernel[3] +
-        texture2D(u_texture, v_texCoord + onePixel * vec2( 0,  0)) * u_sharpness_kernel[4] +
-        texture2D(u_texture, v_texCoord + onePixel * vec2( 1,  0)) * u_sharpness_kernel[5] +
-        texture2D(u_texture, v_texCoord + onePixel * vec2(-1,  1)) * u_sharpness_kernel[6] +
-        texture2D(u_texture, v_texCoord + onePixel * vec2( 0,  1)) * u_sharpness_kernel[7] +
-        texture2D(u_texture, v_texCoord + onePixel * vec2( 1,  1)) * u_sharpness_kernel[8] ;
+        texture(u_texture, v_texCoord + onePixel * vec2(-1, -1)) * u_sharpness_kernel[0] +
+        texture(u_texture, v_texCoord + onePixel * vec2( 0, -1)) * u_sharpness_kernel[1] +
+        texture(u_texture, v_texCoord + onePixel * vec2( 1, -1)) * u_sharpness_kernel[2] +
+        texture(u_texture, v_texCoord + onePixel * vec2(-1,  0)) * u_sharpness_kernel[3] +
+        texture(u_texture, v_texCoord + onePixel * vec2( 0,  0)) * u_sharpness_kernel[4] +
+        texture(u_texture, v_texCoord + onePixel * vec2( 1,  0)) * u_sharpness_kernel[5] +
+        texture(u_texture, v_texCoord + onePixel * vec2(-1,  1)) * u_sharpness_kernel[6] +
+        texture(u_texture, v_texCoord + onePixel * vec2( 0,  1)) * u_sharpness_kernel[7] +
+        texture(u_texture, v_texCoord + onePixel * vec2( 1,  1)) * u_sharpness_kernel[8] ;
 
       return mix(color, colorSum, sharpness);
     }
@@ -218,7 +220,7 @@ const BackgroundImageShaders = {
     void main() {
       vec2 resolution = vec2(u_width, u_height);
       vec2 uv = gl_FragCoord.xy / resolution;
-      vec4 color = texture2D(u_texture, v_texCoord);
+      vec4 color = texture(u_texture, v_texCoord);
 
       color = sharpness(color, u_filter.sharpness);
       color.rgb = brightness(color.rgb, u_filter.brightness);
@@ -232,7 +234,7 @@ const BackgroundImageShaders = {
       color = grain(color, uv, u_filter.grain);
       color = sharpen(color, u_filter.sharpen);
 
-      gl_FragColor = color;
+      fragColor = color;
     }
   `
 };

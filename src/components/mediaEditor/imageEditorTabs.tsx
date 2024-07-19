@@ -1,6 +1,13 @@
-import {For, Show, JSX} from 'solid-js';
+import {For, Show, JSX, createSignal, onMount} from 'solid-js';
 import {ButtonIconTsx} from '../buttonIconTsx';
 import {i18n} from '../../lib/langPack';
+import rootScope from '../../lib/rootScope';
+import StickersTab from '../emoticonsDropdown/tabs/stickers';
+import {EmoticonsDropdown, DROPDOWN_HEIGHT} from '../emoticonsDropdown';
+import cloneDOMRect from '../../helpers/dom/cloneDOMRect';
+import {DEFAULT_STICKER_LAYER} from './consts';
+import {ImageChangeType, AttachmentChangeAction} from './types';
+import {getLayerNextId} from './helpers/layerHelper';
 import {ImageControlProps} from './controls/imageControl';
 import {ImageFilterControl} from './controls/imageFilterControl';
 import {ImageResizeControl} from './controls/imageResizeControl';
@@ -103,10 +110,48 @@ export interface ImageEditorTabsProps extends ImageControlProps {
 }
 
 export function ImageEditorTabs(props: ImageEditorTabsProps) {
+  const [elRef, setElRef] = createSignal<HTMLDivElement>();
+  const [emoticonsDropdown, setEmoticonsDropdown] = createSignal<EmoticonsDropdown>();
   const selectedTabId = () => props.selectedTabId;
   const isTabSelected = () => !!props.selectedTabId;
   const isTabNotSelected = () => !props.selectedTabId;
   const selectedTab = () => TABS_CONFIG.find(t => t.tabId === props.selectedTabId);
+
+  onMount(() => {
+    setEmoticonsDropdown(new EmoticonsDropdown({
+      customParentElement: elRef(),
+      tabsToRender: [new StickersTab(rootScope.managers)],
+      stayAlwaysOpen: false,
+      fullHeight: false,
+      customWidth: window.innerWidth,
+      getOpenPosition: () => {
+        const rect = elRef().getBoundingClientRect();
+        const cloned = cloneDOMRect(rect);
+        cloned.left = 0;
+        cloned.top = -DROPDOWN_HEIGHT;
+        return cloned;
+      },
+      onMediaClicked: (e) => {
+        const el = e.target as HTMLDivElement;
+        const stickerId = el.dataset['docId'];
+
+        props.onImageChange({
+          type: ImageChangeType.layer,
+          layer: {
+            ...DEFAULT_STICKER_LAYER,
+            id: getLayerNextId(),
+            width: el.offsetWidth,
+            height: el.offsetHeight,
+            stickerId
+          },
+          action: AttachmentChangeAction.create,
+          appearInRandomSpot: true
+        });
+
+        emoticonsDropdown().onButtonClick();
+      }
+    }));
+  });
 
   return (
     <>
@@ -158,7 +203,7 @@ export function ImageEditorTabs(props: ImageEditorTabsProps) {
         </div>
       </Show>
       <Show when={props.isMobile}>
-        <div class="image-editor__tabs-container">
+        <div class="image-editor__tabs-container" ref={el => setElRef(el)}>
           <Show when={isTabSelected()}>
             <div class="tab-content">
               <ButtonIconTsx
@@ -175,7 +220,13 @@ export function ImageEditorTabs(props: ImageEditorTabsProps) {
                   <ButtonIconTsx
                     icon={config.icon}
                     asSvgIcon={config.asSvgIcon}
-                    onClick={() => props.onTabSelected(config.tabId)}
+                    onClick={() => {
+                      if(config.tabId === TabType.STICKER) {
+                        emoticonsDropdown().onButtonClick();
+                      } else {
+                        props.onTabSelected(config.tabId);
+                      }
+                    }}
                   />
                 )}
               </For>

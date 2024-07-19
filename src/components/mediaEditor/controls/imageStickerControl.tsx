@@ -4,8 +4,7 @@ import {ImageChangeType, AttachmentChangeAction} from '../types';
 import {DEFAULT_STICKER_LAYER} from '../consts';
 import rootScope from '../../../lib/rootScope';
 import StickersTab from '../../emoticonsDropdown/tabs/stickers';
-import cloneDOMRect from '../../../helpers/dom/cloneDOMRect';
-import {EmoticonsDropdown, DROPDOWN_HEIGHT} from '../../emoticonsDropdown';
+import {EmoticonsDropdown} from '../../emoticonsDropdown';
 import {getLayerNextId} from '../helpers/layerHelper';
 
 export interface ImageStickerControlProps extends ImageControlProps {}
@@ -17,20 +16,8 @@ export function ImageStickerControl(props: ImageStickerControlProps): JSX.Elemen
       customParentElement: ref(),
       tabsToRender: [new StickersTab(rootScope.managers)],
       stayAlwaysOpen: true,
-      fullHeight: !props.isMobile,
-      customWidth: window.innerWidth,
-      getOpenPosition: props.isMobile ? () => {
-        const rect = ref().getBoundingClientRect();
-        const cloned = cloneDOMRect(rect);
-        cloned.left = 0;
-        cloned.top = -DROPDOWN_HEIGHT;
-        return cloned;
-      } : undefined,
+      fullHeight: true,
       onMount: (el) => {
-        if(props.isMobile) {
-          return;
-        }
-
         el.style.height = `${ref().offsetHeight}px`;
         el.style.maxHeight = `${ref().offsetHeight}px`;
         el.style.setProperty('--height', `${ref().offsetHeight}px`);

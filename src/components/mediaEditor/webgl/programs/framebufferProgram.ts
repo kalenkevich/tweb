@@ -5,10 +5,10 @@ import {WebGlBuffer, createWebGlBuffer} from '../helpers/webglBuffer';
 import {WebGlTexture} from '../helpers/webglTexture';
 
 const FramebufferShaders = {
-  vertext: `
-    attribute vec4 a_position;
-    attribute vec2 a_texCoord;
-    varying vec2 v_texCoord;
+  vertext: `#version 300 es
+    in vec4 a_position;
+    in vec2 a_texCoord;
+    out vec2 v_texCoord;
 
     void main() {
       v_texCoord = a_texCoord;
@@ -16,14 +16,16 @@ const FramebufferShaders = {
       gl_Position = a_position;
     }
   `,
-  fragment: `
+  fragment: `#version 300 es
     precision mediump float;
 
     uniform sampler2D u_texture;
-    varying vec2 v_texCoord;
+    in vec2 v_texCoord;
+
+    out vec4 fragColor;
     
     void main() {
-      gl_FragColor = texture2D(u_texture, v_texCoord);
+      fragColor = texture(u_texture, v_texCoord);
     }
   `
 };

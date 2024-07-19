@@ -92,9 +92,17 @@ export class ImageEditorManager {
             const el = document.createElement('div');
             await new Promise<void>((resolve) => {
               this.stickerRenderer.renderSticker(doc, el, [], undefined, () => {
-                resolve();
+                const img = el.children[0] as HTMLImageElement;
+                if(img.complete) {
+                  resolve();
+                } else {
+                  img.addEventListener('load', () => resolve());
+                }
               });
             })
+            const img = el.children[0] as HTMLImageElement;
+            img.width = layer.width * window.devicePixelRatio;
+            img.height = layer.height * window.devicePixelRatio;
             const texture = createImageElementTextureSource(el.children[0] as HTMLImageElement);
             layer.texture = texture;
             const halfWidth = (texture.width) / 2;
