@@ -169,13 +169,9 @@ export function DraggableText(props: DraggableTextProps) {
       }}
       onResize={(scale: [number, number]) => {
         props.onImageChange({
-          type: ImageChangeType.layer,
-          layer: {
-            ...layer(),
-            // translation: [layer().translation[0] * scale[0], layer().translation[1] * scale[1]],
-            fontSize: Math.min(Math.floor(layer().fontSize * scale[0]), MAX_FONT_SIZE)
-          },
-          action: AttachmentChangeAction.update
+          type: ImageChangeType.textLayerFontSize,
+          layerId: layer().id,
+          fontSize: Math.floor(layer().fontSize * scale[0])
         });
       }}
       onRotate={(rotation: number) => {

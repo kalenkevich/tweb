@@ -1,6 +1,5 @@
 import {createSignal, createEffect, on, onMount, onCleanup} from 'solid-js';
 import {ImageChangeType, StickerLayer, AttachmentChangeAction, ImageChangeEvent} from '../types';
-import {DRAGGABLE_OBJECT_TOP_BOTTOM_PADDING, DRAGGABLE_OBJECT_TOP_LEFT_RIGHT} from '../consts';
 import {Draggable} from '../draggable/draggable';
 import {DraggingSurface} from '../draggable/surface';
 import rootScope from '../../../lib/rootScope';

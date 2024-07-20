@@ -356,6 +356,7 @@
     height: 100%;
 
     .draggable-object {
+      cursor: grab;
       padding: 14px 6px; 
       margin: -16px -8px; 
       box-sizing: content-box;
@@ -380,9 +381,9 @@
         z-index: 2;
       }
 
+      --anchor-size: 16px;
       .resize-anchor {
         visibility: hidden;
-        --anchor-size: 16px;
         position: absolute;
         background: #FFFFFF;
         border-radius: 50%;
@@ -414,10 +415,33 @@
         }
       }
 
+      .rotate-anchor {
+        cursor: ew-resize;
+        position: absolute;
+        left: calc(50% - 8px);
+        bottom: -8px;
+        visibility: hidden;
+        background: #FFFFFF;
+        border-radius: 50%;
+        width: var(--anchor-size);
+        height: var(--anchor-size);
+
+        &__icon {
+          font-size: 12px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: #000000;
+          width: var(--anchor-size);
+          height: var(--anchor-size);
+        }
+      }
+
       &:hover, &.active {
         border: 2px dashed rgba(255, 255, 255, 0.5);
         .draggable-object__remove-icon-wrapper,
-        .resize-anchor {
+        .resize-anchor,
+        .rotate-anchor {
           visibility: visible;
         }
       }

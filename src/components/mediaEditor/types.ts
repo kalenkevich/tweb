@@ -185,7 +185,8 @@ export enum ImageChangeType {
   flip,
   layer,
   drawLayer,
-  drawTouch
+  drawTouch,
+  textLayerFontSize
 }
 
 export type ImageChangeEvent = FilterImageChangeEvent
@@ -196,7 +197,8 @@ export type ImageChangeEvent = FilterImageChangeEvent
   | ResizeChangeEvent
   | LayerChangeEvent
   | DrawLayerChangeEvent
-  | DrawTouchEvent;
+  | DrawTouchEvent
+  | TextLayerFontSizeChangeEvent;
 
 export interface FilterImageChangeEvent {
   type: ImageChangeType.filter;
@@ -255,4 +257,10 @@ export interface DrawTouchEvent {
   type: ImageChangeType.drawTouch;
   touch: {x: number; y: number} & Partial<BrushTouch>;
   preventDrawingArrowCap?: boolean;
+}
+
+export interface TextLayerFontSizeChangeEvent {
+  type: ImageChangeType.textLayerFontSize;
+  layerId: number;
+  fontSize: number;
 }

@@ -106,10 +106,22 @@ export function ImageTextControl(props: ImageTextControlProps): JSX.Element {
             newAttachmentState.secondColor = WHITE_COLOR_HEX;
           }
         }
+
+        props.onImageChange({
+          type: ImageChangeType.layer,
+          layer: newAttachmentState,
+          action: AttachmentChangeAction.update
+        });
         break;
       }
       case TextAttachmentProperty.alignment: {
         newAttachmentState.alignment = value as TextAlignment;
+
+        props.onImageChange({
+          type: ImageChangeType.layer,
+          layer: newAttachmentState,
+          action: AttachmentChangeAction.update
+        });
         break;
       }
       case TextAttachmentProperty.style: {
@@ -122,27 +134,35 @@ export function ImageTextControl(props: ImageTextControlProps): JSX.Element {
             newAttachmentState.secondColor = WHITE_COLOR_HEX;
           }
         }
+
+        props.onImageChange({
+          type: ImageChangeType.layer,
+          layer: newAttachmentState,
+          action: AttachmentChangeAction.update
+        });
         break;
       }
       case TextAttachmentProperty.fontName: {
         newAttachmentState.fontName = value as string;
+
+        props.onImageChange({
+          type: ImageChangeType.layer,
+          layer: newAttachmentState,
+          action: AttachmentChangeAction.update
+        });
         break;
       }
       case TextAttachmentProperty.fontSize: {
         const val = value as number;
-        newAttachmentState.fontSize = val;
-        newAttachmentState.padding = Math.min(16, Math.max(val / 2, 8));
-        newAttachmentState.borderRadius = Math.min(24, Math.max(val / 4, 8));
-        newAttachmentState.strokeWidth = Math.min(12, Math.max(val / 6, 4));
+
+        props.onImageChange({
+          type: ImageChangeType.textLayerFontSize,
+          layerId: newAttachmentState.id,
+          fontSize: val
+        });
         break;
       }
     }
-
-    props.onImageChange({
-      type: ImageChangeType.layer,
-      layer: newAttachmentState,
-      action: AttachmentChangeAction.update
-    });
   };
 
   return (
