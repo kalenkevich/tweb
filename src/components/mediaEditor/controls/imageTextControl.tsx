@@ -34,7 +34,7 @@ const TEXT_STYLE_CONTROL_CONFIG: IconConfig[] = [{
   icon: 'text_style_fill' as SvgIconType,
   asSvgIcon: true,
   square: true,
-  value: TextStyle.fill
+  value: TextStyle.default
 }, {
   icon: 'text_style_stroke' as SvgIconType,
   asSvgIcon: true,
@@ -44,7 +44,7 @@ const TEXT_STYLE_CONTROL_CONFIG: IconConfig[] = [{
   icon: 'text_style_fillinverse' as SvgIconType,
   asSvgIcon: true,
   square: true,
-  value: TextStyle.fill_inverse
+  value: TextStyle.fill_background
 }];
 
 const FONT_NAMES_CONFIGS = [{
@@ -99,7 +99,7 @@ export function ImageTextControl(props: ImageTextControlProps): JSX.Element {
     switch(propertyType) {
       case TextAttachmentProperty.color: {
         newAttachmentState.color = value as Color;
-        if(newAttachmentState.style === TextStyle.fill_inverse) {
+        if(newAttachmentState.style === TextStyle.fill_background) {
           if((value as Color).value === WHITE_COLOR_HEX.value) {
             newAttachmentState.secondColor = BLACK_COLOR_HEX;
           } else {
@@ -115,7 +115,7 @@ export function ImageTextControl(props: ImageTextControlProps): JSX.Element {
       case TextAttachmentProperty.style: {
         newAttachmentState.style = value as TextStyle;
 
-        if((value as TextStyle) === TextStyle.fill_inverse) {
+        if((value as TextStyle) === TextStyle.fill_background) {
           if(newAttachmentState.color.value === WHITE_COLOR_HEX.value) {
             newAttachmentState.secondColor = BLACK_COLOR_HEX;
           } else {

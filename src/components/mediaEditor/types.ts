@@ -30,8 +30,8 @@ export enum TextAlignment {
 }
 
 export enum TextStyle {
-  fill = 'fill',
-  fill_inverse = 'fill_inverse',
+  default = 'default',
+  fill_background = 'fill_background',
   stroke = 'stroke',
 }
 
@@ -67,7 +67,7 @@ export interface TextLayer {
   borderRadius: number; // fontSize / 4
   strokeColor: Color;
   strokeWidth: number; // fontSize / 6
-  secondColor: Color; // bac
+  secondColor: Color; // bacground color
   width: number;
   height: number;
   rotation: number;
