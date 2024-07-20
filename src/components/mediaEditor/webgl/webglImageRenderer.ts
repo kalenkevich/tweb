@@ -214,7 +214,7 @@ export class WebglImageRenderer implements ImageRenderer {
 
     return new Promise(resolve => {
       this.canvas.toBlob((blobResult) => {
-        // saveBlobAsFile(blobResult, 'result_image');
+        saveBlobAsFile(blobResult, 'result_image');
         resolve(blobResult);
       });
     });

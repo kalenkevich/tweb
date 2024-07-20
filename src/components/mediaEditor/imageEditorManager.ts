@@ -4,7 +4,7 @@ import {ImageRenderer, RenderOptions, DEFAULT_RENDER_OPTIONS} from './imageRende
 import {WebglImageRenderer} from './webgl/webglImageRenderer';
 import {RenderQueue} from './helpers/renderQueue';
 import {easyAnimation} from './helpers/animation';
-import {renderTextLayer} from './helpers/textHelper';
+import {renderTextLayer, renderTextLayerMultiline} from './helpers/textHelper';
 import {createImageElementTextureSource} from './webgl/helpers/webglTexture';
 import rootScope from '../../lib/rootScope';
 import SuperStickerRenderer from '../emoticonsDropdown/tabs/SuperStickerRenderer';
@@ -64,7 +64,7 @@ export class ImageEditorManager {
     const promises = [];
     for(const layer of state.layers) {
       if(layer.type === ObjectLayerType.text && !!layer.text) {
-        promises.push(renderTextLayer(layer.text, layer).then(texture => {
+        promises.push(renderTextLayerMultiline(layer.text, layer).then(texture => {
           layer.texture = texture;
           const halfWidth = (texture.width) / 2;
           const halfHeight = (texture.height) / 2;

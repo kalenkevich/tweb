@@ -671,7 +671,7 @@ export class AppImManager extends EventListenerBase<{
     });
 
     this.onHashChange(true);
-    this.attachKeydownListener();
+    // this.attachKeydownListener();
     this.attachCopyListener();
     this.handleAutologinDomains();
     this.handlePeerColors();

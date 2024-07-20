@@ -281,7 +281,7 @@ export function ImageEditor(props: MediaEditorProps) {
   const handleSave = async() => {
     const resultImage = await imageEditorManager().compileImage({render: true, layers: 'all'});
 
-    props.onSave(resultImage);
+    // props.onSave(resultImage);
   };
 
   const handleUndo = () => {

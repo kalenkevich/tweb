@@ -1,8 +1,9 @@
 import {TextLayer, TextStyle, TextAlignment} from '../types';
 import {anyColorToHexColor, anyColorToRgbaColor, Color, ColorRgba} from '../../../helpers/color';
-import {measureText as measureCanvasText, getCanvas2DFontStyle} from '../helpers/canvas2dHelper';
+import {measureText as measureCanvasText, TextMeasurements, getCanvas2DFontStyle} from '../helpers/canvas2dHelper';
 import {ImageElementTextureSource, createImageElementTextureSource} from '../webgl/helpers/webglTexture';
 
+// ---------------------------------  1 line text rendering utils -------------------------------------------------------
 export async function renderTextLayer(text: string, layer: TextLayer): Promise<ImageElementTextureSource> {
   const {width, height, fontBoundingBoxDescent} = measureCanvasText(text, layer.fontName, layer.fontSize, layer.fontWeight);
   const ratio = window.devicePixelRatio || 1;
@@ -47,8 +48,6 @@ export async function renderTextLayer(text: string, layer: TextLayer): Promise<I
 
   return createImageElementTextureSource(canvas);
 }
-
-// export async function renderTextMultiline(text: string, layer: TextLayer): Promise<ImageElementTextureSource> {}
 
 export function getTextLayerInputElementStyles(text: string, layer: TextLayer, placeholder: string = '') {
   const {width, height} = measureCanvasText(text || placeholder, layer.fontName, layer.fontSize, layer.fontWeight, layer.style === TextStyle.stroke ? layer.strokeWidth : 0);
@@ -95,170 +94,279 @@ export function getTextLayerInputElementStyles(text: string, layer: TextLayer, p
   // We should not get here!
   return baseStyle;
 };
+// ---------------------------------  multiline text rendering utils -------------------------------------------------------
 
-export interface StyledTextRow {
+export interface TextBox {
+  width: number;
+  height: number;
+  rows: TextRow[];
+  styles?: StyledTextAreaStyles;
+}
+
+export interface TextRow {
   text: string;
   width: number;
   height: number;
-  styles: Record<string, string>;
+  mesurement: TextMeasurements;
+  styles?: Record<string, string>;
   leftJoin?: Record<string, string>;
   rightJoin?: Record<string, string>;
 }
+
 export interface StyledTextAreaStyles {
   textareaWrapper: Record<string, string>,
   textarea: Record<string, string>,
   textareaBackground: Record<string, string>,
   rowWrapper: Record<string, string>,
-  rows: StyledTextRow[];
 }
-export function getTextLayerTextareaElementStyles(text: string, layer: TextLayer, placeholder: string = ''): StyledTextAreaStyles {
-  let boxWidth = 0;
-  let boxHeight = 0;
-  const rows: StyledTextRow[] = [];
 
-  for(const rowText of (text || placeholder).split('\n')) {
-    const {width, height} = measureCanvasText(rowText, layer.fontName, layer.fontSize, layer.fontWeight, layer.style === TextStyle.stroke ? layer.strokeWidth : 0);
-    boxWidth = Math.max(width, boxWidth);
-    boxHeight += height;
+export async function renderTextLayerMultiline(text: string, layer: TextLayer): Promise<ImageElementTextureSource> {
+  const textBox = getTextBox(text, layer);
+  const ratio = window.devicePixelRatio || 1;
+  const fontStyle = getCanvas2DFontStyle(layer);
+  const canvas = new OffscreenCanvas(
+    textBox.width * ratio,
+    textBox.height * ratio
+  );
+  const ctx = canvas.getContext('2d') as OffscreenCanvasRenderingContext2D;
+  ctx.scale(ratio, ratio);
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    rows.push({
-      text: rowText,
-      width,
-      height,
-      styles: {} as Record<string, string>
-    });
+  let currentHeightOffset = 0;
+  for(let i = 0; i < textBox.rows.length; i++) {
+    const row = textBox.rows[i];
+    const {text, width, height} = row;
+    const padding = getTextRowPadding(textBox.rows, i, layer);
+    const margin = getTextRowMargin(textBox, textBox.rows, i, layer);
+    const borderRadius = getTextRowBorderRadius(textBox.rows, i, layer);
+    const fontBoundingBoxDescent = row.mesurement.fontBoundingBoxDescent || row.mesurement.actualBoundingBoxDescent;
+
+    if(layer.style === TextStyle.stroke) {
+      ctx.beginPath();
+      ctx.font = fontStyle;
+      ctx.lineWidth = layer.strokeWidth;
+      ctx.strokeStyle = anyColorToHexColor(layer.strokeColor);
+      ctx.strokeText(
+        text,
+        margin.left + layer.strokeWidth,
+        margin.top + currentHeightOffset + height - layer.strokeWidth
+      );
+      ctx.fillStyle = anyColorToHexColor(layer.color);
+      ctx.fillText(
+        text,
+        margin.left + layer.strokeWidth,
+        margin.top + currentHeightOffset + height - layer.strokeWidth
+      );
+      ctx.stroke();
+      ctx.fill();
+    } else if(layer.style === TextStyle.default) {
+      ctx.beginPath();
+      ctx.font = fontStyle;
+      ctx.fillStyle = anyColorToHexColor(layer.color);
+      ctx.fillText(text, margin.left, margin.top + currentHeightOffset + height);
+      ctx.fill();
+    } else if(layer.style === TextStyle.fill_background) {
+      ctx.beginPath();
+      ctx.font = fontStyle;
+      ctx.fillStyle = anyColorToHexColor(layer.color);
+      ctx.roundRect(
+        margin.left,
+        currentHeightOffset,
+        width + padding.left + padding.right,
+        height + padding.bottom + padding.top,
+        [borderRadius.topLeft, borderRadius.topRight, borderRadius.bottomRight, borderRadius.bottomLeft]
+      );
+      ctx.fill();
+      ctx.fillStyle = anyColorToHexColor(layer.secondColor);
+      ctx.fillText(
+        text,
+        margin.left + padding.left,
+        margin.top + currentHeightOffset + height + padding.top - fontBoundingBoxDescent
+      );
+    }
+
+    currentHeightOffset += height + padding.bottom + padding.top;
   }
 
+  return createImageElementTextureSource(canvas);
+}
+
+export function getTextLayerTextareaElementStyles(text: string, layer: TextLayer, placeholder: string = ''): TextBox {
+  const textbox = getTextBox(text, layer, placeholder);
   const baseTextareaStyle = {
     'border': 'none',
     'outline': 'none',
     'background': 'none',
     'resize': 'none',
-    'width': `${boxWidth}px`,
-    'height': `${boxHeight}px`,
+    'padding': '0',
+    'overflow': 'hidden',
+    'box-sizing': 'content-box',
+    'width': `${textbox.width}px`,
+    'height': `${textbox.height}px`,
     'font-family': layer.fontName,
     'font-size': `${layer.fontSize}px`,
     'font-weight': `${layer.fontWeight}`,
     'line-height': `${layer.fontSize}px`,
-    'text-align': layer.alignment,
-    'box-sizing': 'content-box'
+    'text-align': layer.alignment
   };
 
   if(layer.style === TextStyle.default) {
     return {
-      textareaWrapper: {},
-      textarea: {
-        ...baseTextareaStyle,
-        color: anyColorToHexColor(layer.color)
-      },
-      textareaBackground: {},
-      rowWrapper: {},
-      rows
-    }
+      ...textbox,
+      styles: {
+        textareaWrapper: {
+          'height': `${textbox.height}px`
+        },
+        textarea: {
+          ...baseTextareaStyle,
+          color: anyColorToHexColor(layer.color)
+        },
+        textareaBackground: {},
+        rowWrapper: {}
+      }
+    };
   }
 
   if(layer.style === TextStyle.stroke) {
+    const textareaMargin = layer.alignment === TextAlignment.right ?
+      `0 0 0 -${layer.padding}px` :
+      layer.alignment === TextAlignment.left ?
+      `0 0 0 ${layer.padding}px` :
+      '';
+
     return {
-      textareaWrapper: {},
-      textarea: {
-        ...baseTextareaStyle,
-        'paint-order': 'stroke fill',
-        '-webkit-text-stroke': `${layer.strokeWidth}px ${anyColorToHexColor(layer.strokeColor)}`,
-        'color': anyColorToHexColor(layer.color)
-      },
-      textareaBackground: {},
-      rowWrapper: {},
-      rows
+      ...textbox,
+      styles: {
+        textareaWrapper: {
+          'height': `${textbox.height}px`
+        },
+        textarea: {
+          ...baseTextareaStyle,
+          'margin': textareaMargin,
+          'paint-order': 'stroke fill',
+          '-webkit-text-stroke': `${layer.strokeWidth}px ${anyColorToHexColor(layer.strokeColor)}`,
+          'color': anyColorToHexColor(layer.color)
+        },
+        textareaBackground: {},
+        rowWrapper: {}
+      }
     }
   }
 
   if(layer.style === TextStyle.fill_background) {
-    boxWidth += layer.padding * 2;
-    boxHeight + layer.padding * 2 * rows.length;
-
-    const textareaBackgroundPadding = layer.alignment === TextAlignment.left ?
-      '' :
-      layer.alignment === TextAlignment.center ?
-      `0 ${layer.padding}px` :
-      `0 ${layer.padding * 2}px`
+    const textareaMargin = layer.alignment === TextAlignment.right ?
+      `0 0 0 -${layer.padding}px` :
+      layer.alignment === TextAlignment.left ?
+      `0 0 0 ${layer.padding}px` :
+      '';
 
     return {
-      textareaWrapper: {
-        'position': 'relative',
-        'top': '0',
-        'left': '0',
-        'width': `${boxWidth}px`,
-        'height': `${boxHeight}px`
-      },
-      textarea: {
-        ...baseTextareaStyle,
-        'position': 'absolute',
-        'top': '0',
-        'left': '0',
-        'z-index': '1',
-        'width': `${boxWidth}px`,
-        'height': `${boxHeight}px`,
-        'color': anyColorToHexColor(layer.secondColor),
-        'padding': `${layer.padding}px`,
-        'line-height': `${layer.fontSize}px`
-      },
-      textareaBackground: {
-        'width': `${boxWidth}px`,
-        'height': `${boxHeight}px`,
-        'position': 'absolute',
-        'padding': textareaBackgroundPadding,
-        'top': '0',
-        'left': '0',
-        'color': 'transparent',
-        'font-family': layer.fontName,
-        'font-size': `${layer.fontSize}px`,
-        'font-weight': `${layer.fontWeight}`,
-        'line-height': `${layer.fontSize - layer.padding}px`,
-        'display': 'flex',
-        'flex-direction': 'column',
-        'align-items': layer.alignment === TextAlignment.center ?
-          'center' :
-          layer.alignment === TextAlignment.left ?
-          'flex-start' :
-          'flex-end',
-        'box-sizing': 'content-box'
-      },
-      rowWrapper: {
-        'display': 'flex'
-      },
-      rows: rows.map((row, index) => {
-        const rowStyles = getTextRowStyles(rows, index, layer);
+      ...textbox,
+      rows: textbox.rows.map((row, index) => {
+        const rowStyles = getTextRowStyles(textbox, textbox.rows, index, layer);
 
         return {
           ...row,
           ...rowStyles
         };
-      })
+      }),
+      styles: {
+        textareaWrapper: {
+          'position': 'relative',
+          'top': '0',
+          'left': '0',
+          'width': `${textbox.width}px`,
+          'height': `${textbox.height}px`
+        },
+        textarea: {
+          ...baseTextareaStyle,
+          'position': 'absolute',
+          'top': '0',
+          'left': '0',
+          'z-index': '1',
+          'margin': textareaMargin,
+          'width': `${textbox.width}px`,
+          'height': `${textbox.height}px`,
+          'color': anyColorToHexColor(layer.secondColor),
+          'line-height': `${textbox.rows[0].height + layer.padding}px`
+        },
+        textareaBackground: {
+          'width': `${textbox.width}px`,
+          'height': `${textbox.height}px`,
+          'position': 'absolute',
+          'top': '0',
+          'left': '0',
+          'color': 'transparent',
+          'font-family': layer.fontName,
+          'font-size': `${layer.fontSize}px`,
+          'font-weight': `${layer.fontWeight}`,
+          'line-height': `${layer.fontSize - layer.padding}px`,
+          'box-sizing': 'content-box'
+        },
+        rowWrapper: {
+          'display': 'flex'
+        }
+      }
     }
   }
 
   // We should not get here!
   return {
-    textareaWrapper: {},
-    textarea: baseTextareaStyle,
-    textareaBackground: {},
-    rowWrapper: {},
+    ...textbox,
+    styles: {
+      textareaWrapper: {},
+      textarea: baseTextareaStyle,
+      textareaBackground: {},
+      rowWrapper: {}
+    }
+  };
+}
+
+export function getTextBox(text: string, layer: TextLayer, placeholder: string = ''): TextBox {
+  let boxWidth = 0;
+  let boxHeight = 0;
+  const rows: TextRow[] = [];
+
+  for(const rowText of (text || placeholder).split('\n')) {
+    const mesurement = measureCanvasText(rowText || '|', layer.fontName, layer.fontSize, layer.fontWeight, layer.style === TextStyle.stroke ? layer.strokeWidth : 0);
+    boxWidth = Math.max(mesurement.width, boxWidth);
+    boxHeight += mesurement.maxHeight;
+
+    rows.push({
+      text: rowText,
+      width: mesurement.width,
+      height: mesurement.maxHeight,
+      mesurement,
+      styles: {} as Record<string, string>
+    });
+  }
+
+  if(layer.style === TextStyle.fill_background) {
+    boxWidth += layer.padding * 2;
+    boxHeight += rows.length * layer.padding;
+  }
+
+  return {
+    width: boxWidth,
+    height: boxHeight,
     rows
   };
 }
 
-export function getTextRowStyles(rows: StyledTextRow[], index: number, layer: TextLayer) {
+export function getTextRowStyles(box: TextBox, rows: TextRow[], index: number, layer: TextLayer) {
   const row = rows[index];
-  const borderRadiusStyles = getTextRowBorderStyles(rows, index, layer);
-  const paddingStyles = getTextRowPadding(rows, index, layer);
+  const marginStyles = getTextRowMarginStyles(box, rows, index, layer);
+  const borderRadiusStyles = getTextRowBorderRadiusStyles(rows, index, layer);
+  const paddingStyles = getTextRowPaddingStyles(rows, index, layer);
+  const color = anyColorToHexColor(layer.color);
 
   return {
     styles: {
-      'margin-top': '-1px',
       'line-height': `${layer.fontSize}px`,
-      'background-color': anyColorToHexColor(layer.color),
+      'background-color': color,
       'width': `${row.width}px`,
-      'height': `${layer.fontSize}px`,
+      'height': `${row.height}px`,
+      ...marginStyles,
       ...paddingStyles,
       ...borderRadiusStyles
     }
@@ -266,49 +374,133 @@ export function getTextRowStyles(rows: StyledTextRow[], index: number, layer: Te
   }
 };
 
-export function getTextRowPadding(rows: StyledTextRow[], index: number, layer: TextLayer) {
-  const paddingValue = `${layer.padding}px`;
-  const halfPaddingValue = `${layer.padding / 2}px`
+export function getTextRowMargin(box: TextBox, rows: TextRow[], index: number, layer: TextLayer) {
+  const boxWidth = box.width;
+  const row = rows[index];
+  const padding = layer.style === TextStyle.fill_background ? layer.padding : 0;
+
+  if(layer.alignment === TextAlignment.left) {
+    return {
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0
+    };
+  }
+
+  if(layer.alignment === TextAlignment.right) {
+    const emptySpace = boxWidth - row.width - padding * 2;
+
+    return {
+      top: 0,
+      left: emptySpace,
+      right: 0,
+      bottom: 0
+    };
+  }
+
+  if(layer.alignment === TextAlignment.center) {
+    const emptySpace = (boxWidth - row.width - padding * 2) / 2;
+
+    return {
+      top: 0,
+      left: emptySpace,
+      right: emptySpace,
+      bottom: 0
+    };
+  }
+
+  return {
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0
+  };
+}
+
+export function getTextRowMarginStyles(box: TextBox, rows: TextRow[], index: number, layer: TextLayer) {
+  const margin = getTextRowMargin(box, rows, index, layer);
+
+  return {
+    'margin-top': `${margin.top}px`,
+    'margin-left': `${margin.left}px`,
+    'margin-right': `${margin.right}px`,
+    'margin-bottom': `${margin.bottom}px`
+  };
+}
+
+export function getTextRowPadding(rows: TextRow[], index: number, layer: TextLayer) {
+  if(layer.style !== TextStyle.fill_background) {
+    return {
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0
+    };
+  }
+
+  const paddingValue = layer.padding;
+  const halfPaddingValue = layer.padding / 2;
   const isFirstRow = index === 0;
   const isLastRow = index === rows.length - 1;
 
   if(isFirstRow) {
     if(isLastRow) {
       return {
-        'padding-top': paddingValue,
-        'padding-left': paddingValue,
-        'padding-right': paddingValue,
-        'padding-bottom': paddingValue
+        top: halfPaddingValue,
+        left: paddingValue,
+        right: paddingValue,
+        bottom: halfPaddingValue
       };
     }
 
     return {
-      'padding-top': paddingValue,
-      'padding-left': paddingValue,
-      'padding-right': paddingValue,
-      'padding-bottom': '0px'
+      top: halfPaddingValue,
+      left: paddingValue,
+      right: paddingValue,
+      bottom: halfPaddingValue
     };
   }
 
   if(isLastRow) {
     return {
-      'padding-top': '0px',
-      'padding-left': paddingValue,
-      'padding-right': paddingValue,
-      'padding-bottom': paddingValue
+      top: halfPaddingValue,
+      left: paddingValue,
+      right: paddingValue,
+      bottom: halfPaddingValue
     };
   }
 
   return {
-    'padding-top': halfPaddingValue,
-    'padding-left': paddingValue,
-    'padding-right': paddingValue,
-    'padding-bottom': halfPaddingValue
+    top: halfPaddingValue,
+    left: paddingValue,
+    right: paddingValue,
+    bottom: halfPaddingValue
   };
 }
 
-export function getTextRowBorderStyles(rows: StyledTextRow[], index: number, layer: TextLayer) {
-  const borderValue = `${layer.borderRadius}px`;
+export function getTextRowPaddingStyles(rows: TextRow[], index: number, layer: TextLayer) {
+  const padding = getTextRowPadding(rows, index, layer);
+
+  return {
+    'padding-top': `${padding.top}px`,
+    'padding-left': `${padding.left}px`,
+    'padding-right': `${padding.right}px`,
+    'padding-bottom': `${padding.bottom}px`
+  };
+}
+
+export function getTextRowBorderRadius(rows: TextRow[], index: number, layer: TextLayer) {
+  if(layer.style !== TextStyle.fill_background) {
+    return {
+      topLeft: 0,
+      topRight: 0,
+      bottomLeft: 0,
+      bottomRight: 0
+    };
+  }
+
+  const borderValue = layer.borderRadius;
   const isFirstRow = index === 0;
   const isLastRow = index === rows.length - 1;
   const prevRow = isFirstRow ? undefined : rows[index - 1];
@@ -317,124 +509,130 @@ export function getTextRowBorderStyles(rows: StyledTextRow[], index: number, lay
 
   if(layer.alignment === TextAlignment.left) {
     if(isFirstRow) {
-      const bottomLeftRadius = isLastRow ?  borderValue : '';
-      const bottomRightRadius = isLastRow || nextRow.width < row.width ? borderValue : '';
+      const bottomLeftRadius = isLastRow ?  borderValue : 0;
+      const bottomRightRadius = isLastRow || nextRow.width < row.width ? borderValue : 0;
 
       return {
-        'border-top-left-radius': borderValue,
-        'border-top-right-radius': borderValue,
-        'border-bottom-left-radius': bottomLeftRadius,
-        'border-bottom-right-radius': bottomRightRadius
+        topLeft: borderValue,
+        topRight: borderValue,
+        bottomLeft: bottomLeftRadius,
+        bottomRight: bottomRightRadius
       };
     }
 
     if(isLastRow) {
       const topRightRadius = prevRow.width > row.width ?
-        '' :
+        0 :
         borderValue;
 
       return {
-        'border-top-left-radius': '',
-        'border-top-right-radius': topRightRadius,
-        'border-bottom-left-radius': borderValue,
-        'border-bottom-right-radius': borderValue
+        topLeft: 0,
+        topRight: topRightRadius,
+        bottomLeft: borderValue,
+        bottomRight: borderValue
       };
     }
 
-    const borderTopRightRadius = prevRow.width > row.width ? '' : borderValue;
-    const borderBottomRightRadius = nextRow.width > row.width ? '' : borderValue;
+    const borderTopRightRadius = prevRow.width > row.width ? 0 : borderValue;
+    const borderBottomRightRadius = nextRow.width > row.width ? 0 : borderValue;
 
     return {
-      'border-top-left-radius': '',
-      'border-top-right-radius': borderTopRightRadius,
-      'border-bottom-left-radius': '',
-      'border-bottom-right-radius': borderBottomRightRadius
+      topLeft: 0,
+      topRight: borderTopRightRadius,
+      bottomLeft: 0,
+      bottomRight: borderBottomRightRadius
     };
   }
 
   if(layer.alignment === TextAlignment.center) {
     if(isFirstRow) {
-      const bottomBottomRadius = isLastRow || nextRow.width < row.width ?  borderValue : '';
+      const bottomBottomRadius = isLastRow || nextRow.width < row.width ?  borderValue : 0;
 
       return {
-        'border-top-left-radius': borderValue,
-        'border-top-right-radius': borderValue,
-        'border-bottom-left-radius': bottomBottomRadius,
-        'border-bottom-right-radius': bottomBottomRadius
+        topLeft: borderValue,
+        topRight: borderValue,
+        bottomLeft: bottomBottomRadius,
+        bottomRight: bottomBottomRadius
       };
     }
 
     if(isLastRow) {
       const topRadius = prevRow.width > row.width ?
-        '' :
+        0 :
         borderValue;
 
       return {
-        'border-top-left-radius': topRadius,
-        'border-top-right-radius': topRadius,
-        'border-bottom-left-radius': borderValue,
-        'border-bottom-right-radius': borderValue
+        topLeft: topRadius,
+        topRight: topRadius,
+        bottomLeft: borderValue,
+        bottomRight: borderValue
       };
     }
 
-    const borderTopRadius = prevRow.width > row.width ? '' : borderValue;
-    const borderBottomRadius = nextRow.width > row.width ? '' : borderValue;
+    const borderTopRadius = prevRow.width > row.width ? 0 : borderValue;
+    const borderBottomRadius = nextRow.width > row.width ? 0 : borderValue;
 
     return {
-      'border-top-left-radius': borderTopRadius,
-      'border-top-right-radius': borderTopRadius,
-      'border-bottom-left-radius': borderBottomRadius,
-      'border-bottom-right-radius': borderBottomRadius
+      topLeft: borderTopRadius,
+      topRight: borderTopRadius,
+      bottomLeft: borderBottomRadius,
+      bottomRight: borderBottomRadius
     };
   }
 
   if(layer.alignment === TextAlignment.right) {
     if(isFirstRow) {
-      const borderLeftBottomRadius = isLastRow || nextRow.width < row.width ?  borderValue : '';
-      const borderRightBottomRadius = isLastRow ? borderValue : '';
+      const borderLeftBottomRadius = isLastRow || nextRow.width < row.width ?  borderValue : 0;
+      const borderRightBottomRadius = isLastRow ? borderValue : 0;
 
       return {
-        'border-top-left-radius': borderValue,
-        'border-top-right-radius': borderValue,
-        'border-bottom-left-radius': borderLeftBottomRadius,
-        'border-bottom-right-radius': borderRightBottomRadius
+        topLeft: borderValue,
+        topRight: borderValue,
+        bottomLeft: borderLeftBottomRadius,
+        bottomRight: borderRightBottomRadius
       };
     }
 
     if(isLastRow) {
       const topRadius = prevRow.width > row.width ?
-        '' :
+        0 :
         borderValue;
 
       return {
-        'border-top-left-radius': topRadius,
-        'border-top-right-radius': '',
-        'border-bottom-left-radius': borderValue,
-        'border-bottom-right-radius': borderValue
+        topLeft: topRadius,
+        topRight: 0,
+        bottomLeft: borderValue,
+        bottomRight: borderValue
       };
     }
 
-    const borderTopLeftRadius = prevRow.width > row.width ? '' : borderValue;
-    const borderBottomLeftRadius = nextRow.width > row.width ? '' : borderValue;
+    const borderTopLeftRadius = prevRow.width > row.width ? 0 : borderValue;
+    const borderBottomLeftRadius = nextRow.width > row.width ? 0 : borderValue;
 
     return {
-      'border-top-left-radius': borderTopLeftRadius,
-      'border-top-right-radius': '',
-      'border-bottom-left-radius': borderBottomLeftRadius,
-      'border-bottom-right-radius': ''
+      topLeft: borderTopLeftRadius,
+      topRight: 0,
+      bottomLeft: borderBottomLeftRadius,
+      bottomRight: 0
     };
   }
 
-  return {};
+  return {
+    topLeft: 0,
+    topRight: 0,
+    bottomLeft: 0,
+    bottomRight: 0
+  };
 }
 
-export function getTextRowJoinStyles(rows: StyledTextRow[], index: number, layer: TextLayer) {
-  const leftJoinType = getJoinType(rows, index, layer, JoinSide.left);
-  const rightJoinType = getJoinType(rows, index, layer, JoinSide.right);
+export function getTextRowBorderRadiusStyles(rows: TextRow[], index: number, layer: TextLayer) {
+  const values = getTextRowBorderRadius(rows, index, layer);
 
   return {
-    leftJoin: getJoinStyles(rows, index, layer, leftJoinType),
-    rightJoin: getJoinStyles(rows, index, layer, rightJoinType)
+    'border-top-left-radius': `${values.topLeft}px`,
+    'border-top-right-radius': `${values.topRight}px`,
+    'border-bottom-left-radius': `${values.bottomLeft}px`,
+    'border-bottom-right-radius': `${values.bottomRight}px`
   };
 }
 
@@ -447,11 +645,23 @@ export enum JoinType {
   leftTop = 'leftTop',
   leftBottom = 'leftBottom'
 }
+
 export enum JoinSide {
   left = 'left',
   right = 'right'
 }
-export function getJoinType(rows: StyledTextRow[], index: number, layer: TextLayer, side: JoinSide): JoinType {
+
+export function getTextRowJoinStyles(rows: TextRow[], index: number, layer: TextLayer) {
+  const leftJoinType = getJoinType(rows, index, layer, JoinSide.left);
+  const rightJoinType = getJoinType(rows, index, layer, JoinSide.right);
+
+  return {
+    leftJoin: getJoinStyles(rows, index, layer, leftJoinType),
+    rightJoin: getJoinStyles(rows, index, layer, rightJoinType)
+  };
+}
+
+export function getJoinType(rows: TextRow[], index: number, layer: TextLayer, side: JoinSide): JoinType {
   const isFirstRow = index === 0;
   const isLastRow = index === rows.length - 1;
   const prevRow = isFirstRow ? undefined : rows[index - 1];
@@ -537,7 +747,7 @@ export function getJoinType(rows: StyledTextRow[], index: number, layer: TextLay
   return JoinType.none;
 }
 
-export function getJoinStyles(rows: StyledTextRow[], index: number, layer: TextLayer, type: JoinType) {
+export function getJoinStyles(rows: TextRow[], index: number, layer: TextLayer, type: JoinType) {
   const [r, g, b, a] = anyColorToRgbaColor(layer.color);
   const row = rows[index];
   const size = row.height + layer.padding;

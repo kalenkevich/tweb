@@ -3,7 +3,7 @@ import {i18n} from '../../../lib/langPack';
 import {ImageChangeType, TextLayer, AttachmentChangeAction, ImageChangeEvent, TextStyle} from '../types';
 import {Draggable} from '../draggable/draggable';
 import {DraggingSurface} from '../draggable/surface';
-import {getTextLayerInputElementStyles, getTextLayerTextareaElementStyles, StyledTextAreaStyles, StyledTextRow} from '../helpers/textHelper';
+import {getTextLayerInputElementStyles, getTextLayerTextareaElementStyles, TextBox, TextRow} from '../helpers/textHelper';
 import {IconTsx} from '../../iconTsx';
 
 const PLACEHOLDER = i18n('ImageEditor.TextControl.AddText').innerText;
@@ -35,34 +35,21 @@ export function StyledInput(props: StyledInputProps) {
 }
 
 export function StyledTextarea(props: StyledInputProps) {
-  const [isActive, setActive] = createSignal(false);
-  const [styles, setStyles] = createSignal<StyledTextAreaStyles>(
+  const [textbox, setTextbox] = createSignal<TextBox>(
     getTextLayerTextareaElementStyles(props.value, props.layer, props.placeholder)
   );
 
   createEffect(on(() => [props.value, props.layer, props.placeholder], () => {
-    setStyles(getTextLayerTextareaElementStyles(props.value, props.layer, props.placeholder));
+    setTextbox(getTextLayerTextareaElementStyles(props.value, props.layer, props.placeholder));
   }));
 
-  const onFocus = (e: Event) => {
-    setActive(true);
-
-    props.onFocus?.(e);
-  };
-
-  const onBlur = (e: Event) => {
-    setActive(false);
-
-    props.onBlur?.(e);
-  };
-
   return (
-    <div class="draggable-text__textarea-wrapper" style={styles().textareaWrapper}>
-      <div class="draggable-text__textarea-background" style={styles().textareaBackground}>
+    <div class="draggable-text__textarea-wrapper" style={textbox().styles.textareaWrapper}>
+      <div class="draggable-text__textarea-background" style={textbox().styles.textareaBackground}>
         <Show when={props.layer.style === TextStyle.fill_background}>
-          <For each={styles().rows}>
-            {(row: StyledTextRow) => (
-              <div class="extarea-background--row-wrapper" style={styles().rowWrapper}>
+          <For each={textbox().rows}>
+            {(row: TextRow) => (
+              <div class="extarea-background--row-wrapper" style={textbox().styles.rowWrapper}>
                 <Show when={row.leftJoin}>
                   <div class="textarea-background--row-join" style={row.leftJoin}></div>
                 </Show>
@@ -80,11 +67,11 @@ export function StyledTextarea(props: StyledInputProps) {
         tabindex="0"
         contentEditable={true}
         ref={props.ref}
-        style={styles().textarea}
+        style={textbox().styles.textarea}
         placeholder={props.placeholder}
         value={props.value}
-        onFocus={onFocus}
-        onBlur={onBlur}
+        onFocus={props.onFocus}
+        onBlur={props.onBlur}
         onInput={props.onInput}>
       </textarea>
     </div>
@@ -107,7 +94,7 @@ export function DraggableText(props: DraggableTextProps) {
   const layer = () => props.layer;
 
   onMount(() => {
-    if(props.isActive && !props.isMobile) {
+    if(props.isActive && !props.isMobile && document.activeElement !== inputRef()) {
       inputRef().focus();
     }
   });

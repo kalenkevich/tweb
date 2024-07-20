@@ -76,7 +76,7 @@ export function ImageRotationControl(props: ImageRotationControlProps): JSX.Elem
       rootRef().style.setProperty('--rotation-control-padding-bottom', `${ROTATE_CARUSEL_PADDING}px`);
     }
 
-    attachGrabListeners(caruselRef() as any, (pos) => {
+    attachGrabListeners(rootRef() as any, (pos) => {
       onGrabStart();
 
       const caruselRect = caruselRef().getBoundingClientRect();

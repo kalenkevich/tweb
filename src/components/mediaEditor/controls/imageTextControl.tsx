@@ -131,9 +131,9 @@ export function ImageTextControl(props: ImageTextControlProps): JSX.Element {
       case TextAttachmentProperty.fontSize: {
         const val = value as number;
         newAttachmentState.fontSize = val;
-        newAttachmentState.padding = Math.min(val / 2, 4);
-        newAttachmentState.borderRadius = Math.min(val / 4, 8);
-        newAttachmentState.strokeWidth = Math.min(val / 6, 20);
+        newAttachmentState.padding = Math.min(16, Math.max(val / 2, 8));
+        newAttachmentState.borderRadius = Math.min(24, Math.max(val / 4, 8));
+        newAttachmentState.strokeWidth = Math.min(12, Math.max(val / 6, 4));
         break;
       }
     }

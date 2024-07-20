@@ -8,19 +8,32 @@ const getOffscreenCanvas = () => {
   return _offscreenCanvasEl = new OffscreenCanvas(window.innerWidth, window.innerHeight);
 }
 
+export interface TextMeasurements {
+  actualBoundingBoxAscent: number;
+  actualBoundingBoxDescent: number;
+  actualBoundingBoxLeft: number;
+  actualBoundingBoxRight: number;
+  fontBoundingBoxAscent: number;
+  fontBoundingBoxDescent: number;
+  width: number;
+  height: number;
+  maxHeight: number;
+}
+
 export const measureText = (
   text: string,
   fontName: string,
   fontSize: number,
   fontWeight: number,
   extraPadding: number = 0
-) => {
+): TextMeasurements => {
   const canvas = getOffscreenCanvas();
   const ctx = canvas.getContext('2d') as OffscreenCanvasRenderingContext2D;
   ctx.font = getCanvas2DFontStyle({fontName, fontSize, fontWeight});
   const metrics = ctx.measureText(text);
   // Mozilla linux 115 do not support fontBoundingBoxAscent and fontBoundingBoxDescent props.
-  const actualHeight = (metrics.fontBoundingBoxAscent || metrics.actualBoundingBoxAscent) + (metrics.fontBoundingBoxDescent || metrics.actualBoundingBoxDescent);
+  const actualHeight = metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent;
+  const maxHeight = (metrics.fontBoundingBoxAscent || metrics.actualBoundingBoxAscent) + (metrics.fontBoundingBoxDescent || metrics.actualBoundingBoxDescent);
 
   return {
     actualBoundingBoxAscent: metrics.actualBoundingBoxAscent,
@@ -30,7 +43,8 @@ export const measureText = (
     fontBoundingBoxAscent: metrics.fontBoundingBoxAscent,
     fontBoundingBoxDescent: metrics.fontBoundingBoxDescent,
     width: metrics.width + extraPadding * 2,
-    height: actualHeight + extraPadding * 2
+    height: actualHeight + extraPadding * 2,
+    maxHeight
   };
 };
 
