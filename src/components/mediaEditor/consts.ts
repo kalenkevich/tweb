@@ -58,13 +58,13 @@ export const DEFAULT_TEXT_LAYER: TextLayer = {
   type: ObjectLayerType.text,
   isDirty: false,
   zIndex: 1,
-  text: 'Hello world\nhello\nworld!',
+  text: '',
   fontName: 'Roboto',
   fontSize: 24,
   fontWeight: 500,
   color: QUCIK_PALLETE_COLORS[0],
   alignment: TextAlignment.left,
-  style: TextStyle.default,
+  style: TextStyle.fill_background,
   padding: 12,
   borderRadius: 6,
   strokeWidth: 4,
@@ -74,7 +74,7 @@ export const DEFAULT_TEXT_LAYER: TextLayer = {
   },
   secondColor: {
     type: ColorFormatType.hexa,
-    value: '#FFFFFF'
+    value: '#000000'
   },
   width: 130 * window.devicePixelRatio,
   height: 82 * window.devicePixelRatio,
@@ -151,6 +151,8 @@ export const DRAGGABLE_OBJECT_TOP_BOTTOM_PADDING = 14;
 
 export const DRAGGABLE_OBJECT_TOP_LEFT_RIGHT = 6;
 
-export const DRAW_ARROW_CAP_AFTER_MS = 500;
+export const DRAW_ARROW_CAP_AFTER_MS = 250;
 
 export const IMAGE_EDITOR_MOBILE_WIDTH_THRESHOLD = 840;
+
+export const MAX_FONT_SIZE = 128;

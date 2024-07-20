@@ -3,6 +3,7 @@ import {ImageControlProps} from './imageControl';
 import {ImageChangeType, AttachmentChangeAction} from '../types';
 import {DEFAULT_STICKER_LAYER} from '../consts';
 import rootScope from '../../../lib/rootScope';
+import mediaSizes from '../../../helpers/mediaSizes';
 import StickersTab from '../../emoticonsDropdown/tabs/stickers';
 import {EmoticonsDropdown} from '../../emoticonsDropdown';
 import {getLayerNextId} from '../helpers/layerHelper';

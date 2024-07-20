@@ -91,7 +91,7 @@ export class ImageEditorManager {
           rootScope.managers.appDocsManager.getDoc(layer.stickerId).then(async(doc) => {
             const el = document.createElement('div');
             await new Promise<void>((resolve) => {
-              this.stickerRenderer.renderSticker(doc, el, [], undefined, () => {
+              this.stickerRenderer.renderSticker(doc, el, undefined, undefined, layer.width * window.devicePixelRatio, layer.height * window.devicePixelRatio, () => {
                 const img = el.children[0] as HTMLImageElement;
                 if(img.complete) {
                   resolve();

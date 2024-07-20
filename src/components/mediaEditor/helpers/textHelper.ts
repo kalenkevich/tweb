@@ -94,8 +94,8 @@ export function getTextLayerInputElementStyles(text: string, layer: TextLayer, p
   // We should not get here!
   return baseStyle;
 };
-// ---------------------------------  multiline text rendering utils -------------------------------------------------------
 
+// ---------------------------------  multiline text rendering utils -------------------------------------------------------
 export interface TextBox {
   width: number;
   height: number;

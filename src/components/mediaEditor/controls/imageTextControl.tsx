@@ -1,7 +1,7 @@
 import {JSX, For, Show, createSignal} from 'solid-js';
 import {i18n} from '../../../lib/langPack';
 import {ImageChangeType, TextAlignment, TextStyle, TextLayer, AttachmentChangeAction} from '../types';
-import {QUCIK_PALLETE_COLORS, WHITE_COLOR_HEX, BLACK_COLOR_HEX, DEFAULT_TEXT_LAYER} from '../consts';
+import {QUCIK_PALLETE_COLORS, WHITE_COLOR_HEX, BLACK_COLOR_HEX, DEFAULT_TEXT_LAYER, MAX_FONT_SIZE} from '../consts';
 import {ImageControlProps} from './imageControl';
 import {Color, ColorFormatType, anyColorToHexColor} from '../../../helpers/color';
 import {ColorPickerV2, ColorPickerV2Mobile} from '../../colorPickerV2';
@@ -201,7 +201,7 @@ export function ImageTextControl(props: ImageTextControlProps): JSX.Element {
                 color={hexColor()}
                 step={1}
                 min={0}
-                max={128}
+                max={MAX_FONT_SIZE}
                 value={fontSize()}
                 trumpSize={20}
                 onScrub={(value: number) => onPropertyChange(TextAttachmentProperty.fontSize, value)}
@@ -259,7 +259,7 @@ export function ImageTextControl(props: ImageTextControlProps): JSX.Element {
             color={hexColor()}
             step={1}
             min={0}
-            max={128}
+            max={MAX_FONT_SIZE}
             value={fontSize()}
             trumpSize={20}
             onScrub={(value: number) => onPropertyChange(TextAttachmentProperty.fontSize, value)}

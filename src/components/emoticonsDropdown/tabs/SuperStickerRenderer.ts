@@ -57,6 +57,8 @@ export default class SuperStickerRenderer {
     element?: HTMLElement,
     loadPromises?: Promise<any>[],
     middleware?: Middleware,
+    width?: number,
+    height?: number,
     onReady?: () => void
   ) {
     if(!element) {
@@ -80,6 +82,8 @@ export default class SuperStickerRenderer {
       onlyThumb: doc.animated,
       loadPromises,
       middleware: element.middlewareHelper.get(),
+      width,
+      height,
       ...(doc.animated ? {} : this.visibleRenderOptions || {})
     });
 

@@ -1,6 +1,7 @@
 import {createSignal, createEffect, on, onMount, Show, For} from 'solid-js';
 import {i18n} from '../../../lib/langPack';
 import {ImageChangeType, TextLayer, AttachmentChangeAction, ImageChangeEvent, TextStyle} from '../types';
+import {MAX_FONT_SIZE} from '../consts';
 import {Draggable} from '../draggable/draggable';
 import {DraggingSurface} from '../draggable/surface';
 import {getTextLayerInputElementStyles, getTextLayerTextareaElementStyles, TextBox, TextRow} from '../helpers/textHelper';
@@ -149,11 +150,14 @@ export function DraggableText(props: DraggableTextProps) {
   return (
     <Draggable
       surface={props.surface}
-      enabled={isActiveInternal()}
+      active={isActiveInternal()}
+      movable={true}
+      resizable={true}
+      rotatable={true}
       translation={layer().translation}
       scale={layer().scale}
       rotation={layer().rotation}
-      onChange={(translation: [number, number]) => {
+      onMove={(translation: [number, number]) => {
         props.onImageChange({
           type: ImageChangeType.layer,
           layer: {
@@ -163,22 +167,34 @@ export function DraggableText(props: DraggableTextProps) {
           action: AttachmentChangeAction.update
         });
       }}
-    >
-      <div class="draggable-object draggable-text"
+      onResize={(scale: [number, number]) => {
+        props.onImageChange({
+          type: ImageChangeType.layer,
+          layer: {
+            ...layer(),
+            // translation: [layer().translation[0] * scale[0], layer().translation[1] * scale[1]],
+            fontSize: Math.min(Math.floor(layer().fontSize * scale[0]), MAX_FONT_SIZE)
+          },
+          action: AttachmentChangeAction.update
+        });
+      }}
+      onRotate={(rotation: number) => {
+        props.onImageChange({
+          type: ImageChangeType.layer,
+          layer: {
+            ...layer(),
+            rotation
+          },
+          action: AttachmentChangeAction.update
+        });
+      }}>
+      <div class="draggable-text"
         classList={{'active': isActiveInternal()}}
         onTouchStart={onWrapperMouseDown}
         onMouseDown={onWrapperMouseDown}>
         <div class="draggable-object__remove-icon-wrapper" ref={el => setRemoveWrapperEl(el)}>
           <IconTsx class="draggable-object__remove-icon" icon="close"/>
         </div>
-        {/* <StyledInput
-          ref={(el) => setInputRef(el)}
-          placeholder={PLACEHOLDER}
-          layer={layer()}
-          value={textValueInternal()}
-          onBlur={onInputBlur}
-          onInput={handleInputChange}
-        /> */}
         <StyledTextarea
           ref={(el) => setInputRef(el)}
           placeholder={PLACEHOLDER}
