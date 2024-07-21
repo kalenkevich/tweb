@@ -146,12 +146,17 @@ export function Draggable(props: DraggableProps) {
   };
 
   const moveHandler = (deltaX: number, deltaY: number, direction: Direction, angle: number, emitChangeEvent: boolean) => {
-    const newTranslation: [number, number] = [translation()[0] + deltaX, translation()[1] + deltaY];
+    const currentTranslation = translation();
+    const newTranslation: [number, number] = [currentTranslation[0] + deltaX, currentTranslation[1] + deltaY];
 
     setTranslation(newTranslation);
 
     if(emitChangeEvent) {
-      props.onMove(newTranslation);
+      const isChanged = newTranslation[0] !== props.translation[0] || newTranslation[1] !== props.translation[1];
+
+      if(isChanged) {
+        props.onMove(newTranslation);
+      }
     }
   };
 

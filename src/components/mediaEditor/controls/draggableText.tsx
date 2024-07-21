@@ -14,7 +14,7 @@ export interface StyledInputProps {
   value: string;
   onBlur?: (e: Event) => void;
   onFocus?: (e: Event) => void;
-  onInput: (e: InputEvent) => void;
+  onInput: (e: InputEvent | ClipboardEvent) => void;
 }
 export function StyledInput(props: StyledInputProps) {
   const inputStyles = () => getTextLayerInputElementStyles(props.value, props.layer, props.placeholder);
@@ -71,7 +71,8 @@ export function StyledTextarea(props: StyledInputProps) {
         value={props.value}
         onFocus={props.onFocus}
         onBlur={props.onBlur}
-        onInput={props.onInput}>
+        onInput={props.onInput}
+        onPaste={props.onInput}>
       </textarea>
     </div>
   );
@@ -92,16 +93,14 @@ export function DraggableText(props: DraggableTextProps) {
   const layer = () => props.layer;
 
   onMount(() => {
-    if(props.isActive && !props.isMobile && document.activeElement !== inputRef()) {
-      inputRef().focus();
+    const el = inputRef();
+
+    if(props.isActive && !props.isMobile && document.activeElement !== el) {
+      el.focus();
     }
   });
 
   createEffect(on(() => props.isActive, (isActive) => {
-    if(!isActive) {
-      inputRef().blur();
-    }
-
     setActiveInternalState(isActive);
   }));
 
@@ -121,8 +120,13 @@ export function DraggableText(props: DraggableTextProps) {
     }
   };
 
-  const handleInputChange = (e: Event) => {
-    const value = (e.target as HTMLInputElement).value;
+  const handleInputChange = (e: InputEvent | ClipboardEvent) => {
+    let value;
+    if((e as ClipboardEvent).clipboardData) {
+      value = (e as ClipboardEvent).clipboardData.getData('text/plain');
+    } else if((e as InputEvent).target) {
+      value = (e.target as HTMLTextAreaElement).value;
+    }
 
     setTextValueInternal(value);
   };

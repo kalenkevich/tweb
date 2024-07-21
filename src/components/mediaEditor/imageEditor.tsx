@@ -341,6 +341,10 @@ export function ImageEditor(props: MediaEditorProps) {
     }
 
     const index = imageEditorManager().getCurrentImageState().layers.findIndex(l => l === layer);
+    if(index === currentLayerIndex()) {
+      return;
+    }
+
     if(layer.type === ObjectLayerType.text) {
       setSelectedTabId(TabType.TEXT);
     } else if(!isMobile() && layer.type === ObjectLayerType.sticker) {
