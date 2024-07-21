@@ -96,6 +96,14 @@ const IMAGE_FILTER_CONTROLS_CONFIG = [{
   min: 0,
   max: 100,
   trumpSize: 20
+}, {
+  label: 'Blur',
+  type: ImageFilterType.blur,
+  value: (props: ImageFilterControlProps) => Math.round(props.imageState.filter.blur * 100),
+  step: 1,
+  min: 0,
+  max: 100,
+  trumpSize: 20
 }]
 
 export function ImageFilterControl(props: ImageFilterControlProps): JSX.Element {

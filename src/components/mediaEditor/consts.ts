@@ -127,7 +127,8 @@ export const DEFAULT_IMAGE_STATE: ImageState = {
     shadows: 0,
     vignette: 0,
     grain: 0,
-    sharpen: 0
+    sharpen: 0,
+    blur: 0
   },
   aspectRatio: ImageAspectRatio.original,
   rotation: 0,

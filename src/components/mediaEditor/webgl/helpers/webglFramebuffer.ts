@@ -2,7 +2,7 @@ import {CompatibleWebGLRenderingContext} from '../webglContext';
 import {WebGlTexture} from './webglTexture';
 
 export interface CreateFrameBufferOptions {
-  texture: WebGlTexture;
+  texture: WebGlTexture | WebGlTexture[];
   attachmentPoint?: number;
 }
 
@@ -11,7 +11,7 @@ export interface WebGlFrameBuffer {
   bind(): void;
   unbind(): void;
   clear(color?: [number, number, number, number]): void;
-  getTexture(): WebGlTexture;
+  getTexture(): WebGlTexture | WebGlTexture[];
 }
 
 export function createFrameBuffer(
@@ -21,13 +21,28 @@ export function createFrameBuffer(
   const framebuffer = gl.createFramebuffer();
 
   gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
-  gl.framebufferTexture2D(
-    gl.FRAMEBUFFER,
-    gl.COLOR_ATTACHMENT0,
-    gl.TEXTURE_2D,
-    options.texture.texture,
-    options.texture.level
-  );
+  if(Array.isArray(options.texture)) {
+    let currentColorAttachment = gl.COLOR_ATTACHMENT0;
+    for(const text of options.texture) {
+      gl.framebufferTexture2D(
+        gl.FRAMEBUFFER,
+        currentColorAttachment,
+        gl.TEXTURE_2D,
+        text.texture,
+        text.level
+      );
+      currentColorAttachment += 1;
+    }
+  } else {
+    gl.framebufferTexture2D(
+      gl.FRAMEBUFFER,
+      gl.COLOR_ATTACHMENT0,
+      gl.TEXTURE_2D,
+      options.texture.texture,
+      options.texture.level
+    );
+  }
+
   gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 
   return {
@@ -38,7 +53,7 @@ export function createFrameBuffer(
     unbind() {
       gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     },
-    getTexture(): WebGlTexture {
+    getTexture(): WebGlTexture | WebGlTexture[] {
       return options.texture;
     },
     clear(color?: [number, number, number, number]) {

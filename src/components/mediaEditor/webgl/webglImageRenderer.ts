@@ -1,6 +1,7 @@
 import {ImageState, ObjectLayerType, BrushTouch, ObjectLayer} from '../types';
 import {ImageRenderer, ImageRendererOptions, RenderOptions} from '../imageRenderer';
 import {CompatibleWebGLRenderingContext, makeCompatibleWebGLRenderingContext} from './webglContext';
+import {WebGlTexture} from './helpers/webglTexture';
 import {ObjectLayerProgram} from './programs/objectLayerProgram';
 import {BrushTouchProgram} from './programs/brushTouchProgram';
 import {BackgroundImageProgram} from './programs/backgroundImageProgram';
@@ -66,6 +67,7 @@ export class WebglImageRenderer implements ImageRenderer {
 
     this.backgroundImageProgram = new BackgroundImageProgram(gl);
     this.backgroundImageProgram.init();
+    this.backgroundImageProgram.setupFramebuffer(this.canvas.width, this.canvas.height);
 
     this.inited = true;
   }
@@ -86,12 +88,13 @@ export class WebglImageRenderer implements ImageRenderer {
     }
 
     this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
+    this.backgroundImageProgram?.resetFramebuffer(this.canvas.width, this.canvas.height);
     this.brushTouchProgram?.resetFramebuffer(this.canvas.width, this.canvas.height);
   }
 
   public render(imageState: ImageState, options?: RenderOptions) {
-    this.renderBackgroundImage(imageState, options);
-    this.renderBrushTouches(imageState.drawLayer.touches, options);
+    const backgroundImageTexture = this.renderBackgroundImage(imageState, options);
+    this.renderBrushTouches(backgroundImageTexture, imageState.drawLayer.touches, options);
     this.renderLayerObjects(imageState.layers, options);
 
     const error = this.gl.getError();
@@ -113,8 +116,8 @@ export class WebglImageRenderer implements ImageRenderer {
   }
 
   public renderBrushTouch(imageState: ImageState, touch: BrushTouch, options?: RenderOptions) {
-    this.renderBackgroundImage(imageState, options);
-    this.renderBrushTouches([touch], {...options, clearBrushProgramFramebuffer: false});
+    const backgroundImage = this.renderBackgroundImage(imageState, options);
+    this.renderBrushTouches(backgroundImage, [touch], {...options, clearBrushProgramFramebuffer: false});
     this.renderLayerObjects(imageState.layers, options);
 
     const error = this.gl.getError();
@@ -123,7 +126,7 @@ export class WebglImageRenderer implements ImageRenderer {
     }
   }
 
-  renderBackgroundImage(imageState: ImageState, options: RenderOptions) {
+  renderBackgroundImage(imageState: ImageState, options: RenderOptions): WebGlTexture {
     const renderAllLayers = options?.layers === 'all';
     const renderBackgroundLayer = renderAllLayers || (options?.layers || []).includes(ObjectLayerType.backgroundImage);
     const imageMatrix = getProjectionViewMatrix(imageState);
@@ -139,11 +142,29 @@ export class WebglImageRenderer implements ImageRenderer {
     this.backgroundImageProgram.setHeight(this.canvas.height);
     this.backgroundImageProgram.setDevicePixelRatio(this.devicePixelRatio);
     this.backgroundImageProgram.setFilter(imageState.filter);
-    this.backgroundImageProgram.draw(imageDrawObject);
+    this.backgroundImageProgram.drawToFramebuffer(imageDrawObject);
     this.backgroundImageProgram.unlink();
+
+    const backgroundImage = this.backgroundImageProgram.getFramebufferTexture();;
+    const canvasMatrix = getProjectionViewMatrix({
+      translation: [0, 0],
+      scale: [1, 1],
+      rotation: 0,
+      origin: [0, 0]
+    });
+
+    this.framebufferProgram.link();
+    this.framebufferProgram.setMatrix(canvasMatrix);
+    this.framebufferProgram.setWidth(this.canvas.width);
+    this.framebufferProgram.setHeight(this.canvas.height);
+    this.framebufferProgram.setDevicePixelRatio(this.devicePixelRatio);
+    this.framebufferProgram.draw(backgroundImage);
+    this.framebufferProgram.unlink();
+
+    return backgroundImage;
   }
 
-  renderBrushTouches(touches: BrushTouch[], options: RenderOptions) {
+  renderBrushTouches(backgroundImage: WebGlTexture, touches: BrushTouch[], options: RenderOptions) {
     const renderAllLayers = options?.layers === 'all';
     const renderDrawLayer = renderAllLayers || (options?.layers || []).includes(ObjectLayerType.draw);
 
@@ -164,6 +185,7 @@ export class WebglImageRenderer implements ImageRenderer {
     this.brushTouchProgram.setWidth(this.canvas.width);
     this.brushTouchProgram.setHeight(this.canvas.height);
     this.brushTouchProgram.setDevicePixelRatio(this.devicePixelRatio);
+    this.brushTouchProgram.setBackgroundImageTexture(backgroundImage);
     if(options.clearBrushProgramFramebuffer === true) {
       this.brushTouchProgram.clearFramebuffer();
     }

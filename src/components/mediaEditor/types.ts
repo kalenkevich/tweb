@@ -124,7 +124,8 @@ export enum ImageFilterType {
   shadows = 'shadows',
   vignette = 'vignette',
   grain = 'grain',
-  sharpen = 'sharpen'
+  sharpen = 'sharpen',
+  blur = 'blur'
 }
 
 export const IMAGE_FILTER_NAMES = [
@@ -138,7 +139,8 @@ export const IMAGE_FILTER_NAMES = [
   ImageFilterType.shadows,
   ImageFilterType.vignette,
   ImageFilterType.grain,
-  ImageFilterType.sharpen
+  ImageFilterType.sharpen,
+  ImageFilterType.blur
 ];
 
 export interface ImageFilterState {
@@ -154,6 +156,7 @@ export interface ImageFilterState {
   vignette: number;
   grain: number;
   sharpen: number;
+  blur: number;
 }
 
 export interface ImageState {

@@ -170,6 +170,7 @@ export interface WebGlTexture {
   level: number;
   setSource(source: ImageTextureSource): void;
   setPixels(texturePixels: ArrayBufferTextureSource): void;
+  premultiplyAlpha(premultiply: boolean): void;
   bind(): void;
   unbind(): void;
 }
@@ -277,6 +278,9 @@ export function createWebGlTexture(gl: CompatibleWebGLRenderingContext, options:
     bind() {
       gl.activeTexture(gl.TEXTURE0 + textureIndex);
       gl.bindTexture(gl.TEXTURE_2D, texture);
+    },
+    premultiplyAlpha(premultiply: boolean) {
+      gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, premultiply);
     },
     unbind() {
       gl.activeTexture(gl.TEXTURE0);

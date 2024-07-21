@@ -2,6 +2,7 @@ import {BaseWebglProgram, SHADER_CLIP_UTILS, SHADER_MAT_UTILS} from './baseProgr
 import {CompatibleWebGLRenderingContext} from '../webglContext';
 import {WebGlUniform, createWebGlUniform} from '../helpers/webglUniform';
 import {WebGlBuffer, createWebGlBuffer} from '../helpers/webglBuffer';
+import {WebGlFrameBuffer, createFrameBuffer} from '../helpers/webglFramebuffer';
 import {WebGlTexture, createWebGlTexture, TextureSourceType} from '../helpers/webglTexture';
 import {ImageDrawObject} from '../drawObject/imageDrawObject';
 import {ImageFilterState, IMAGE_FILTER_NAMES} from '../../types';
@@ -48,6 +49,7 @@ const BackgroundImageShaders = {
       float vignette;
       float grain;
       float sharpen;
+      float blur;
     };
 
     uniform float u_width;
@@ -217,6 +219,28 @@ const BackgroundImageShaders = {
       return mix(color, colorSum, sharpness);
     }
 
+    vec4 blur(vec4 color, float blur) {
+      vec2 onePixel = vec2(1.0, 1.0) / u_textureSize;
+      vec4 colorSum =
+        texture(u_texture, v_texCoord + vec2(-7.0*onePixel.x, -7.0*onePixel.y))*0.0044299121055113265 +
+        texture(u_texture, v_texCoord + vec2(-6.0*onePixel.x, -6.0*onePixel.y))*0.00895781211794 +
+        texture(u_texture, v_texCoord + vec2(-5.0*onePixel.x, -5.0*onePixel.y))*0.0215963866053 +
+        texture(u_texture, v_texCoord + vec2(-4.0*onePixel.x, -4.0*onePixel.y))*0.0443683338718 +
+        texture(u_texture, v_texCoord + vec2(-3.0*onePixel.x, -3.0*onePixel.y))*0.0776744219933 +
+        texture(u_texture, v_texCoord + vec2(-2.0*onePixel.x, -2.0*onePixel.y))*0.115876621105 +
+        texture(u_texture, v_texCoord + vec2(-1.0*onePixel.x, -1.0*onePixel.y))*0.147308056121 +
+        texture(u_texture, v_texCoord                                         )*0.159576912161 +
+        texture(u_texture, v_texCoord + vec2( 1.0*onePixel.x,  1.0*onePixel.y))*0.147308056121 +
+        texture(u_texture, v_texCoord + vec2( 2.0*onePixel.x,  2.0*onePixel.y))*0.115876621105 +
+        texture(u_texture, v_texCoord + vec2( 3.0*onePixel.x,  3.0*onePixel.y))*0.0776744219933 +
+        texture(u_texture, v_texCoord + vec2( 4.0*onePixel.x,  4.0*onePixel.y))*0.0443683338718 +
+        texture(u_texture, v_texCoord + vec2( 5.0*onePixel.x,  5.0*onePixel.y))*0.0215963866053 +
+        texture(u_texture, v_texCoord + vec2( 6.0*onePixel.x,  6.0*onePixel.y))*0.00895781211794 +
+        texture(u_texture, v_texCoord + vec2( 7.0*onePixel.x,  7.0*onePixel.y))*0.0044299121055113265;
+
+      return mix(color, colorSum, blur);
+    }
+
     void main() {
       vec2 resolution = vec2(u_width, u_height);
       vec2 uv = gl_FragCoord.xy / resolution;
@@ -233,6 +257,7 @@ const BackgroundImageShaders = {
       color = vignette(color, uv, u_filter.vignette);
       color = grain(color, uv, u_filter.grain);
       color = sharpen(color, u_filter.sharpen);
+      color = blur(color, u_filter.blur);
 
       fragColor = color;
     }
@@ -248,6 +273,9 @@ export class BackgroundImageProgram extends BaseWebglProgram {
   // Attributes
   protected positionBuffer: WebGlBuffer;
   protected textcoordBuffer: WebGlBuffer;
+
+  protected framebuffer: WebGlFrameBuffer;
+  protected framebufferTexture: WebGlTexture;
 
   protected imageFilterUnifroms: {
     [key: string]: WebGlUniform;
@@ -320,8 +348,8 @@ export class BackgroundImageProgram extends BaseWebglProgram {
       wrapT: gl.CLAMP_TO_EDGE,
       minFilter: gl.LINEAR,
       magFilter: gl.LINEAR,
-      format: gl.RGB,
-      internalFormat: gl.RGB
+      format: gl.RGBA,
+      internalFormat: gl.RGBA
     });
   }
 
@@ -355,5 +383,44 @@ export class BackgroundImageProgram extends BaseWebglProgram {
 
     this.texture.unbind();
     gl.bindVertexArray(null);
+  }
+
+  drawToFramebuffer(imageDrawObject: ImageDrawObject): void {
+    this.framebuffer.bind();
+
+    this.draw(imageDrawObject);
+
+    this.framebuffer.unbind();
+  }
+
+  getFramebufferTexture(): WebGlTexture {
+    return this.framebufferTexture;
+  }
+
+  resetFramebuffer(width: number, height: number) {
+    this.setupFramebuffer(width, height);
+  }
+
+  clearFramebuffer() {
+    this.framebuffer.clear([1, 1, 1, 0]);
+  }
+
+  setupFramebuffer(width: number, height: number) {
+    const gl = this.gl;
+
+    this.framebufferTexture = createWebGlTexture(gl, {
+      name: 'background_framebuffer_texture',
+      // Replace texture with a new instance but use the same texture index
+      textureIndex: this.framebufferTexture?.index,
+      width,
+      height,
+      pixels: null,
+      minFilter: gl.LINEAR,
+      magFilter: gl.LINEAR,
+      wrapS: gl.CLAMP_TO_EDGE,
+      wrapT: gl.CLAMP_TO_EDGE
+    });
+    this.framebuffer = createFrameBuffer(gl, {texture: [this.framebufferTexture]});
+    this.clearFramebuffer();
   }
 }
