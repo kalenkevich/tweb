@@ -1,6 +1,6 @@
 import {ImageAspectRatio} from '../types';
 
-export const getImageScaleByAspectRatio = (sourceWidth: number, sourceHeight: number, aspectRatio: ImageAspectRatio | number): [number, number] => {
+export const getScaleByAspectRatio = (sourceWidth: number, sourceHeight: number, aspectRatio: ImageAspectRatio | number): [number, number] => {
   const imageAspect = sourceWidth / sourceHeight;
   if(typeof aspectRatio === 'number') {
     return [1, imageAspect / aspectRatio];
@@ -30,7 +30,7 @@ export const fitImageIntoCanvas = (
   aspectRatio: ImageAspectRatio | number
 ): [number, number] => {
   const canvasAspect = canvasWidth / canvasHeight;
-  const imageScale = getImageScaleByAspectRatio(imageWidth, imageHeight, aspectRatio);
+  const imageScale = getScaleByAspectRatio(imageWidth, imageHeight, aspectRatio);
   const imageAspect = (imageWidth * imageScale[0]) / (imageHeight * imageScale[1]);
 
   if(scaleMode === ScaleMode.contain) {
@@ -66,12 +66,12 @@ export const fitImageIntoCanvas = (
   return imageScale;
 };
 
-export const fitImageIntoElement = (
+export function fitImageIntoElement(
   imageWidth: number,
   imageHeight: number,
   elWidth: number,
   elHeight: number
-): [number, number] => {
+): [number, number] {
   if(imageWidth <= elWidth && imageHeight > elHeight) {
     const aspect = elHeight / imageHeight;
 
@@ -94,3 +94,13 @@ export const fitImageIntoElement = (
 
   return [imageWidth, imageHeight];
 };
+
+export function getDimentionsForAspectRatio(
+  elWidth: number,
+  elHeight: number,
+  aspectRatio: ImageAspectRatio | number
+): [number, number] {
+  const scale = getScaleByAspectRatio(elWidth, elHeight, aspectRatio);
+
+  return [elWidth * scale[0], elHeight * scale[1]];
+}

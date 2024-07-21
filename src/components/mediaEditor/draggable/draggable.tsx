@@ -1,8 +1,8 @@
-import {JSX, children, createSignal, createEffect, on, onCleanup, onMount, Show, batch} from 'solid-js';
+import {JSX, children, createSignal, onCleanup, onMount, Show, batch, createEffect, on} from 'solid-js';
 import {DraggingSurface, DragEventType, GrabEvent} from './surface';
 import clamp from '../../../helpers/number/clamp';
 import {IconTsx} from '../../iconTsx';
-import {getLineDirection, Direction, distance} from '../helpers/mathHelper';
+import {getLineDirection, Direction} from '../helpers/mathHelper';
 
 export enum DraggableMode {
   move = 'move',
@@ -19,6 +19,8 @@ export enum ResizeAnchorPosition {
 
 export interface DraggableProps {
   children: JSX.Element;
+  class?: string;
+  ref?: (el: HTMLDivElement) => void;
   surface: DraggingSurface;
   active: boolean;
   movable: boolean;
@@ -28,22 +30,23 @@ export interface DraggableProps {
   translation: [number, number];
   scale: [number, number];
   rotation: number;
+  origin: [number, number];
   onClick?: (e: Event) => void;
-  onMove: (translation: [number, number]) => void;
-  onResize: (scale: [number, number], elRect?: DOMRect) => void;
-  onRotate: (rotation: number) => void;
-  onRemove: () => void;
+  onMove?: (translation: [number, number]) => void;
+  onResize?: (scale: [number, number], elRect?: DOMRect) => void;
+  onRotate?: (rotation: number) => void;
+  onRemove?: () => void;
 }
 export function Draggable(props: DraggableProps) {
   const [elRef, setElRef] = createSignal<HTMLDivElement>();
-  const [rotateAnchorRef, setRotateAnchorRef] = createSignal<HTMLDivElement>();
-  const [mode, setCurrentMode] = createSignal<DraggableMode>(DraggableMode.move);
+  const [mode, _setCurrentMode] = createSignal<DraggableMode>(DraggableMode.move);
   const [startPos, setStartPos] = createSignal<[number, number]>();
   const [startAngle, setStartAngle] = createSignal(0);
   const [isDragging, setIsDragging] = createSignal(false);
   const [translation, setTranslation] = createSignal(props.translation);
   const [scale, setScale] = createSignal(props.scale);
   const [rotation, setRotation] = createSignal(props.rotation);
+  const [origin, setOrigin] = createSignal(props.origin);
   const [selectedResizeAnchor, setSelectedResizeAnchor] = createSignal<HTMLDivElement>();
   const surface = () => props.surface;
   const c = children(() => props.children);
@@ -62,6 +65,26 @@ export function Draggable(props: DraggableProps) {
 
     document.documentElement.style.cursor = '';
   });
+
+  createEffect(on(() => props.translation, () => {
+    setTranslation(props.translation);
+    updateElement();
+  }));
+
+  createEffect(on(() => props.scale, () => {
+    setScale(props.scale);
+    updateElement();
+  }));
+
+  createEffect(on(() => props.rotation, () => {
+    setRotation(props.rotation);
+    updateElement();
+  }));
+
+  createEffect(on(() => props.origin, () => {
+    setOrigin(props.origin);
+    updateElement();
+  }));
 
   const onDragStart = (pos: GrabEvent) => {
     const rootRect = surface().element.getBoundingClientRect();
@@ -107,14 +130,22 @@ export function Draggable(props: DraggableProps) {
   }
 
   const updateElement = () => {
-    elRef().style.position = 'absolute';
-    elRef().style.top = '0';
-    elRef().style.left = '0';
-    elRef().style.display = 'block';
-    elRef().style.cursor = 'grab';
-    const translationX = (translation()[0] - elRef().offsetWidth / 2) / window.devicePixelRatio;
-    const translationY = (translation()[1] - elRef().offsetHeight / 2) / window.devicePixelRatio;
-    elRef().style.transform = `translateX(${translationX}px) translateY(${translationY}px) rotateZ(${rotation()}deg) scaleX(${scale()[0]}) scaleY(${scale()[1]})`;
+    const el = elRef();
+    const translationX = (translation()[0] + origin()[0]) / window.devicePixelRatio;
+    const translationY = (translation()[1] + origin()[1]) / window.devicePixelRatio;
+
+    el.style.position = 'absolute';
+    el.style.top = '0';
+    el.style.left = '0';
+    el.style.display = 'block';
+    el.style.cursor = 'grab';
+    el.style.transform = `translateX(${translationX}px) translateY(${translationY}px) rotateZ(${rotation()}deg) scaleX(${scale()[0]}) scaleY(${scale()[1]})`;
+
+    if(mode() === DraggableMode.move) {
+      elRef().style.transformOrigin = 'top left';
+    } else {
+      elRef().style.transformOrigin = 'center';
+    }
   };
 
   const dragHandler = (pageX: number, pageY: number, emitChangeEvent: boolean) => {
@@ -155,7 +186,7 @@ export function Draggable(props: DraggableProps) {
       const isChanged = newTranslation[0] !== props.translation[0] || newTranslation[1] !== props.translation[1];
 
       if(isChanged) {
-        props.onMove(newTranslation);
+        props.onMove?.(newTranslation);
       }
     }
   };
@@ -207,7 +238,7 @@ export function Draggable(props: DraggableProps) {
     setScale([scaleX, scaleY]);
 
     if(emitChangeEvent) {
-      props.onResize([scaleX, scaleY], elRef().getBoundingClientRect());
+      props.onResize?.([scaleX, scaleY], elRef().getBoundingClientRect());
     }
   };
 
@@ -216,12 +247,21 @@ export function Draggable(props: DraggableProps) {
     setRotation(newAngle);
 
     if(emitChangeEvent) {
-      props.onRotate(newAngle);
+      props.onRotate?.(newAngle);
     }
   };
 
+  const setCurrentMode = (mode: DraggableMode) => {
+    _setCurrentMode(mode);
+    if(mode === DraggableMode.move) {
+      elRef().style.transformOrigin = 'top left';
+    } else {
+      elRef().style.transformOrigin = 'center';
+    }
+  }
+
   const onElementClick = (e: Event) => {
-    if(e.target === elRef()) {
+    if(e.target === elRef() || e.target === c()) {
       setCurrentMode(DraggableMode.move);
     }
 
@@ -248,14 +288,17 @@ export function Draggable(props: DraggableProps) {
   const onRemoveClick = (e: MouseEvent | TouchEvent) => {
     e.stopImmediatePropagation();
 
-    props.onRemove();
+    props.onRemove?.();
   };
 
   return (
-    <div ref={(el) => setElRef(el)}
-      class="draggable-object"
-      classList={{'active': props.active}}
-      onMouseDown={onElementClick}>
+    <div ref={(el) => {
+      setElRef(el);
+      props.ref?.(el);
+    }}
+    class={['draggable-object', props.class || ''].join(' ')}
+    classList={{'active': props.active}}
+    onMouseDown={onElementClick}>
       <Show when={props.removable}>
         <div class="draggable-object__remove-icon-wrapper"
           onTouchStart={onRemoveClick}
@@ -287,7 +330,6 @@ export function Draggable(props: DraggableProps) {
       </Show>
       <Show when={props.rotatable}>
         <div class="rotate-anchor"
-          ref={el => setRotateAnchorRef(el)}
           onMouseDown={onRotateAnchorClick}>
           <IconTsx class="rotate-anchor__icon" icon="rotate_left"/>
         </div>

@@ -62,10 +62,21 @@ export interface DraggableStickerProps {
 }
 export function DraggableSticker(props: DraggableStickerProps) {
   const [isActiveInternal, setActiveInternalState] = createSignal(props.isActive);
+  const [origin, setOrigin] = createSignal<[number, number]>([
+    -props.layer.width / 2,
+    -props.layer.height / 2
+  ]);
   const layer = () => props.layer;
 
   createEffect(on(() => props.isActive, (isActive) => {
     setActiveInternalState(isActive);
+  }));
+
+  createEffect(on(() => [props.layer.width, props.layer.height], () => {
+    setOrigin([
+      -props.layer.width / 2,
+      -props.layer.height / 2
+    ]);
   }));
 
   const onClick = () => {
@@ -84,6 +95,7 @@ export function DraggableSticker(props: DraggableStickerProps) {
       translation={layer().translation}
       scale={layer().scale}
       rotation={layer().rotation}
+      origin={origin()}
       onClick={onClick}
       onMove={(translation: [number, number]) => {
         props.onImageChange({
@@ -95,13 +107,17 @@ export function DraggableSticker(props: DraggableStickerProps) {
           action: AttachmentChangeAction.update
         });
       }}
-      onResize={(scale: [number, number], elRect: DOMRect) => {
+      onResize={(scale: [number, number]) => {
+        const newWidth = layer().width * scale[0];
+        const newHeight = layer().width * scale[0];
+
         props.onImageChange({
           type: ImageChangeType.layer,
           layer: {
             ...layer(),
-            width: layer().width * scale[0],
-            height: layer().height * scale[1]
+            width: newWidth,
+            height: newHeight,
+            origin: [-newWidth / 2, -newHeight / 2]
           },
           action: AttachmentChangeAction.update
         });

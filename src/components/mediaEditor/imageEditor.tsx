@@ -104,7 +104,7 @@ export function ImageEditor(props: MediaEditorProps) {
   };
 
   const onContainerResized = (canvasWidth: number, canvasHeight: number) => {
-    imageEditorManager().resizeCanvas(canvasWidth, canvasHeight);
+    imageEditorManager().resizeCanvas(canvasWidth, canvasHeight, {render: false});
     imageEditorManager().origin(-canvasWidth / 2, -canvasHeight / 2, false, {render: false});
     const newState = imageEditorManager().moveTo((canvasWidth / 2), (canvasHeight / 2), false, {render: true, layers: layersToRender()});
 
@@ -119,17 +119,12 @@ export function ImageEditor(props: MediaEditorProps) {
         return imageEditorManager().filter(event.value, {render: true, layers: layersToRender()});
       }
       case ImageChangeType.aspectRatio: {
-        const canvas = imageEditorManager().getCanvas();
-        const [scaleX, scaleY] = fitImageIntoCanvas(
-          ScaleMode.contain,
-          state.originalWidth,
-          state.originalHeight,
-          canvas.clientWidth,
-          canvas.clientHeight,
-          event.value
-        );
+        const state = imageEditorManager().getCurrentImageState();
 
-        return imageEditorManager().resize(scaleX, scaleY, event.animation, {render: true, layers: layersToRender()});
+        return imageEditorManager().pushState({
+          ...state,
+          aspectRatio: event.value
+        }, {render: false});
       }
       case ImageChangeType.rotate: {
         return imageEditorManager().rotate(event.value, event.animation, {render: true, layers: layersToRender()});
@@ -147,10 +142,16 @@ export function ImageEditor(props: MediaEditorProps) {
         return imageEditorManager().resize(event.scaleX, event.scaleY, event.animation, {render: true, layers: layersToRender()});
       }
       case ImageChangeType.flip: {
-        return imageEditorManager().flipHorisontaly(event.animation, {render: true, layers: layersToRender()});
+        const state = imageEditorManager().getCurrentImageState();
+
+        return imageEditorManager().resize(-state.scale[0], state.scale[1], event.animation, {render: true, layers: layersToRender()});
       }
       case ImageChangeType.layerTranslation: {
         const layer = {...state.layers.find(l => l.id === event.layerId)};
+
+        if(event.translation[0] === layer.translation[0] && event.translation[1] === layer.translation[1]) {
+          return state;
+        }
 
         return handleChangeEvent({
           type: ImageChangeType.layer,
@@ -158,6 +159,22 @@ export function ImageEditor(props: MediaEditorProps) {
           layer: {
             ...layer,
             translation: event.translation
+          }
+        });
+      }
+      case ImageChangeType.layerOrigin: {
+        const layer = {...state.layers.find(l => l.id === event.layerId)};
+
+        if(event.origin[0] === layer.origin[0] && event.origin[1] === layer.origin[1]) {
+          return state;
+        }
+
+        return handleChangeEvent({
+          type: ImageChangeType.layer,
+          action: AttachmentChangeAction.update,
+          layer: {
+            ...layer,
+            origin: event.origin
           }
         });
       }

@@ -6,9 +6,10 @@ import {IconTsx} from '../../iconTsx';
 import clamp from '../../../helpers/number/clamp';
 import attachGrabListeners from '../../../helpers/dom/attachGrabListeners';
 
-export const ROTATE_CARUSEL_HEIGHT = 60;
-export const ROTATE_CARUSEL_PADDING = 20;
-export const ROTATE_CARUSEL_ACTUAL_HEIGHT = ROTATE_CARUSEL_HEIGHT + ROTATE_CARUSEL_PADDING;
+export const ROTATE_CARUSEL_RAW_HEIGHT = 60;
+export const ROTATE_CARUSEL_PADDING_TOP = 30;
+export const ROTATE_CARUSEL_PADDING_BOTTOM = 10;
+export const ROTATE_CARUSEL_HEIGHT = ROTATE_CARUSEL_RAW_HEIGHT + ROTATE_CARUSEL_PADDING_TOP + ROTATE_CARUSEL_PADDING_BOTTOM;
 
 const getRangeBasedOnWidth = (width: number): number => {
   if(width >= 0 && width <= 400) {
@@ -27,28 +28,47 @@ const getRangeBasedOnWidth = (width: number): number => {
 }
 
 const generateStepsFromAngle = (centerAngle: number, range: number = 90, stepMilestone: number = 15) => {
+  centerAngle = centerAngle % 180;
   const result = [];
+  const from = Math.max(-180, centerAngle - range);
+  const to = Math.min(180, centerAngle + range);
 
-  for(let i = centerAngle - range; i <= centerAngle + range; i++) {
-    let angle = centerAngle + i;
-    if(angle >= 360) {
-      angle = -(angle % 360);
-    } else if(angle <= -360) {
-      angle = -(angle % 360);
+  for(let i = from; i <= to; i++) {
+    const angle = centerAngle + i;
+    if(angle > 180 || angle < -180) {
+      result.push({
+        value: angle,
+        milestole: false,
+        visible: false,
+        center: i === centerAngle,
+        opacity: 0
+      });
+    } else {
+      result.push({
+        value: angle,
+        visible: true,
+        milestole: angle % stepMilestone === 0,
+        center: i === centerAngle,
+        opacity: 1.1 - Math.abs(i - centerAngle) / range
+      });
     }
-
-    result.push({
-      value: angle,
-      milestole: angle % stepMilestone === 0,
-      center: i === centerAngle,
-      opacity: 1.1 - Math.abs(i - centerAngle) / range
-    });
   }
 
   return result;
 }
 
-export interface ImageRotationControlProps extends ImageControlProps {}
+const clampAngle = (angle: number) => {
+  if(angle > 180 || angle < -180) {
+    angle %= 180;
+    angle *= -1;
+  }
+
+  return angle;
+}
+
+export interface ImageRotationControlProps extends ImageControlProps {
+  visible: boolean;
+}
 
 export function ImageRotationControl(props: ImageRotationControlProps): JSX.Element {
   const [currentAngle, setCurrentAngle] = createSignal(props.imageState.rotation);
@@ -59,22 +79,18 @@ export function ImageRotationControl(props: ImageRotationControlProps): JSX.Elem
   const [steps, setSteps] = createSignal([]);
 
   createEffect(on(() => props.imageState.rotation, (val) => {
-    setCurrentAngle(val);
+    setCurrentAngle(clampAngle(val));
     updateSteps();
   }));
 
   onMount(() => {
     window.addEventListener('resize', updateSteps);
 
-    rootRef().style.setProperty('--rotation-control-height', `${ROTATE_CARUSEL_HEIGHT}px`);
-
-    if(props.isMobile) {
-      rootRef().style.setProperty('--rotation-control-padding-top', `${ROTATE_CARUSEL_PADDING / 2}px`);
-      rootRef().style.setProperty('--rotation-control-padding-bottom', `${ROTATE_CARUSEL_PADDING / 2}px`);
-    } else {
-      rootRef().style.setProperty('--rotation-control-padding-top', `${0}px`);
-      rootRef().style.setProperty('--rotation-control-padding-bottom', `${ROTATE_CARUSEL_PADDING}px`);
-    }
+    rootRef().style.bottom = props.visible ? '0' : `-${ROTATE_CARUSEL_HEIGHT}px`;
+    rootRef().style.setProperty('--rotation-control-height', `${ROTATE_CARUSEL_RAW_HEIGHT}px`);
+    rootRef().style.setProperty('--rotation-control-padding-top', `${ROTATE_CARUSEL_PADDING_TOP}px`);
+    rootRef().style.setProperty('--rotation-control-padding-bottom', `${ROTATE_CARUSEL_PADDING_BOTTOM}px`);
+    rootRef().style.display = 'block';
 
     attachGrabListeners(rootRef() as any, (pos) => {
       onGrabStart();
@@ -98,13 +114,22 @@ export function ImageRotationControl(props: ImageRotationControlProps): JSX.Elem
     window.removeEventListener('resize', updateSteps);
   });
 
+  createEffect(on(() => props.visible, (visible) => {
+    rootRef().style.bottom = visible ? '0' : `-${ROTATE_CARUSEL_HEIGHT}px`;
+  }));
+
   const caruselRotateHandler = (pageX: number) => {
     const caruselRect = caruselRef().getBoundingClientRect();
     const eventX = clamp(pageX - caruselRect.left, 0, caruselRect.width);
     const deltaX = (eventX - startPosX()) / window.devicePixelRatio;
     const angleDelta = Math.floor(180 * (deltaX / caruselRect.width));
+    let newAngle = (startAngle() - angleDelta);
+    if(newAngle > 180) {
+      newAngle = 180;
+    } else if(newAngle < -180) {
+      newAngle = -180;
+    }
 
-    const newAngle = startAngle() - angleDelta;
     setCurrentAngle(newAngle);
     updateSteps();
     props.onImageChange({
@@ -135,7 +160,7 @@ export function ImageRotationControl(props: ImageRotationControlProps): JSX.Elem
           onClick={() => {
             props.onImageChange({
               type: ImageChangeType.rotate,
-              value: currentAngle() - 90,
+              value: (currentAngle() - 90) % 360,
               animation: true
             });
           }}
@@ -156,7 +181,8 @@ export function ImageRotationControl(props: ImageRotationControlProps): JSX.Elem
                 </div>
                 <div class="step__circle" classList={{
                   'milestone': step.milestole,
-                  'center': step.center
+                  'center': step.center,
+                  'hidden': !step.visible
                 }}></div>
               </span>
             )}

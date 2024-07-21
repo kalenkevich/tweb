@@ -66,8 +66,6 @@ export class ImageEditorManager {
       if(layer.type === ObjectLayerType.text && !!layer.text) {
         promises.push(renderTextLayerMultiline(layer.text, layer).then(texture => {
           layer.texture = texture;
-          const halfWidth = (texture.width) / 2;
-          const halfHeight = (texture.height) / 2;
           const scaleX = state.originalWidth / this.canvas.width;
           const scaleY = state.originalHeight / this.canvas.height;
 
@@ -76,12 +74,12 @@ export class ImageEditorManager {
             width: texture.width,
             height: texture.height,
             translation: [
-              (layer.translation[0] + (window.devicePixelRatio === 2 ? DRAGGABLE_OBJECT_TOP_LEFT_RIGHT : 0)) * scaleX,
-              (layer.translation[1] + (window.devicePixelRatio === 2 ? DRAGGABLE_OBJECT_TOP_BOTTOM_PADDING : 0)) * scaleY
+              layer.translation[0] * scaleX,
+              layer.translation[1] * scaleY
             ] as [number, number],
             origin:[
-              (-halfWidth * scaleX) / window.devicePixelRatio,
-              (-halfHeight * scaleY) / window.devicePixelRatio
+              layer.origin[0],
+              layer.origin[1]
             ] as [number, number],
             scale: [scaleX, scaleY] as [number, number]
           };
@@ -105,8 +103,6 @@ export class ImageEditorManager {
             img.height = layer.height * window.devicePixelRatio;
             const texture = createImageElementTextureSource(el.children[0] as HTMLImageElement);
             layer.texture = texture;
-            const halfWidth = (texture.width) / 2;
-            const halfHeight = (texture.height) / 2;
             const scaleX = state.originalWidth / this.canvas.width;
             const scaleY = state.originalHeight / this.canvas.height;
 
@@ -115,12 +111,12 @@ export class ImageEditorManager {
               width: texture.width,
               height: texture.height,
               translation: [
-                (layer.translation[0] + (window.devicePixelRatio === 2 ? DRAGGABLE_OBJECT_TOP_LEFT_RIGHT : 0)) * scaleX,
-                (layer.translation[1] + (window.devicePixelRatio === 2 ? DRAGGABLE_OBJECT_TOP_BOTTOM_PADDING : 0)) * scaleY
+                layer.translation[0] * scaleX,
+                layer.translation[1] * scaleY
               ] as [number, number],
               origin:[
-                -halfWidth,
-                -halfHeight
+                layer.origin[0],
+                layer.origin[1]
               ] as [number, number],
               scale: [scaleX, scaleY] as [number, number]
             };
@@ -297,15 +293,6 @@ export class ImageEditorManager {
 
   crop(fromX: number, fromY: number, width: number, height: number, animation: boolean = false, rerenderOptions?: RenderOptions): ImageState {
     return this.createNewImageState({});
-  }
-
-  flipHorisontaly(animation: boolean = false, rerenderOptions?: RenderOptions): ImageState {
-    const state = this.getCurrentImageState();
-    const newImageState = this.createNewImageState({scale: [state.scale[0] * -1, 1]});
-
-    this.rerender(newImageState, rerenderOptions);
-
-    return newImageState;
   }
 
   brushTouch(brushTouch: BrushTouch, rerenderOptions?: RenderOptions): ImageState {

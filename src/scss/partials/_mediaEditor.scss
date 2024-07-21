@@ -283,6 +283,9 @@
   }
 
   .rotation-control {
+    position: absolute;
+    display: none;
+    bottom: calc(-1 * var(--rotation-control-height));
     background: #000000;
     height: var(--rotation-control-height);
     padding-top: var(--rotation-control-padding-top);
@@ -290,11 +293,10 @@
     width: 100%;
     display: flex;
     align-items: center;
-    bottom: 0;
     cursor: grab;
-    position: absolute;
     z-index: 1;
     box-sizing: content-box;
+    transition: bottom ease-out 0.25s;
 
     .rotation-control__container {
       color: #FFFFFF;
@@ -348,7 +350,7 @@
           background-color: #FFFFFF;
           opacity: 0.25;
 
-          .hidden {
+          &.hidden {
             opacity: 0;
           }
 
@@ -371,99 +373,117 @@
     z-index: 1;
     width: 100%;
     height: 100%;
+  }
 
-    .draggable-object {
-      cursor: grab;
-      padding: 14px 6px; 
-      margin: -16px -8px; 
-      box-sizing: content-box;
-      border: 2px dashed transparent;
-      border-radius: 10px;
+  .draggable-object {
+    --anchor-size: 16px;
+    --anchor-size-half: calc(var(--anchor-size) / 2);
+    --anchor-size-half-minus: calc(-1 * var(--anchor-size) / 2);
 
-      &__remove-icon-wrapper {
-        visibility: hidden;
-        position: absolute;
-        top: -8px;
-        right: -8px;
-        cursor: pointer;
-        background: #FFFFFF;
-        color: #000000;
-        border-radius: 50%;
+    cursor: grab;
+    padding: 14px 6px; 
+    margin: -16px -8px; 
+    box-sizing: content-box;
+    border: 2px dashed transparent;
+    border-radius: 10px;
+    z-index: 2;
+
+    &__remove-icon-wrapper {
+      visibility: hidden;
+      position: absolute;
+      top: var(--anchor-size-half-minus);
+      right: var(--anchor-size-half-minus);
+      cursor: pointer;
+      background: #FFFFFF;
+      color: #000000;
+      border-radius: 50%;
+      font-size: 12px;
+      width: var(--anchor-size);
+      height: var(--anchor-size);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2;
+    }
+
+    .resize-anchor {
+      visibility: hidden;
+      position: absolute;
+      background: #FFFFFF;
+      border-radius: 50%;
+      width: var(--anchor-size);
+      height: var(--anchor-size);
+
+      &--top-left {
+        top: var(--anchor-size-half-minus);
+        left: var(--anchor-size-half-minus);
+        cursor: nwse-resize;
+      }
+
+      &--top-right {
+        top: var(--anchor-size-half-minus);
+        right: var(--anchor-size-half-minus);
+        cursor: nesw-resize;
+      }
+
+      &--bottom-left {
+        bottom: var(--anchor-size-half-minus);
+        left: var(--anchor-size-half-minus);
+        cursor: nesw-resize;
+      }
+
+      &--bottom-right {
+        bottom: var(--anchor-size-half-minus);
+        right: var(--anchor-size-half-minus);
+        cursor: nwse-resize;
+      }
+    }
+
+    .rotate-anchor {
+      cursor: ew-resize;
+      position: absolute;
+      left: calc(50% - var(--anchor-size-half));
+      bottom: var(--anchor-size-half-minus);
+      visibility: hidden;
+      background: #FFFFFF;
+      border-radius: 50%;
+      width: var(--anchor-size);
+      height: var(--anchor-size);
+      transform: rotate(90deg);
+
+      &__icon {
         font-size: 12px;
-        width: 16px;
-        height: 16px;
         display: flex;
         align-items: center;
         justify-content: center;
-        z-index: 2;
-      }
-
-      --anchor-size: 16px;
-      .resize-anchor {
-        visibility: hidden;
-        position: absolute;
-        background: #FFFFFF;
-        border-radius: 50%;
+        color: #000000;
         width: var(--anchor-size);
         height: var(--anchor-size);
-
-        &--top-left {
-          top: -8px;
-          left: -8px;
-          cursor: nwse-resize;
-        }
-
-        &--top-right {
-          top: -8px;
-          right: -8px;
-          cursor: nesw-resize;
-        }
-
-        &--bottom-left {
-          bottom: -8px;
-          left: -8px;
-          cursor: nesw-resize;
-        }
-
-        &--bottom-right {
-          bottom: -8px;
-          right: -8px;
-          cursor: nwse-resize;
-        }
-      }
-
-      .rotate-anchor {
-        cursor: ew-resize;
-        position: absolute;
-        left: calc(50% - 8px);
-        bottom: -8px;
-        visibility: hidden;
-        background: #FFFFFF;
-        border-radius: 50%;
-        width: var(--anchor-size);
-        height: var(--anchor-size);
-        transform: rotate(90deg);
-
-        &__icon {
-          font-size: 12px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          color: #000000;
-          width: var(--anchor-size);
-          height: var(--anchor-size);
-        }
-      }
-
-      &:hover, &.active {
-        border: 2px dashed rgba(255, 255, 255, 0.5);
-        .draggable-object__remove-icon-wrapper,
-        .resize-anchor,
-        .rotate-anchor {
-          visibility: visible;
-        }
       }
     }
+
+    &:hover, &.active {
+      border: 2px dashed rgba(255, 255, 255, 0.5);
+      .draggable-object__remove-icon-wrapper,
+      .resize-anchor,
+      .rotate-anchor {
+        visibility: visible;
+      }
+    }
+  }
+
+  .image-cropper-wrapper {
+    border: none;
+    padding: 0;
+    margin: 0;
+
+    &.active {
+      border: none;
+    }
+
+    // .image-cropper {
+    //   transition: width,height ease-out 0.25s;
+    // }
   }
 }
 

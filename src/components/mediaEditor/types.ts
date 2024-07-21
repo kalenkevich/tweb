@@ -187,6 +187,7 @@ export enum ImageChangeType {
   drawLayer,
   drawTouch,
   layerTranslation,
+  layerOrigin,
   textLayerFontSize
 }
 
@@ -200,6 +201,7 @@ export type ImageChangeEvent = FilterImageChangeEvent
   | DrawLayerChangeEvent
   | DrawTouchEvent
   | LayerTranslationChangeEvent
+  | LayerOriginChangeEvent
   | TextLayerFontSizeChangeEvent;
 
 export interface FilterImageChangeEvent {
@@ -271,4 +273,10 @@ export interface LayerTranslationChangeEvent {
   type: ImageChangeType.layerTranslation;
   layerId: number;
   translation: [number, number];
+}
+
+export interface LayerOriginChangeEvent {
+  type: ImageChangeType.layerOrigin;
+  layerId: number;
+  origin: [number, number];
 }

@@ -87,9 +87,11 @@ export interface DraggableTextProps {
   onImageChange: (imageChangeEvent: ImageChangeEvent) => void;
 }
 export function DraggableText(props: DraggableTextProps) {
+  const [draggableRef, setDraggableRef] = createSignal<HTMLDivElement>();
   const [inputRef, setInputRef] = createSignal<HTMLInputElement | HTMLTextAreaElement>();
   const [textValueInternal, setTextValueInternal] = createSignal(props.layer.text);
   const [isActiveInternal, setActiveInternalState] = createSignal(props.isActive);
+  const [origin, setOrigin] = createSignal<[number, number]>([0, 0]);
   const layer = () => props.layer;
 
   onMount(() => {
@@ -98,7 +100,34 @@ export function DraggableText(props: DraggableTextProps) {
     if(props.isActive && !props.isMobile && document.activeElement !== el) {
       el.focus();
     }
+
+    updateOrigin();
   });
+
+  createEffect(on(() => [
+    props.layer.alignment,
+    props.layer.fontName,
+    props.layer.fontSize,
+    props.layer.fontWeight,
+    props.layer.style,
+    props.layer.padding,
+    props.layer.strokeWidth
+  ], () => {
+    updateOrigin();
+  }));
+
+  const updateOrigin = () => {
+    const width = draggableRef().offsetWidth;
+    const height = draggableRef().offsetHeight;
+    const origin = [-width / 2, -height / 2] as [number, number];
+
+    setOrigin(origin);
+    props.onImageChange({
+      type: ImageChangeType.layerOrigin,
+      layerId: layer().id,
+      origin
+    });
+  };
 
   createEffect(on(() => props.isActive, (isActive) => {
     setActiveInternalState(isActive);
@@ -138,6 +167,7 @@ export function DraggableText(props: DraggableTextProps) {
 
   return (
     <Draggable
+      ref={el => setDraggableRef(el)}
       surface={props.surface}
       active={isActiveInternal()}
       movable={true}
@@ -147,6 +177,7 @@ export function DraggableText(props: DraggableTextProps) {
       translation={layer().translation}
       scale={layer().scale}
       rotation={layer().rotation}
+      origin={origin()}
       onClick={onClick}
       onMove={(translation: [number, number]) => {
         props.onImageChange({

@@ -89,7 +89,7 @@ export function DraggingSurfaceComponent(props: DraggingSurfaceProps) {
   };
 
   return (
-    <div ref={(el) => setSurfaceEl(el)}>
+    <div class="dragging-surface" ref={(el) => setSurfaceEl(el)}>
       {c()}
     </div>
   );

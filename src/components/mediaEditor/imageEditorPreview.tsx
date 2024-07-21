@@ -1,14 +1,15 @@
-import {JSX, onMount, createSignal, Show, onCleanup, batch} from 'solid-js';
+import {JSX, onMount, createSignal, Show, onCleanup, on, createEffect} from 'solid-js';
 import {ObjectLayer} from './types';
 import {TabType} from './imageEditorTabs';
 import {ImageControlProps} from './controls/imageControl';
-import {ImageRotationControl} from './controls/imageRotationControl';
+import {ImageRotationControl, ROTATE_CARUSEL_HEIGHT} from './controls/imageRotationControl';
 import {DraggableObjects} from './controls/draggableObjects';
-import {ImageConunterpartControl} from './controls/imageCounterpartControl';
+import {ImageCropperComponent} from './controls/imageCropper';
 import {DraggingSurfaceComponent, DraggingSurface} from './draggable/surface';
 import {DrawableSurface} from './controls/drawableSurface';
 import SuperStickerRenderer from '../emoticonsDropdown/tabs/SuperStickerRenderer';
 import {fitImageIntoElement} from './helpers/aspectRatioHelper';
+import {easyAnimation} from './helpers/animation';
 
 export interface ImagePreviewProps extends ImageControlProps {
   selectedTabId: TabType | undefined;
@@ -29,10 +30,12 @@ export function ImageEditorPreview(props: ImagePreviewProps): JSX.Element {
   const showDraggableObjects = () => !props.selectedTabId || [TabType.TEXT, TabType.STICKER, TabType.DRAW].includes(props.selectedTabId);
 
   onMount(() => {
-    fitCanvasIntoParent();
+    const [cw, ch] = fitCanvasIntoParent();
+    updateCanvasResolution(cw, ch);
+
     props.onCanvasMounted(canvasRef());
 
-    const resizeObserver = new ResizeObserver(onResize);
+    const resizeObserver = new ResizeObserver(() => onResize());
     resizeObserver.observe(rootRef(), {box: 'content-box'});
     setResizeObserver(resizeObserver);
   });
@@ -41,29 +44,59 @@ export function ImageEditorPreview(props: ImagePreviewProps): JSX.Element {
     resizeObserver().disconnect();
   });
 
+  createEffect(on(() => props.selectedTabId, () => {
+    onResize(!props.isMobile);
+  }));
+
   const fitCanvasIntoParent = () => {
-    const [elWidth, elHeight] = [rootRef().offsetWidth, rootRef().offsetHeight];
-    const canvasWrapper = canvasWrapperRef();
-    const canvas = canvasRef();
-    const [canvasWidth, canvasHeight] = fitImageIntoElement(
+    const root = rootRef();
+    const elWidth = root.offsetWidth;
+    const elHeight = root.offsetHeight - (isResizeTabSelected() ? ROTATE_CARUSEL_HEIGHT * window.devicePixelRatio : 0);
+
+    return fitImageIntoElement(
       props.imageState.originalWidth,
       props.imageState.originalHeight,
       elWidth,
       elHeight
     );
-    canvas.width = canvasWidth * window.devicePixelRatio;
-    canvas.height = canvasHeight * window.devicePixelRatio;
-    canvas.style.width = `${canvasWidth}px`;
-    canvas.style.height = `${canvasHeight}px`;
-    canvasWrapper.style.width = `${canvasWidth}px`;
-    canvasWrapper.style.height = `${canvasHeight}px`;
   };
 
-  const onResize = () => {
+  const onResize = (animation: boolean = false) => {
     const canvas = canvasRef();
-    fitCanvasIntoParent();
+    const originalWidth = canvas.width / window.devicePixelRatio;
+    const originalHeight = canvas.height / window.devicePixelRatio;
+    const [newCanvasWidth, newCanvasHeight] = fitCanvasIntoParent();
 
-    props.onContainerResized(canvas.width, canvas.height);
+    if(originalWidth === canvas.width && originalHeight === newCanvasHeight) {
+      return;
+    }
+
+    if(animation) {
+      const deltaWidth = newCanvasWidth - originalWidth;
+      const deltaHeight = newCanvasHeight - originalHeight;
+      easyAnimation((progress: number) => {
+        const stepWidth = originalWidth + deltaWidth * progress;
+        const stepHeight = originalHeight + deltaHeight * progress;
+
+        updateCanvasResolution(stepWidth, stepHeight);
+        props.onContainerResized(canvas.width, canvas.height);
+      });
+    } else {
+      updateCanvasResolution(newCanvasWidth, newCanvasHeight);
+      props.onContainerResized(canvas.width, canvas.height);
+    }
+  };
+
+  const updateCanvasResolution = (width: number, height: number) => {
+    const canvas = canvasRef();
+    const canvasWrapper = canvasWrapperRef();
+
+    canvas.width = width * window.devicePixelRatio;
+    canvas.height = height * window.devicePixelRatio;
+    canvas.style.width = `${width}px`;
+    canvas.style.height = `${height}px`;
+    canvasWrapper.style.width = `${width}px`;
+    canvasWrapper.style.height = `${height}px`;
   };
 
   return (
@@ -76,7 +109,7 @@ export function ImageEditorPreview(props: ImagePreviewProps): JSX.Element {
               ref={(el) => setCanvasRef(el)}>
             </canvas>
             <Show when={isResizeTabSelected()}>
-              <ImageConunterpartControl
+              <ImageCropperComponent
                 isMobile={props.isMobile}
                 surface={draggingSurface()}
                 imageState={props.imageState}
@@ -106,14 +139,13 @@ export function ImageEditorPreview(props: ImagePreviewProps): JSX.Element {
           </DraggingSurfaceComponent>
         </div>
       </div>
-      <Show when={isResizeTabSelected()}>
-        <ImageRotationControl
-          isMobile={props.isMobile}
-          imageState={props.imageState}
-          onImageChange={props.onImageChange}
-          currentLayerIndex={props.currentLayerIndex}
-        />
-      </Show>
+      <ImageRotationControl
+        visible={isResizeTabSelected()}
+        isMobile={props.isMobile}
+        imageState={props.imageState}
+        onImageChange={props.onImageChange}
+        currentLayerIndex={props.currentLayerIndex}
+      />
     </div>
   )
 }
