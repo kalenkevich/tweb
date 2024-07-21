@@ -5,7 +5,6 @@ import {DraggingSurface} from '../draggable/surface';
 import rootScope from '../../../lib/rootScope';
 import {MyDocument} from '../../../lib/appManagers/appDocsManager';
 import SuperStickerRenderer from '../../emoticonsDropdown/tabs/SuperStickerRenderer';
-import {IconTsx} from '../../iconTsx';
 
 export interface SuperStickerProps {
   stickerId: string;
@@ -63,44 +62,15 @@ export interface DraggableStickerProps {
 }
 export function DraggableSticker(props: DraggableStickerProps) {
   const [isActiveInternal, setActiveInternalState] = createSignal(props.isActive);
-  const [removeWrapperEl, setRemoveWrapperEl] = createSignal<HTMLDivElement>();
   const layer = () => props.layer;
-
-  onMount(() => {
-    window.addEventListener('keyup', onKeyUp);
-  });
-
-  onCleanup(() => {
-    window.removeEventListener('keyup', onKeyUp);
-  });
 
   createEffect(on(() => props.isActive, (isActive) => {
     setActiveInternalState(isActive);
   }));
 
-  const onWrapperMouseDown = (e: Event) => {
-    if(e.target === removeWrapperEl()) {
-      removeObject();
-    } else {
-      setActiveInternalState(true);
-      props.onClick();
-    }
-  };
-
-  const onKeyUp = (e: KeyboardEvent) => {
-    const isBackspaceKey = e.key === 'Backspace';
-
-    if(isBackspaceKey && isActiveInternal()) {
-      removeObject();
-    }
-  };
-
-  const removeObject = () => {
-    props.onImageChange({
-      type: ImageChangeType.layer,
-      layer: layer(),
-      action: AttachmentChangeAction.delete
-    });
+  const onClick = () => {
+    setActiveInternalState(true);
+    props.onClick();
   };
 
   return (
@@ -110,9 +80,11 @@ export function DraggableSticker(props: DraggableStickerProps) {
       movable={true}
       resizable={true}
       rotatable={true}
+      removable={true}
       translation={layer().translation}
       scale={layer().scale}
       rotation={layer().rotation}
+      onClick={onClick}
       onMove={(translation: [number, number]) => {
         props.onImageChange({
           type: ImageChangeType.layer,
@@ -123,7 +95,7 @@ export function DraggableSticker(props: DraggableStickerProps) {
           action: AttachmentChangeAction.update
         });
       }}
-      onResize={(scale: [number, number]) => {
+      onResize={(scale: [number, number], elRect: DOMRect) => {
         props.onImageChange({
           type: ImageChangeType.layer,
           layer: {
@@ -143,22 +115,21 @@ export function DraggableSticker(props: DraggableStickerProps) {
           },
           action: AttachmentChangeAction.update
         });
+      }}
+      onRemove={() => {
+        props.onImageChange({
+          type: ImageChangeType.layer,
+          layer: layer(),
+          action: AttachmentChangeAction.delete
+        });
       }}>
-      <div class="draggable-object draggable-sticker"
-        classList={{'active': isActiveInternal()}}
-        onTouchStart={onWrapperMouseDown}
-        onMouseDown={onWrapperMouseDown}>
-        <div class="draggable-object__remove-icon-wrapper" ref={el => setRemoveWrapperEl(el)}>
-          <IconTsx class="draggable-object__remove-icon" icon="close"/>
-        </div>
-        <SuperSticker
-          animate={true}
-          stickerRenderer={props.stickerRenderer}
-          stickerId={layer().stickerId}
-          width={layer().width}
-          height={layer().height}
-        />
-      </div>
+      <SuperSticker
+        animate={true}
+        stickerRenderer={props.stickerRenderer}
+        stickerId={layer().stickerId}
+        width={layer().width}
+        height={layer().height}
+      />
     </Draggable>
   );
 }

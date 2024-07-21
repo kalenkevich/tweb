@@ -149,17 +149,26 @@ export function ImageEditor(props: MediaEditorProps) {
       case ImageChangeType.flip: {
         return imageEditorManager().flipHorisontaly(event.animation, {render: true, layers: layersToRender()});
       }
+      case ImageChangeType.layerTranslation: {
+        const layer = {...state.layers.find(l => l.id === event.layerId)};
+
+        return handleChangeEvent({
+          type: ImageChangeType.layer,
+          action: AttachmentChangeAction.update,
+          layer: {
+            ...layer,
+            translation: event.translation
+          }
+        });
+      }
       case ImageChangeType.textLayerFontSize: {
         const state = imageEditorManager().getCurrentImageState();
         const fontSize = Math.min(event.fontSize, MAX_FONT_SIZE);
         const textLayer = {...state.layers.find(l => l.id === event.layerId)};
         if(textLayer.type === ObjectLayerType.text) {
           textLayer.fontSize = fontSize;
-          // Math.min(16, Math.max(val / 3, 8));
           textLayer.padding = fontSize / 2;
-          // Math.min(24, Math.max(val / 4, 8));
           textLayer.borderRadius = fontSize / 4;
-          // Math.min(12, Math.max(val / 6, 4));
           textLayer.strokeWidth = fontSize / 6;
         }
 

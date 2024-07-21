@@ -1,11 +1,9 @@
 import {createSignal, createEffect, on, onMount, Show, For} from 'solid-js';
 import {i18n} from '../../../lib/langPack';
 import {ImageChangeType, TextLayer, AttachmentChangeAction, ImageChangeEvent, TextStyle} from '../types';
-import {MAX_FONT_SIZE} from '../consts';
 import {Draggable} from '../draggable/draggable';
 import {DraggingSurface} from '../draggable/surface';
 import {getTextLayerInputElementStyles, getTextLayerTextareaElementStyles, TextBox, TextRow} from '../helpers/textHelper';
-import {IconTsx} from '../../iconTsx';
 
 const PLACEHOLDER = i18n('ImageEditor.TextControl.AddText').innerText;
 
@@ -91,7 +89,6 @@ export function DraggableText(props: DraggableTextProps) {
   const [inputRef, setInputRef] = createSignal<HTMLInputElement | HTMLTextAreaElement>();
   const [textValueInternal, setTextValueInternal] = createSignal(props.layer.text);
   const [isActiveInternal, setActiveInternalState] = createSignal(props.isActive);
-  const [removeWrapperEl, setRemoveWrapperEl] = createSignal<HTMLDivElement>();
   const layer = () => props.layer;
 
   onMount(() => {
@@ -130,21 +127,9 @@ export function DraggableText(props: DraggableTextProps) {
     setTextValueInternal(value);
   };
 
-  const onWrapperMouseDown = (e: Event) => {
-    if(e.target === removeWrapperEl()) {
-      removeObject();
-    } else {
-      setActiveInternalState(true);
-      props.onClick();
-    }
-  };
-
-  const removeObject = () => {
-    props.onImageChange({
-      type: ImageChangeType.layer,
-      layer: layer(),
-      action: AttachmentChangeAction.delete
-    });
+  const onClick = () => {
+    setActiveInternalState(true);
+    props.onClick();
   };
 
   return (
@@ -154,9 +139,11 @@ export function DraggableText(props: DraggableTextProps) {
       movable={true}
       resizable={true}
       rotatable={true}
+      removable={true}
       translation={layer().translation}
       scale={layer().scale}
       rotation={layer().rotation}
+      onClick={onClick}
       onMove={(translation: [number, number]) => {
         props.onImageChange({
           type: ImageChangeType.layer,
@@ -167,12 +154,17 @@ export function DraggableText(props: DraggableTextProps) {
           action: AttachmentChangeAction.update
         });
       }}
-      onResize={(scale: [number, number]) => {
+      onResize={(scale: [number, number], elRect: DOMRect) => {
         props.onImageChange({
           type: ImageChangeType.textLayerFontSize,
           layerId: layer().id,
           fontSize: Math.floor(layer().fontSize * scale[0])
         });
+        // props.onImageChange({
+        //   type: ImageChangeType.layerTranslation,
+        //   layerId: layer().id,
+        //   translation: [elRect.x, elRect.y]
+        // });
       }}
       onRotate={(rotation: number) => {
         props.onImageChange({
@@ -183,23 +175,22 @@ export function DraggableText(props: DraggableTextProps) {
           },
           action: AttachmentChangeAction.update
         });
+      }}
+      onRemove={() => {
+        props.onImageChange({
+          type: ImageChangeType.layer,
+          layer: layer(),
+          action: AttachmentChangeAction.delete
+        });
       }}>
-      <div class="draggable-text"
-        classList={{'active': isActiveInternal()}}
-        onTouchStart={onWrapperMouseDown}
-        onMouseDown={onWrapperMouseDown}>
-        <div class="draggable-object__remove-icon-wrapper" ref={el => setRemoveWrapperEl(el)}>
-          <IconTsx class="draggable-object__remove-icon" icon="close"/>
-        </div>
-        <StyledTextarea
-          ref={(el) => setInputRef(el)}
-          placeholder={PLACEHOLDER}
-          layer={layer()}
-          value={textValueInternal()}
-          onBlur={onInputBlur}
-          onInput={handleInputChange}
-        />
-      </div>
+      <StyledTextarea
+        ref={(el) => setInputRef(el)}
+        placeholder={PLACEHOLDER}
+        layer={layer()}
+        value={textValueInternal()}
+        onBlur={onInputBlur}
+        onInput={handleInputChange}
+      />
     </Draggable>
   );
 }

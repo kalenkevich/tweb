@@ -228,7 +228,6 @@ export interface ProjectionProperties {
   origin: [number, number];
 }
 export function getProjectionViewMatrix(state: ProjectionProperties): Matrix3 {
-  const ratio = window.devicePixelRatio;
   const translationMatrix = translateMatrix3(createMatrix3(), [state.translation[0], state.translation[1]]);
   const rotationMatrix = rotateMatrix3(createMatrix3(), degreesToRadians(state.rotation));
   const scaleMatrix = scaleMatrix3(createMatrix3(), state.scale);

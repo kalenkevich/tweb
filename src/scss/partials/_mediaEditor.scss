@@ -425,6 +425,7 @@
         border-radius: 50%;
         width: var(--anchor-size);
         height: var(--anchor-size);
+        transform: rotate(90deg);
 
         &__icon {
           font-size: 12px;

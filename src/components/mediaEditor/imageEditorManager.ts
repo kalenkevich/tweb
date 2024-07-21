@@ -80,8 +80,8 @@ export class ImageEditorManager {
               (layer.translation[1] + (window.devicePixelRatio === 2 ? DRAGGABLE_OBJECT_TOP_BOTTOM_PADDING : 0)) * scaleY
             ] as [number, number],
             origin:[
-              -halfWidth / window.devicePixelRatio,
-              -halfHeight / window.devicePixelRatio
+              (-halfWidth * scaleX) / window.devicePixelRatio,
+              (-halfHeight * scaleY) / window.devicePixelRatio
             ] as [number, number],
             scale: [scaleX, scaleY] as [number, number]
           };
@@ -119,8 +119,8 @@ export class ImageEditorManager {
                 (layer.translation[1] + (window.devicePixelRatio === 2 ? DRAGGABLE_OBJECT_TOP_BOTTOM_PADDING : 0)) * scaleY
               ] as [number, number],
               origin:[
-                -halfWidth / window.devicePixelRatio,
-                -halfHeight / window.devicePixelRatio
+                -halfWidth,
+                -halfHeight
               ] as [number, number],
               scale: [scaleX, scaleY] as [number, number]
             };

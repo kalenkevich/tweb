@@ -2,7 +2,7 @@ import {JSX, children, createSignal, createEffect, on, onCleanup, onMount, Show,
 import {DraggingSurface, DragEventType, GrabEvent} from './surface';
 import clamp from '../../../helpers/number/clamp';
 import {IconTsx} from '../../iconTsx';
-import {getLineDirection, Direction, rotate} from '../helpers/mathHelper';
+import {getLineDirection, Direction, distance} from '../helpers/mathHelper';
 
 export enum DraggableMode {
   move = 'move',
@@ -24,18 +24,22 @@ export interface DraggableProps {
   movable: boolean;
   resizable: boolean;
   rotatable: boolean;
+  removable: boolean;
   translation: [number, number];
   scale: [number, number];
   rotation: number;
-  onClick?: () => void;
+  onClick?: (e: Event) => void;
   onMove: (translation: [number, number]) => void;
-  onResize: (scale: [number, number]) => void;
+  onResize: (scale: [number, number], elRect?: DOMRect) => void;
   onRotate: (rotation: number) => void;
+  onRemove: () => void;
 }
 export function Draggable(props: DraggableProps) {
   const [elRef, setElRef] = createSignal<HTMLDivElement>();
+  const [rotateAnchorRef, setRotateAnchorRef] = createSignal<HTMLDivElement>();
   const [mode, setCurrentMode] = createSignal<DraggableMode>(DraggableMode.move);
   const [startPos, setStartPos] = createSignal<[number, number]>();
+  const [startAngle, setStartAngle] = createSignal(0);
   const [isDragging, setIsDragging] = createSignal(false);
   const [translation, setTranslation] = createSignal(props.translation);
   const [scale, setScale] = createSignal(props.scale);
@@ -48,25 +52,16 @@ export function Draggable(props: DraggableProps) {
     surface().subscribe(DragEventType.DragStart, onDragStart);
     surface().subscribe(DragEventType.DragMove, onDragMove);
     surface().subscribe(DragEventType.DragEnd, onDragEnd);
+    updateElement();
   });
 
   onCleanup(() => {
     surface().unsubscribe(DragEventType.DragStart, onDragStart);
     surface().unsubscribe(DragEventType.DragMove, onDragMove);
     surface().unsubscribe(DragEventType.DragEnd, onDragEnd);
+
+    document.documentElement.style.cursor = '';
   });
-
-  createEffect(on(() => props.translation, (newVal) => {
-    setTranslation(newVal);
-    updateElement();
-  }));
-
-  createEffect(on(() => [
-    props.scale,
-    props.rotation
-  ], () => {
-    updateElement();
-  }));
 
   const onDragStart = (pos: GrabEvent) => {
     const rootRect = surface().element.getBoundingClientRect();
@@ -101,8 +96,12 @@ export function Draggable(props: DraggableProps) {
     if(isDragging()) {
       dragHandler(pos.x, pos.y, true);
     }
-    setStartPos(undefined);
-    setIsDragging(false);
+
+    batch(() => {
+      setStartPos(undefined);
+      setIsDragging(false);
+      setCurrentMode(undefined);
+    });
     elRef().style.cursor = 'grab';
     document.documentElement.style.cursor = '';
   }
@@ -128,11 +127,11 @@ export function Draggable(props: DraggableProps) {
     const deltaY = (eventY - startY) * window.devicePixelRatio;
     const direction = getLineDirection([startX, startY], [eventX, eventY]);
     const draggingMode = mode();
-    const rectCenter= {
-      x: elRect.left + elRect.width/2,
-      y: elRect.top + elRect.height/2
+    const anchorCenter = {
+      x: elRect.left + elRect.width / 2,
+      y: elRect.top + elRect.height / 2
     };
-    const angle = Math.atan2(eventX - rectCenter.x, -(eventY - rectCenter.y)) * 180 / Math.PI;
+    const angle = Math.atan2(eventX - anchorCenter.x, -(eventY - anchorCenter.y)) * 180 / Math.PI;
 
     if(draggingMode === DraggableMode.move) {
       moveHandler(deltaX, deltaY, direction, angle, emitChangeEvent);
@@ -143,6 +142,7 @@ export function Draggable(props: DraggableProps) {
     }
 
     setStartPos([eventX, eventY]);
+    setStartAngle(angle);
   };
 
   const moveHandler = (deltaX: number, deltaY: number, direction: Direction, angle: number, emitChangeEvent: boolean) => {
@@ -202,15 +202,16 @@ export function Draggable(props: DraggableProps) {
     setScale([scaleX, scaleY]);
 
     if(emitChangeEvent) {
-      props.onResize([scaleX, scaleY]);
+      props.onResize([scaleX, scaleY], elRef().getBoundingClientRect());
     }
   };
 
   const rotateHandler = (deltaX: number, deltaY: number, direction: Direction, angle: number, emitChangeEvent: boolean) => {
-    setRotation(angle);
+    const newAngle = rotation() + angle - startAngle();
+    setRotation(newAngle);
 
     if(emitChangeEvent) {
-      props.onRotate(angle);
+      props.onRotate(newAngle);
     }
   };
 
@@ -219,26 +220,44 @@ export function Draggable(props: DraggableProps) {
       setCurrentMode(DraggableMode.move);
     }
 
-    props.onClick?.();
+    props.onClick?.(e);
   };
 
   const onResizeAnchorClick = (e: MouseEvent | TouchEvent) => {
+    e.stopImmediatePropagation();
     setCurrentMode(DraggableMode.resize);
     setSelectedResizeAnchor(e.target as HTMLDivElement);
 
     document.documentElement.style.cursor = (e.target as HTMLDivElement).style.cursor;
+    props.onClick?.(e);
   };
 
   const onRotateAnchorClick = (e: MouseEvent | TouchEvent) => {
+    e.stopImmediatePropagation();
     setCurrentMode(DraggableMode.rotate);
 
     document.documentElement.style.cursor = (e.target as HTMLDivElement).style.cursor;
+    props.onClick?.(e);
+  };
+
+  const onRemoveClick = (e: MouseEvent | TouchEvent) => {
+    e.stopImmediatePropagation();
+
+    props.onRemove();
   };
 
   return (
     <div ref={(el) => setElRef(el)}
       class="draggable-object"
+      classList={{'active': props.active}}
       onMouseDown={onElementClick}>
+      <Show when={props.removable}>
+        <div class="draggable-object__remove-icon-wrapper"
+          onTouchStart={onRemoveClick}
+          onMouseDown={onRemoveClick}>
+          <IconTsx class="draggable-object__remove-icon" icon="close"/>
+        </div>
+      </Show>
       <Show when={props.resizable}>
         <div class="resize-anchor resize-anchor--top-left"
           data-anchor-position={ResizeAnchorPosition.topLeft}
@@ -263,6 +282,7 @@ export function Draggable(props: DraggableProps) {
       </Show>
       <Show when={props.rotatable}>
         <div class="rotate-anchor"
+          ref={el => setRotateAnchorRef(el)}
           onMouseDown={onRotateAnchorClick}>
           <IconTsx class="rotate-anchor__icon" icon="rotate_left"/>
         </div>
