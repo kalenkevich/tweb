@@ -131,7 +131,25 @@ export class ImageEditorManager {
     const preparedLayers: ObjectLayer[] = await Promise.all(promises);
     preparedLayers.sort((l1, l2) => l1.zIndex - l2.zIndex);
 
-    return this.compiler.compileImage({...state, layers: preparedLayers}, renderOptions);
+    const scaleX = state.originalWidth / this.canvas.width;
+    const scaleY = state.originalHeight / this.canvas.height;
+    const preparedDrawLayer = {
+      ...state.drawLayer,
+      touches: state.drawLayer.touches.map(t => {
+        return {
+          ...t,
+          x: t.x * scaleX,
+          y: t.y * scaleY,
+          size: t.size * scaleX
+        }
+      })
+    };
+
+    return this.compiler.compileImage({
+      ...state,
+      drawLayer: preparedDrawLayer,
+      layers: preparedLayers
+    }, renderOptions);
   }
 
   canUndo(): boolean {
