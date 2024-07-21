@@ -12,6 +12,12 @@
     align-items: center;
     justify-content: space-between;
     height: 48px;
+
+    .btn-icon {
+      &.selected, &:hover {
+        background-color: var(--color-value);
+      }
+    }
   }
 
   .pallete-switch-button {

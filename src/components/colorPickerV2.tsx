@@ -24,6 +24,7 @@ export function PalleteSwitchButton(props: PalleteSwitchButtonProps) {
 
 export interface QuickPalleteProps {
   isMobile: boolean;
+  color: Color;
   colors: Color[];
   onClose: () => void;
   onColorClick: (color: Color) => void;
@@ -34,9 +35,19 @@ export function QuickPallete(props: QuickPalleteProps) {
     <div class="color-picker-v2__quick-pallete quick-pallete">
       <For each={props.colors}>
         {(color) => (
-          <ButtonIconTsx onClick={() => props.onColorClick(color)}>
+          <ButtonIconTsx
+            onClick={() => props.onColorClick(color)}
+            classList={{
+              'selected': props.color && anyColorToHexColor(color) === anyColorToHexColor(props.color)
+            }}
+            ref={el => {
+              const [r, g, b] = anyColorToRgbaColor(color);
+              el.style.setProperty('--color-value', `rgba(${r}, ${g}, ${b}, 0.1)`);
+            }}>
             <div class="quick-pallete__color-button color-button"
-              style={{'background-color': anyColorToHexColor(color)}}
+              style={{
+                'background-color': anyColorToHexColor(color)
+              }}
             />
           </ButtonIconTsx>
         )}
@@ -450,6 +461,7 @@ export function ColorPickerV2(props: ColorPickerProps) {
         /> :
         <QuickPallete
           isMobile={false}
+          color={props.color}
           colors={props.quickPallete}
           onColorClick={(selectedColor) => handleColorChange(selectedColor)}
           onPalleteSwitchClick={() => setAdvansedPalleteOpened(true)}
@@ -531,6 +543,7 @@ export function ColorPickerV2Mobile(props: ColorPickerProps) {
       <Show when={showQuickPallete()}>
         <QuickPallete
           isMobile={true}
+          color={props.color}
           colors={props.quickPallete}
           onColorClick={(selectedColor) => handleColorChange(selectedColor)}
           onPalleteSwitchClick={() => setCurrentView(MobileColorPickerView.advansedPallete)}

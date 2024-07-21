@@ -104,9 +104,10 @@ export function ImageResizeControl(props: ImageResizeControlProps): JSX.Element 
               {(config) => (
                 <RowTsx
                   classList={{
+                    'aspect-row': true,
                     'aspect-row-full': config.fullWidth,
                     'aspect-row-half': !config.fullWidth,
-                    'aspect-row-selected': selectedValue() === config
+                    'selected': selectedValue() === config
                   }}
                   icon={config.icon as SvgIconType}
                   asSvgIcon={config.asSvgIcon}

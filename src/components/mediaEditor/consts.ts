@@ -88,7 +88,10 @@ export const DEFAULT_DRAW_LAYER: DrawLayer = {
   id: 0,
   type: ObjectLayerType.draw,
   zIndex: 0,
-  color: QUCIK_PALLETE_COLORS[0],
+  color: {
+    type: ColorFormatType.hexa,
+    value: '#FE4438'
+  },
   size: 15,
   style: BrushStyle.pen,
   touches: []

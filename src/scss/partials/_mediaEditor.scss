@@ -153,6 +153,10 @@
       &__icon {
         margin-right: 32px;
       }
+
+      &.selected {
+        background-color: var(--light-secondary-text-color);
+      }
     }
   }
 
@@ -210,6 +214,9 @@
 
       &__row {
         margin: 0px -8px;
+        .selected {
+          background-color: var(--light-secondary-text-color);
+        }
       }
     }
   }
@@ -245,11 +252,21 @@
 
       &__row {
         margin: 0 -8px;
+        .selected {
+          background-color: var(--light-secondary-text-color);
+        }
         .row-body {
           display: flex;
 
           &__label {
             margin-left: 16px;
+          }
+
+          &__image.colorisable {
+            svg > g > path, svg > g > rect {
+              fill: var(--selected-brush-color);
+              stroke: var(--selected-brush-color);
+            }
           }
         }
       }

@@ -1,8 +1,8 @@
 import {createSignal, onMount, onCleanup, createEffect, on} from 'solid-js';
-import {ImageChangeEvent, ImageState, ImageChangeType} from '../types';
+import {ImageChangeEvent, ImageState, ImageChangeType, BrushStyle} from '../types';
 import {DraggingSurface, DragEventType, GrabEvent} from '../draggable/surface';
 import clamp from '../../../helpers/number/clamp';
-import {anyColorToHexColor} from '../../../helpers/color';
+import {anyColorToHexColor, anyColorToRgbaColor} from '../../../helpers/color';
 
 export interface DrawableSurfaceProps {
   isMobile: boolean;
@@ -13,7 +13,9 @@ export interface DrawableSurfaceProps {
 
 export function DrawableSurface(props: DrawableSurfaceProps) {
   const surface = () => props.surface;
+  const brushStyle = () => props.imageState.drawLayer.style;
   const brushColor = () => anyColorToHexColor(props.imageState.drawLayer.color);
+  const brushColorRgba = () => anyColorToRgbaColor(props.imageState.drawLayer.color);
   const brushSize = () => props.imageState.drawLayer.size;
   const [brushEl, setBrushEl] = createSignal<HTMLDivElement>();
 
@@ -22,7 +24,7 @@ export function DrawableSurface(props: DrawableSurfaceProps) {
     surface().element.addEventListener('mousemove', onMouseMove);
     surface().element.addEventListener('mouseenter', setCursorStyle);
     surface().element.addEventListener('mouseleave', restoreCursorStyle);
-    setupBrushStyle();
+    setupBrushPointerStyle();
   });
 
   onCleanup(() => {
@@ -35,7 +37,7 @@ export function DrawableSurface(props: DrawableSurfaceProps) {
   createEffect(on(() => [
     props.imageState.drawLayer.color.value,
     props.imageState.drawLayer.size
-  ], () => updateBrushStyle()));
+  ], () => updateBrushPointerStyle()));
 
   const onMouseMove = (e: MouseEvent) => {
     const rootRect = surface().element.getBoundingClientRect();
@@ -61,7 +63,7 @@ export function DrawableSurface(props: DrawableSurfaceProps) {
     });
   };
 
-  const setupBrushStyle = () => {
+  const setupBrushPointerStyle = () => {
     const el = brushEl();
 
     el.style.position = 'absolute';
@@ -70,14 +72,26 @@ export function DrawableSurface(props: DrawableSurfaceProps) {
     el.style.height = `${brushSize()}px`;
     el.style.borderRadius = '50%';
     el.style.backgroundColor = brushColor();
-    el.style.border = `1px solid #000000`;
+    el.style.border = `1px solid ${brushColor()}`;
   };
 
-  const updateBrushStyle = () => {
+  const updateBrushPointerStyle = () => {
     const el = brushEl();
     el.style.width = `${brushSize()}px`;
     el.style.height = `${brushSize()}px`;
-    el.style.backgroundColor = brushColor();
+
+    if(brushStyle() === BrushStyle.eraser) {
+      el.style.backgroundColor = 'transparent';
+      el.style.border = '1px solid #000000';
+    } else if(brushStyle() === BrushStyle.brush) {
+      const [r, g, b, a] = brushColorRgba();
+      const color = `rgba(${r}, ${g}, ${b}, ${0.5})`;
+      el.style.backgroundColor = color;
+      el.style.border = `1px solid ${color}`;
+    } else {
+      el.style.backgroundColor = brushColor();
+      el.style.border = `1px solid ${brushColor()}`;
+    }
   };
 
   const updateBrushPos = (x: number, y: number) => {

@@ -1,4 +1,4 @@
-import {JSX, For, Show} from 'solid-js';
+import {JSX, For, Show, createSignal, on, createEffect} from 'solid-js';
 import {BrushStyle, ImageChangeType} from '../types';
 import {Color, ColorFormatType, anyColorToHexColor} from '../../../helpers/color';
 import {ImageControlProps} from './imageControl';
@@ -46,11 +46,16 @@ enum DrawAttachmentProperty {
 }
 
 export function ImageDrawControl(props: ImageDrawControlProps): JSX.Element {
+  const [el, setElRef] = createSignal<HTMLDivElement>();
   const layer = () => props.imageState.drawLayer;
   const color = () => layer().color;
   const size = () => layer().size;
   const style = () => layer().style;
-  const hexColor = () => anyColorToHexColor(color())
+  const hexColor = () => anyColorToHexColor(color());
+
+  createEffect(on(() => props.imageState.drawLayer.color.value, (v) => {
+    el().style.setProperty('--selected-brush-color', hexColor());
+  }));
 
   const onPropertyChange = (propertyType: DrawAttachmentProperty, value: Color | number | BrushStyle) => {
     const newState = {
@@ -83,7 +88,7 @@ export function ImageDrawControl(props: ImageDrawControlProps): JSX.Element {
   return (
     <>
       <Show when={!props.isMobile}>
-        <div class="image-editor__image-control draw-image-control">
+        <div class="image-editor__image-control draw-image-control" ref={(el) => setElRef(el)}>
           <div class="color-picker-container">
             <ColorPickerV2
               color={color()}
@@ -123,7 +128,9 @@ export function ImageDrawControl(props: ImageDrawControlProps): JSX.Element {
                   <RowTsx
                     title={(
                       <div class="row-body">
-                        <div class="row-body__image">{config.image}</div>
+                        <div class="row-body__image" classList={{
+                          'colorisable': [BrushStyle.pen, BrushStyle.arrow, BrushStyle.brush, BrushStyle.neon].includes(config.value)
+                        }}>{config.image}</div>
                         <div class="row-body__label">{config.label}</div>
                       </div>
                     )}
