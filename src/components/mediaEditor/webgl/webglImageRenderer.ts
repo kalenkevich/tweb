@@ -142,6 +142,7 @@ export class WebglImageRenderer implements ImageRenderer {
     this.backgroundImageProgram.setHeight(this.canvas.height);
     this.backgroundImageProgram.setDevicePixelRatio(this.devicePixelRatio);
     this.backgroundImageProgram.setFilter(imageState.filter);
+    this.backgroundImageProgram.clearFramebuffer();
     this.backgroundImageProgram.drawToFramebuffer(imageDrawObject);
     this.backgroundImageProgram.unlink();
 

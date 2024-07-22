@@ -15,7 +15,8 @@ import {
   AttachmentChangeAction,
   ObjectLayerType,
   BrushStyle,
-  BrushTouch
+  BrushTouch,
+  ImageAspectRatio
 } from './types';
 import {
   MAX_FONT_SIZE,
@@ -43,8 +44,8 @@ export function createImageState(source: ImageSource): ImageState {
     layers: [],
     source,
     texture,
-    width: source.width,
-    height: source.height,
+    resultWidth: source.width,
+    resultHeight: source.height,
     originalWidth: source.width,
     originalHeight: source.height
   }
@@ -71,6 +72,7 @@ export function ImageEditor(props: MediaEditorProps) {
   const [currentBrushSequence, setCurrentBrushSequence] = createSignal(0);
   const [canRedo, setCanRedu] = createSignal(false);
   const [canUndo, setCanUndo] = createSignal(false);
+  const showSaveButton = () => !isMobile() && selectedTabId() !== TabType.RESIZE;
 
   onMount(() => {
     window.addEventListener('resize', onScreenResized);
@@ -141,6 +143,21 @@ export function ImageEditor(props: MediaEditorProps) {
       case ImageChangeType.resize: {
         return imageEditorManager().resize(event.scaleX, event.scaleY, event.animation, {render: true, layers: layersToRender()});
       }
+      case ImageChangeType.crop: {
+        const state = imageEditorManager().crop(
+          event.x,
+          event.y,
+          event.width,
+          event.height,
+          event.animation,
+          {render: true, layers: layersToRender()}
+        );
+
+        return imageEditorManager().pushState({
+          ...state,
+          aspectRatio: ImageAspectRatio.original
+        }, {render: false});
+      }
       case ImageChangeType.flip: {
         const state = imageEditorManager().getCurrentImageState();
 
@@ -174,7 +191,8 @@ export function ImageEditor(props: MediaEditorProps) {
           action: AttachmentChangeAction.update,
           layer: {
             ...layer,
-            origin: event.origin
+            origin: event.origin,
+            translation: event.translation
           }
         });
       }
@@ -216,13 +234,13 @@ export function ImageEditor(props: MediaEditorProps) {
           const newLayers = [...state.layers, newLayerState];
           newState = {
             ...state,
-            layers: newLayers
+            layers: newLayers as ObjectLayer[]
           };
         } else if(event.action === AttachmentChangeAction.update) {
-          const newLayers = state.layers.map((l) => l.id === event.layer.id ? event.layer : l);
+          const newLayers = state.layers.map((l) => l.id === event.layer.id ? ({...l, ...event.layer}) : l);
           newState = {
             ...state,
-            layers: newLayers
+            layers: newLayers as ObjectLayer[]
           };
         } else if(event.action === AttachmentChangeAction.delete) {
           const newLayers = state.layers.filter((l) => l.id !== event.layer.id);
@@ -435,6 +453,7 @@ export function ImageEditor(props: MediaEditorProps) {
         onContainerResized={onContainerResized}
         onImageChange={onImageChange}
         onActiveLayerChange={onActiveLayerChange}
+        onSave={handleSave}
       />
       <ImageEditorTabs
         isMobile={isMobile()}
@@ -449,7 +468,7 @@ export function ImageEditor(props: MediaEditorProps) {
         onImageChange={onImageChange}
         onTabSelected={handleTabSelection}
       />
-      <Show when={!isMobile()}>
+      <Show when={showSaveButton()}>
         <div class="image-editor__save-button">
           <ButtonIconTsx
             class="btn-circle btn-corner"

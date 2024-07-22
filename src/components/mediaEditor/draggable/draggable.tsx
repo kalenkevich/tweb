@@ -177,8 +177,23 @@ export function Draggable(props: DraggableProps) {
   };
 
   const moveHandler = (deltaX: number, deltaY: number, direction: Direction, angle: number, emitChangeEvent: boolean) => {
+    const elBox = elRef().getBoundingClientRect();
+    const surfaceBox = surface().element.getBoundingClientRect();
     const currentTranslation = translation();
     const newTranslation: [number, number] = [currentTranslation[0] + deltaX, currentTranslation[1] + deltaY];
+    const [originX, originY] = origin();
+
+    // Do not allow object to be outside of the surface
+    if((newTranslation[0] + originX) / window.devicePixelRatio + elBox.width > surfaceBox.width) {
+      newTranslation[0] = (surfaceBox.width - elBox.width) * window.devicePixelRatio - originX;
+    } else if((newTranslation[0] + originX) < 0) {
+      newTranslation[0] = -originX;
+    }
+    if((newTranslation[1] + originY) / window.devicePixelRatio + elBox.height > surfaceBox.height) {
+      newTranslation[1] = (surfaceBox.height - elBox.height) * window.devicePixelRatio - originY;
+    } else if((newTranslation[1] + originY) < 0) {
+      newTranslation[1] = -originY;
+    }
 
     setTranslation(newTranslation);
 

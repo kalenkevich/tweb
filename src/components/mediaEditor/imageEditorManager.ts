@@ -291,8 +291,17 @@ export class ImageEditorManager {
     return newImageState;
   }
 
-  crop(fromX: number, fromY: number, width: number, height: number, animation: boolean = false, rerenderOptions?: RenderOptions): ImageState {
-    return this.createNewImageState({});
+  crop(x: number, y: number, width: number, height: number, animation: boolean = false, rerenderOptions?: RenderOptions): ImageState {
+    const state = this.createNewImageState({
+      resultX: x,
+      resultY: y,
+      resultWidth: width,
+      resultHeight: height
+    });
+
+    this.rerender(state, rerenderOptions);
+
+    return state;
   }
 
   brushTouch(brushTouch: BrushTouch, rerenderOptions?: RenderOptions): ImageState {

@@ -1,9 +1,10 @@
 import {createSignal, createEffect, on, For, batch, onMount} from 'solid-js';
-import {ImageAspectRatio} from '../types';
+import {ImageAspectRatio, ImageChangeType} from '../types';
 import {ImageControlProps} from './imageControl';
 import {DraggingSurface} from '../draggable/surface';
-import {getDimentionsForAspectRatio} from '../helpers/aspectRatioHelper';
+import {getDimentionsForAspectRatio, getScaleByAspectRatio} from '../helpers/aspectRatioHelper';
 import {Draggable} from '../draggable/draggable';
+import {ButtonIconTsx} from '../../buttonIconTsx';
 
 const GRID_ROWS_COUNT = 4;
 
@@ -17,8 +18,11 @@ export enum ImageCoverPosition {
 }
 
 export interface ImageCropper {
+  x: number;
+  y: number;
   width: number;
   height: number;
+  scale: [number, number];
   rows: ImageCropperRow[];
   columns: ImageCropperColumn[];
   styles: Record<string, string>;
@@ -61,8 +65,9 @@ export function getImageCropperFromAspectRatio(
     surfaceHeight,
     aspectRatio
   );
+  const scale = getScaleByAspectRatio(surfaceWidth, surfaceHeight, aspectRatio);
 
-  return getImageCropper(x, y, width, height, surfaceWidth, surfaceHeight, rowsCount, columnsCount);
+  return getImageCropper(x, y, width, height, surfaceWidth, surfaceHeight, scale, rowsCount, columnsCount);
 }
 
 export function getImageCropper(
@@ -72,12 +77,16 @@ export function getImageCropper(
   height: number,
   surfaceWidth: number,
   surfaceHeight: number,
+  scale: [number, number],
   rowsCount: number = GRID_ROWS_COUNT,
   columnsCount: number = GRID_COLUMNS_COUNT
 ): ImageCropper {
   return {
+    x,
+    y,
     width,
     height,
+    scale,
     rows: getGridRows(width, height, rowsCount),
     columns: getGridColumns(width, height, columnsCount),
     styles: {
@@ -225,8 +234,10 @@ function getImageCover(
 
 export interface ImageCropperProps extends ImageControlProps {
   surface: DraggingSurface;
+  onSaveClick: () => void;
 }
 export function ImageCropperComponent(props: ImageCropperProps) {
+  const [isDirty, setDirtyState] = createSignal(false);
   const [translation, setTranslation] = createSignal<[number, number]>([
     props.surface.element.offsetWidth / 2,
     props.surface.element.offsetHeight / 2
@@ -246,7 +257,10 @@ export function ImageCropperComponent(props: ImageCropperProps) {
     updateCropper(props.imageState.aspectRatio);
   });
 
-  createEffect(on(() => props.imageState.aspectRatio, (aspectRatio) => updateCropper(aspectRatio)));
+  createEffect(on(() => props.imageState.aspectRatio, (aspectRatio) => {
+    updateCropper(aspectRatio);
+    setDirtyState(true);
+  }));
 
   const updateCropper = (aspectRatio: ImageAspectRatio | number) => {
     const imageCropper = getImageCropperFromAspectRatio(
@@ -257,19 +271,20 @@ export function ImageCropperComponent(props: ImageCropperProps) {
       props.surface.element.offsetHeight
     );
     const updatedOrigin = [
-      -imageCropper.width / 2,
-      -imageCropper.height / 2
+      -imageCropper.width / 2 * window.devicePixelRatio,
+      -imageCropper.height / 2 * window.devicePixelRatio
+    ] as [number, number];
+    const updatedTranslation = [
+      props.surface.element.offsetWidth / 2 * window.devicePixelRatio,
+      props.surface.element.offsetHeight / 2 * window.devicePixelRatio
     ] as [number, number];
 
     batch(() => {
-      setTranslation([
-        props.surface.element.offsetWidth / 2,
-        props.surface.element.offsetHeight / 2
-      ]);
+      setTranslation(updatedTranslation);
       setOrigin(updatedOrigin);
       setImageCropper(getImageCropperFromAspectRatio(
-        translation()[0] + updatedOrigin[0],
-        translation()[1] + updatedOrigin[1],
+        updatedTranslation[0] + updatedOrigin[0],
+        updatedTranslation[1] + updatedOrigin[1],
         aspectRatio,
         props.surface.element.offsetWidth,
         props.surface.element.offsetHeight
@@ -279,14 +294,16 @@ export function ImageCropperComponent(props: ImageCropperProps) {
 
   const onMove = (translation: [number, number]) => {
     batch(() => {
-      setImageCropper(
+      setDirtyState(true);
+      setImageCropper((currentCropper) =>
         getImageCropper(
           translation[0] + origin()[0],
           translation[1] + origin()[1],
           imageCropper().width,
           imageCropper().height,
           props.surface.element.offsetWidth,
-          props.surface.element.offsetHeight
+          props.surface.element.offsetHeight,
+          currentCropper.scale
         )
       );
       setTranslation(translation);
@@ -294,62 +311,107 @@ export function ImageCropperComponent(props: ImageCropperProps) {
   }
 
   const onResize = (scale: [number, number]) => {
-    const newWidth = imageCropper().width * scale[0];
-    const newHeight = imageCropper().height * scale[1];
+    let newWidth = imageCropper().width * scale[0] * window.devicePixelRatio;
+    let newHeight = imageCropper().height * scale[1] * window.devicePixelRatio;
+
+    if(newWidth > props.surface.element.offsetWidth) {
+      newWidth = props.surface.element.offsetWidth;
+    }
+    if(newHeight > props.surface.element.offsetHeight) {
+      newHeight = props.surface.element.offsetHeight;
+    }
+
     const origin = [-newWidth / 2, -newHeight / 2] as [number, number];
+    const newTranslation = [
+      translation()[0] + origin[0],
+      translation()[1] + origin[1]
+    ] as [number, number];
 
     batch(() => {
-      setImageCropper(
+      setDirtyState(true);
+      setImageCropper(currentCropper =>
         getImageCropper(
-          translation()[0] + origin[0],
-          translation()[1] + origin[1],
+          newTranslation[0],
+          newTranslation[1],
           newWidth,
           newHeight,
           props.surface.element.offsetWidth,
-          props.surface.element.offsetHeight
+          props.surface.element.offsetHeight,
+          currentCropper.scale
         )
       );
       setOrigin(origin);
     });
   }
 
+  const handleSave = () => {
+    if(isDirty()) {
+      const cropper = imageCropper();
+      props.onImageChange({
+        // type: ImageChangeType.crop,
+        // x: cropper.x / window.devicePixelRatio * cropper.scale[0],
+        // y: cropper.y / window.devicePixelRatio * cropper.scale[1],
+        // width: cropper.width * window.devicePixelRatio * cropper.scale[0],
+        // height: cropper.height * window.devicePixelRatio * cropper.scale[1]
+
+        type: ImageChangeType.crop,
+        x: cropper.x,
+        y: cropper.y,
+        width: cropper.width * window.devicePixelRatio,
+        height: cropper.height * window.devicePixelRatio
+      });
+      setDirtyState(false);
+    } else {
+      props.onSaveClick();
+    }
+  };
+
   return (
     <>
-      <Draggable
-        class="image-cropper-wrapper"
-        surface={props.surface}
-        active={true}
-        movable={true}
-        resizable={true}
-        rotatable={false}
-        removable={false}
-        translation={translation()}
-        scale={[1, 1]}
-        rotation={0}
-        origin={origin()}
-        onMove={onMove}
-        onResize={onResize}
-      >
-        <div class="image-cropper" style={imageCropper().styles}>
-          <For each={imageCropper().rows}>
-            {(row) => <div class="image-cropper--row" style={row.styles}></div>}
-          </For>
-          <For each={imageCropper().columns}>
-            {(column) => <div class="image-cropper--column" style={column.styles}></div>}
-          </For>
+      <div class="image-cropper">
+        <Draggable
+          class="image-cropper-wrapper"
+          surface={props.surface}
+          active={true}
+          movable={true}
+          resizable={true}
+          rotatable={false}
+          removable={false}
+          translation={translation()}
+          scale={[1, 1]}
+          rotation={0}
+          origin={origin()}
+          onMove={onMove}
+          onResize={onResize}
+        >
+          <div class="image-cropper" style={imageCropper().styles}>
+            <For each={imageCropper().rows}>
+              {(row) => <div class="image-cropper--row" style={row.styles}></div>}
+            </For>
+            <For each={imageCropper().columns}>
+              {(column) => <div class="image-cropper--column" style={column.styles}></div>}
+            </For>
+          </div>
+        </Draggable>
+        <div class="image-cropper-cover cover-top"
+          style={imageCropper().covers.top.styles}>
         </div>
-      </Draggable>
-      <div class="image-cropper-cover cover-top"
-        style={imageCropper().covers.top.styles}>
+        <div class="image-cropper-cover cover-left"
+          style={imageCropper().covers.left.styles}>
+        </div>
+        <div class="image-cropper-cover cover-right"
+          style={imageCropper().covers.right.styles}>
+        </div>
+        <div class="image-cropper-cover cover-bottom"
+          style={imageCropper().covers.bottom.styles}>
+        </div>
       </div>
-      <div class="image-cropper-cover cover-left"
-        style={imageCropper().covers.left.styles}>
-      </div>
-      <div class="image-cropper-cover cover-right"
-        style={imageCropper().covers.right.styles}>
-      </div>
-      <div class="image-cropper-cover cover-bottom"
-        style={imageCropper().covers.bottom.styles}>
+      <div class="image-editor__save-button">
+        <ButtonIconTsx
+          class="btn-circle btn-corner"
+          icon="check"
+          onClick={handleSave}
+        />
       </div>
     </>
   );

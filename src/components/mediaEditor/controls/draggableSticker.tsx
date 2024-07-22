@@ -101,7 +101,6 @@ export function DraggableSticker(props: DraggableStickerProps) {
         props.onImageChange({
           type: ImageChangeType.layer,
           layer: {
-            ...layer(),
             translation
           },
           action: AttachmentChangeAction.update
@@ -114,7 +113,6 @@ export function DraggableSticker(props: DraggableStickerProps) {
         props.onImageChange({
           type: ImageChangeType.layer,
           layer: {
-            ...layer(),
             width: newWidth,
             height: newHeight,
             origin: [-newWidth / 2, -newHeight / 2]
@@ -126,7 +124,6 @@ export function DraggableSticker(props: DraggableStickerProps) {
         props.onImageChange({
           type: ImageChangeType.layer,
           layer: {
-            ...layer(),
             rotation
           },
           action: AttachmentChangeAction.update

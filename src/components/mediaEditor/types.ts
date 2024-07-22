@@ -163,10 +163,14 @@ export interface ImageState {
   type: ObjectLayerType.backgroundImage;
   source?: ImageSource;
   texture?: ImageElementTextureSource;
-  width: number;
-  height: number;
   originalWidth: number;
   originalHeight: number;
+  // From where to start draw image
+  resultX: number;
+  resultY: number;
+  // From where to start draw image
+  resultWidth: number;
+  resultHeight: number;
   filter: ImageFilterState;
   aspectRatio: number | ImageAspectRatio;
   rotation: number;
@@ -185,6 +189,7 @@ export enum ImageChangeType {
   aspectRatio,
   resize,
   move,
+  crop,
   flip,
   layer,
   drawLayer,
@@ -200,6 +205,7 @@ export type ImageChangeEvent = FilterImageChangeEvent
   | FlipImageChangeEvent
   | MoveChangeEvent
   | ResizeChangeEvent
+  | CropChangeEvent
   | LayerChangeEvent
   | DrawLayerChangeEvent
   | DrawTouchEvent
@@ -244,9 +250,18 @@ export interface ResizeChangeEvent {
   animation?: boolean;
 }
 
+export interface CropChangeEvent {
+  type: ImageChangeType.crop;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  animation?: boolean;
+}
+
 export interface LayerChangeEvent {
   type: ImageChangeType.layer;
-  layer: ObjectLayer;
+  layer: Partial<ObjectLayer>;
   action: AttachmentChangeAction;
   appearInRandomSpot?: boolean;
 }
@@ -282,4 +297,5 @@ export interface LayerOriginChangeEvent {
   type: ImageChangeType.layerOrigin;
   layerId: number;
   origin: [number, number];
+  translation?: [number, number]
 }

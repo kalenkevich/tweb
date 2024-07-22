@@ -99,9 +99,10 @@
   }
 
   &__save-button {
-    position: absolute;
+    position: fixed;
     bottom: 70px;
     right: 0px;
+    z-index: 3;
   }
 
   .filter-image-control {
@@ -382,7 +383,6 @@
 
     cursor: grab;
     padding: 14px 6px; 
-    margin: -16px -8px; 
     box-sizing: content-box;
     border: 2px dashed transparent;
     border-radius: 10px;

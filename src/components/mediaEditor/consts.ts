@@ -112,8 +112,10 @@ export const DEFAULT_STICKER_LAYER: StickerLayer = {
 
 export const DEFAULT_IMAGE_STATE: ImageState = {
   type: ObjectLayerType.backgroundImage,
-  width: 0,
-  height: 0,
+  resultX: 0,
+  resultY: 0,
+  resultWidth: 0,
+  resultHeight: 0,
   originalWidth: 0,
   originalHeight: 0,
   filter: {

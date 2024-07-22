@@ -105,6 +105,7 @@ export function DraggableText(props: DraggableTextProps) {
   });
 
   createEffect(on(() => [
+    props.layer.text,
     props.layer.alignment,
     props.layer.fontName,
     props.layer.fontSize,
@@ -117,21 +118,49 @@ export function DraggableText(props: DraggableTextProps) {
   }));
 
   const updateOrigin = () => {
+    const l = layer();
+    const center = [
+      l.translation[0] - l.origin[0],
+      l.translation[1] - l.origin[1]
+    ];
     const width = draggableRef().offsetWidth;
     const height = draggableRef().offsetHeight;
     const origin = [-width / 2, -height / 2] as [number, number];
+    const translation = [
+      center[0] + origin[0],
+      center[1] + origin[1]
+    ] as [number, number];
 
     setOrigin(origin);
     props.onImageChange({
       type: ImageChangeType.layerOrigin,
-      layerId: layer().id,
-      origin
+      layerId: l.id,
+      origin,
+      translation
     });
   };
 
   createEffect(on(() => props.isActive, (isActive) => {
     setActiveInternalState(isActive);
   }));
+
+  const handleMove = (translation: [number, number]) => {
+    props.onImageChange({
+      type: ImageChangeType.layer,
+      layer: {
+        translation
+      },
+      action: AttachmentChangeAction.update
+    });
+  };
+
+  const handleResize = (scale: [number, number]) => {
+    props.onImageChange({
+      type: ImageChangeType.textLayerFontSize,
+      layerId: layer().id,
+      fontSize: Math.floor(layer().fontSize * scale[0])
+    });
+  };
 
   const onInputBlur = () => {
     const hasChange = textValueInternal() !== layer().text;
@@ -140,7 +169,6 @@ export function DraggableText(props: DraggableTextProps) {
       props.onImageChange({
         type: ImageChangeType.layer,
         layer: {
-          ...layer(),
           isDirty: !!textValueInternal(),
           text: textValueInternal()
         },
@@ -179,28 +207,8 @@ export function DraggableText(props: DraggableTextProps) {
       rotation={layer().rotation}
       origin={origin()}
       onClick={onClick}
-      onMove={(translation: [number, number]) => {
-        props.onImageChange({
-          type: ImageChangeType.layer,
-          layer: {
-            ...layer(),
-            translation
-          },
-          action: AttachmentChangeAction.update
-        });
-      }}
-      onResize={(scale: [number, number], elRect: DOMRect) => {
-        props.onImageChange({
-          type: ImageChangeType.textLayerFontSize,
-          layerId: layer().id,
-          fontSize: Math.floor(layer().fontSize * scale[0])
-        });
-        // props.onImageChange({
-        //   type: ImageChangeType.layerTranslation,
-        //   layerId: layer().id,
-        //   translation: [elRect.x, elRect.y]
-        // });
-      }}
+      onMove={handleMove}
+      onResize={handleResize}
       onRotate={(rotation: number) => {
         props.onImageChange({
           type: ImageChangeType.layer,
