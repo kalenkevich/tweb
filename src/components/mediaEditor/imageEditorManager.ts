@@ -1,10 +1,10 @@
 import {ImageState, ImageFilterState, ObjectLayerType, BrushTouch, ObjectLayer} from './types';
-import {DEFAULT_IMAGE_STATE, DRAGGABLE_OBJECT_TOP_BOTTOM_PADDING, DRAGGABLE_OBJECT_TOP_LEFT_RIGHT} from './consts';
+import {DEFAULT_IMAGE_STATE, WAIT_TILL_USER_FINISH_CHANGES_TO_COMMIT_STATE} from './consts';
 import {ImageRenderer, RenderOptions, DEFAULT_RENDER_OPTIONS} from './imageRenderer';
 import {WebglImageRenderer} from './webgl/webglImageRenderer';
 import {RenderQueue} from './helpers/renderQueue';
 import {easyAnimation} from './helpers/animation';
-import {renderTextLayer, renderTextLayerMultiline} from './helpers/textHelper';
+import {renderTextLayerMultiline} from './helpers/textHelper';
 import {createImageElementTextureSource} from './webgl/helpers/webglTexture';
 import rootScope from '../../lib/rootScope';
 import SuperStickerRenderer from '../emoticonsDropdown/tabs/SuperStickerRenderer';
@@ -14,20 +14,32 @@ export class ImageEditorManager {
   private canvas?: HTMLCanvasElement;
   private shadowCanvas?: HTMLCanvasElement;
   private renderQueue: RenderQueue = new RenderQueue();
-  private imageStates: ImageState[] = [];
+  private imageStates: {
+    id: number;
+    state: ImageState,
+    commited: boolean;
+    timestamp: number;
+  }[] = [];
   private currentStateIndex: number = 0;
   // Could be WebGPU renrerer implementation some day.
   private renderer: ImageRenderer = new WebglImageRenderer();
   private compiler: ImageRenderer = new WebglImageRenderer();
   private ready: boolean = false;
+  private commitStateTimeoutRef: number;
+  private imageStateId = 0;
 
   constructor(
     private readonly stickerRenderer: SuperStickerRenderer,
     initialImageState: ImageState = DEFAULT_IMAGE_STATE,
-    private readonly stateSnapshowCounts = 10
+    private readonly stateSnapshowCounts = 50
   ) {
     this.shadowCanvas = document.createElement('canvas');
-    this.imageStates.push(initialImageState);
+    this.imageStates.push({
+      id: this.getNextImageStateId(),
+      state: initialImageState,
+      timestamp: Date.now(),
+      commited: true
+    });
   }
 
   init(canvas: HTMLCanvasElement) {
@@ -66,8 +78,8 @@ export class ImageEditorManager {
       if(layer.type === ObjectLayerType.text && !!layer.text) {
         promises.push(renderTextLayerMultiline(layer.text, layer).then(texture => {
           layer.texture = texture;
-          const scaleX = state.originalWidth / this.canvas.width;
-          const scaleY = state.originalHeight / this.canvas.height;
+          const scaleX = state.resultWidth / this.canvas.width;
+          const scaleY = state.resultHeight / this.canvas.height;
 
           return {
             ...layer,
@@ -89,7 +101,7 @@ export class ImageEditorManager {
           rootScope.managers.appDocsManager.getDoc(layer.stickerId).then(async(doc) => {
             const el = document.createElement('div');
             await new Promise<void>((resolve) => {
-              this.stickerRenderer.renderSticker(doc, el, undefined, undefined, layer.width * window.devicePixelRatio, layer.height * window.devicePixelRatio, () => {
+              this.stickerRenderer.renderSticker(doc, el, undefined, undefined, 512, 512, () => {
                 const img = el.children[0] as HTMLImageElement;
                 if(img.complete) {
                   resolve();
@@ -103,8 +115,8 @@ export class ImageEditorManager {
             img.height = layer.height * window.devicePixelRatio;
             const texture = createImageElementTextureSource(el.children[0] as HTMLImageElement);
             layer.texture = texture;
-            const scaleX = state.originalWidth / this.canvas.width;
-            const scaleY = state.originalHeight / this.canvas.height;
+            const scaleX = state.resultWidth / this.canvas.width;
+            const scaleY = state.resultHeight / this.canvas.height;
 
             return {
               ...layer,
@@ -127,8 +139,8 @@ export class ImageEditorManager {
     const preparedLayers: ObjectLayer[] = await Promise.all(promises);
     preparedLayers.sort((l1, l2) => l1.zIndex - l2.zIndex);
 
-    const scaleX = state.originalWidth / this.canvas.width;
-    const scaleY = state.originalHeight / this.canvas.height;
+    const scaleX = state.resultWidth / this.canvas.width;
+    const scaleY = state.resultHeight / this.canvas.height;
     const preparedDrawLayer = {
       ...state.drawLayer,
       touches: state.drawLayer.touches.map(t => {
@@ -149,29 +161,59 @@ export class ImageEditorManager {
   }
 
   canUndo(): boolean {
-    return this.currentStateIndex > 0;
+    for(let i = this.currentStateIndex - 1; i >= 0; i--) {
+      if(this.imageStates[i].commited) {
+        return true;
+      }
+    }
+
+    return false;
+    // return this.currentStateIndex > 0;
   }
 
   undo(rerenderOptions?: RenderOptions): ImageState {
-    if(this.canUndo()) {
-      this.currentStateIndex--;
+    if(!this.canUndo()) {
+      return;
     }
 
-    this.rerender(this.getCurrentImageState(), rerenderOptions);
+    this.currentStateIndex--;
+    if(this.currentStateIndex > 0) {
+      this.goToLastCommitedState();
+    }
+
+    this.rerender(this.getCurrentImageState(), {
+      ...rerenderOptions,
+      clearBrushProgramFramebuffer: true
+    });
 
     return this.getCurrentImageState();
   }
 
   canRedo(): boolean {
-    return this.currentStateIndex > 0 && this.currentStateIndex < this.imageStates.length - 1;
+    for(let i = this.currentStateIndex + 1; i < this.imageStates.length; i++) {
+      if(this.imageStates[i].commited) {
+        return true;
+      }
+    }
+
+    return false;
+    // return this.currentStateIndex > 0 && this.currentStateIndex < this.imageStates.length - 1;
   }
 
   redo(rerenderOptions?: RenderOptions): ImageState {
-    if(this.canRedo()) {
-      this.currentStateIndex++;
+    if(!this.canRedo()) {
+      return;
     }
 
-    this.rerender(this.getCurrentImageState(), rerenderOptions);
+    this.currentStateIndex++;
+    if(this.currentStateIndex < this.imageStates.length) {
+      this.goToNextCommitedState();
+    }
+
+    this.rerender(this.getCurrentImageState(), {
+      ...rerenderOptions,
+      clearBrushProgramFramebuffer: true
+    });
 
     return this.getCurrentImageState();
   }
@@ -321,28 +363,82 @@ export class ImageEditorManager {
   }
 
   getCurrentImageState(): ImageState {
-    return this.imageStates[this.currentStateIndex];
+    return this.imageStates[this.currentStateIndex].state;
   }
 
-  private createNewImageState(state: Partial<ImageState>) {
-    const currentState = this.imageStates[this.currentStateIndex];
-    const newState = {
+  private createNewImageState(state: Partial<ImageState>): ImageState {
+    const currentState = this.imageStates[this.currentStateIndex].state;
+    const newImageState = {
       ...currentState,
       ...state
     };
 
     this.currentStateIndex++;
     if(this.currentStateIndex < this.imageStates.length) {
-      this.imageStates[this.currentStateIndex] = newState;
+      this.imageStates[this.currentStateIndex] = {
+        id: this.getNextImageStateId(),
+        state: newImageState,
+        commited: false,
+        timestamp: Date.now()
+      };
     } else {
-      this.imageStates.push(newState);
+      this.imageStates.push({
+        id: this.getNextImageStateId(),
+        state: newImageState,
+        commited: false,
+        timestamp: Date.now()
+      });
     }
 
     if(this.imageStates.length > this.stateSnapshowCounts) {
       this.imageStates.unshift();
     }
 
-    return newState;
+    const stateId = this.imageStates[this.currentStateIndex].id;
+    if(this.commitStateTimeoutRef !== undefined) {
+      clearTimeout(this.commitStateTimeoutRef);
+    }
+    this.commitStateTimeoutRef = setTimeout(() => {
+      this.commitState(stateId);
+      this.pruneUncommitedStates();
+      this.goToState(stateId);
+      this.commitStateTimeoutRef = undefined;
+    }, WAIT_TILL_USER_FINISH_CHANGES_TO_COMMIT_STATE) as unknown as number;
+
+    return newImageState;
+  }
+
+  private goToLastCommitedState() {
+    while(!this.imageStates[this.currentStateIndex].commited) {
+      this.currentStateIndex--;
+    }
+  }
+
+  private goToNextCommitedState() {
+    while(this.currentStateIndex < this.imageStates.length && !this.imageStates[this.currentStateIndex].commited) {
+      this.currentStateIndex++;
+    }
+
+    if(this.currentStateIndex === this.imageStates.length) {
+      this.currentStateIndex--;
+    }
+  }
+
+  private commitState(stateId: number) {
+    const state = this.imageStates.find(s => s.id === stateId);
+    state.commited = true;
+  }
+
+  private pruneUncommitedStates() {
+    this.imageStates = this.imageStates.filter(s => s.commited);
+  }
+
+  private goToState(stateId: number) {
+    this.currentStateIndex = this.imageStates.findIndex(s => s.id === stateId);
+  }
+
+  private getNextImageStateId(): number {
+    return this.imageStateId++;
   }
 
   private rerender(

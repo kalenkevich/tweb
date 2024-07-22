@@ -173,6 +173,7 @@ export function ImageEditor(props: MediaEditorProps) {
         return handleChangeEvent({
           type: ImageChangeType.layer,
           action: AttachmentChangeAction.update,
+          layerId: event.layerId,
           layer: {
             ...layer,
             translation: event.translation
@@ -189,6 +190,7 @@ export function ImageEditor(props: MediaEditorProps) {
         return handleChangeEvent({
           type: ImageChangeType.layer,
           action: AttachmentChangeAction.update,
+          layerId: event.layerId,
           layer: {
             ...layer,
             origin: event.origin,
@@ -210,6 +212,7 @@ export function ImageEditor(props: MediaEditorProps) {
         return handleChangeEvent({
           type: ImageChangeType.layer,
           action: AttachmentChangeAction.update,
+          layerId: event.layerId,
           layer: textLayer
         });
       }
@@ -237,13 +240,13 @@ export function ImageEditor(props: MediaEditorProps) {
             layers: newLayers as ObjectLayer[]
           };
         } else if(event.action === AttachmentChangeAction.update) {
-          const newLayers = state.layers.map((l) => l.id === event.layer.id ? ({...l, ...event.layer}) : l);
+          const newLayers = state.layers.map((l) => l.id === event.layerId ? ({...l, ...event.layer}) : l);
           newState = {
             ...state,
             layers: newLayers as ObjectLayer[]
           };
         } else if(event.action === AttachmentChangeAction.delete) {
-          const newLayers = state.layers.filter((l) => l.id !== event.layer.id);
+          const newLayers = state.layers.filter((l) => l.id !== event.layerId);
           newState = {
             ...state,
             layers: newLayers
@@ -350,7 +353,7 @@ export function ImageEditor(props: MediaEditorProps) {
   };
 
   const handleUndo = () => {
-    const newState = imageEditorManager().undo();
+    const newState = imageEditorManager().undo({render: true, layers: layersToRender()});
 
     batch(() => {
       setImageState(newState);
@@ -360,7 +363,7 @@ export function ImageEditor(props: MediaEditorProps) {
   };
 
   const handleRedo = () => {
-    const newState = imageEditorManager().redo();
+    const newState = imageEditorManager().redo({render: true, layers: layersToRender()});
 
     batch(() => {
       setImageState(newState);
@@ -400,8 +403,8 @@ export function ImageEditor(props: MediaEditorProps) {
       if(layer.type === ObjectLayerType.text && !layer.isDirty) {
         newState = handleChangeEvent({
           type: ImageChangeType.layer,
-          action: AttachmentChangeAction.delete,
-          layer
+          layerId: layer.id,
+          action: AttachmentChangeAction.delete
         });
       }
     }
@@ -411,6 +414,7 @@ export function ImageEditor(props: MediaEditorProps) {
       newState = handleChangeEvent({
         type: ImageChangeType.layer,
         action: AttachmentChangeAction.create,
+        layerId: -1,
         layer: DEFAULT_TEXT_LAYER,
         appearInRandomSpot: true
       });

@@ -109,6 +109,7 @@ export function ImageTextControl(props: ImageTextControlProps): JSX.Element {
 
         props.onImageChange({
           type: ImageChangeType.layer,
+          layerId: newAttachmentState.id,
           layer: newAttachmentState,
           action: AttachmentChangeAction.update
         });
@@ -119,6 +120,7 @@ export function ImageTextControl(props: ImageTextControlProps): JSX.Element {
 
         props.onImageChange({
           type: ImageChangeType.layer,
+          layerId: newAttachmentState.id,
           layer: newAttachmentState,
           action: AttachmentChangeAction.update
         });
@@ -137,6 +139,7 @@ export function ImageTextControl(props: ImageTextControlProps): JSX.Element {
 
         props.onImageChange({
           type: ImageChangeType.layer,
+          layerId: newAttachmentState.id,
           layer: newAttachmentState,
           action: AttachmentChangeAction.update
         });
@@ -147,6 +150,7 @@ export function ImageTextControl(props: ImageTextControlProps): JSX.Element {
 
         props.onImageChange({
           type: ImageChangeType.layer,
+          layerId: newAttachmentState.id,
           layer: newAttachmentState,
           action: AttachmentChangeAction.update
         });
@@ -266,6 +270,7 @@ export function ImageTextControl(props: ImageTextControlProps): JSX.Element {
             icon="plus"
             onClick={() => props.onImageChange({
               type: ImageChangeType.layer,
+              layerId: -1,
               layer: DEFAULT_TEXT_LAYER,
               action: AttachmentChangeAction.create
             })}

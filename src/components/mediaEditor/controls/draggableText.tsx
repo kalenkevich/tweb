@@ -147,6 +147,7 @@ export function DraggableText(props: DraggableTextProps) {
   const handleMove = (translation: [number, number]) => {
     props.onImageChange({
       type: ImageChangeType.layer,
+      layerId: layer().id,
       layer: {
         translation
       },
@@ -168,6 +169,7 @@ export function DraggableText(props: DraggableTextProps) {
     if(hasChange) {
       props.onImageChange({
         type: ImageChangeType.layer,
+        layerId: layer().id,
         layer: {
           isDirty: !!textValueInternal(),
           text: textValueInternal()
@@ -212,6 +214,7 @@ export function DraggableText(props: DraggableTextProps) {
       onRotate={(rotation: number) => {
         props.onImageChange({
           type: ImageChangeType.layer,
+          layerId: layer().id,
           layer: {
             ...layer(),
             rotation
@@ -222,7 +225,7 @@ export function DraggableText(props: DraggableTextProps) {
       onRemove={() => {
         props.onImageChange({
           type: ImageChangeType.layer,
-          layer: layer(),
+          layerId: layer().id,
           action: AttachmentChangeAction.delete
         });
       }}>

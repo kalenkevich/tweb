@@ -261,7 +261,8 @@ export interface CropChangeEvent {
 
 export interface LayerChangeEvent {
   type: ImageChangeType.layer;
-  layer: Partial<ObjectLayer>;
+  layerId: number;
+  layer?: Partial<ObjectLayer>;
   action: AttachmentChangeAction;
   appearInRandomSpot?: boolean;
 }

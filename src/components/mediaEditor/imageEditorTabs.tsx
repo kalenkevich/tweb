@@ -7,7 +7,6 @@ import {EmoticonsDropdown, DROPDOWN_HEIGHT} from '../emoticonsDropdown';
 import cloneDOMRect from '../../helpers/dom/cloneDOMRect';
 import {DEFAULT_STICKER_LAYER} from './consts';
 import {ImageChangeType, AttachmentChangeAction} from './types';
-import {getLayerNextId} from './helpers/layerHelper';
 import {ImageControlProps} from './controls/imageControl';
 import {ImageFilterControl} from './controls/imageFilterControl';
 import {ImageResizeControl} from './controls/imageResizeControl';
@@ -137,9 +136,9 @@ export function ImageEditorTabs(props: ImageEditorTabsProps) {
 
         props.onImageChange({
           type: ImageChangeType.layer,
+          layerId: -1,
           layer: {
             ...DEFAULT_STICKER_LAYER,
-            id: getLayerNextId(),
             width: el.offsetWidth,
             height: el.offsetHeight,
             stickerId

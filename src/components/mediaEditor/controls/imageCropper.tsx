@@ -1,4 +1,4 @@
-import {createSignal, createEffect, on, For, batch, onMount} from 'solid-js';
+import {createSignal, createEffect, on, For, batch, onMount, Show} from 'solid-js';
 import {ImageAspectRatio, ImageChangeType} from '../types';
 import {ImageControlProps} from './imageControl';
 import {DraggingSurface} from '../draggable/surface';
@@ -352,13 +352,13 @@ export function ImageCropperComponent(props: ImageCropperProps) {
     if(isDirty()) {
       const cropper = imageCropper();
       const scale = [
-        props.imageState.originalWidth / cropper.surfaceWidth,
-        props.imageState.originalHeight / cropper.surfaceHeight
+        props.imageState.resultWidth / cropper.surfaceWidth,
+        props.imageState.resultHeight / cropper.surfaceHeight
       ];
       props.onImageChange({
         type: ImageChangeType.crop,
-        x: cropper.x,
-        y: cropper.y,
+        x: props.imageState.resultX + cropper.x,
+        y: props.imageState.resultY + cropper.y,
         width: cropper.width * scale[0],
         height: cropper.height * scale[1]
       });
@@ -408,13 +408,15 @@ export function ImageCropperComponent(props: ImageCropperProps) {
           style={imageCropper().covers.bottom.styles}>
         </div>
       </div>
-      <div class="image-editor__save-button">
-        <ButtonIconTsx
-          class="btn-circle btn-corner"
-          icon="check"
-          onClick={handleSave}
-        />
-      </div>
+      <Show when={!props.isMobile}>
+        <div class="image-editor__save-button">
+          <ButtonIconTsx
+            class="btn-circle btn-corner"
+            icon="check"
+            onClick={handleSave}
+          />
+        </div>
+      </Show>
     </>
   );
 }

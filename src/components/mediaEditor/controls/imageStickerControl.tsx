@@ -6,7 +6,6 @@ import rootScope from '../../../lib/rootScope';
 import mediaSizes from '../../../helpers/mediaSizes';
 import StickersTab from '../../emoticonsDropdown/tabs/stickers';
 import {EmoticonsDropdown} from '../../emoticonsDropdown';
-import {getLayerNextId} from '../helpers/layerHelper';
 
 export interface ImageStickerControlProps extends ImageControlProps {}
 export function ImageStickerControl(props: ImageStickerControlProps): JSX.Element {
@@ -29,9 +28,9 @@ export function ImageStickerControl(props: ImageStickerControlProps): JSX.Elemen
 
         props.onImageChange({
           type: ImageChangeType.layer,
+          layerId: -1,
           layer: {
             ...DEFAULT_STICKER_LAYER,
-            id: getLayerNextId(),
             width: el.offsetWidth,
             height: el.offsetHeight,
             stickerId

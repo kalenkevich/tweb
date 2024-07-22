@@ -100,6 +100,7 @@ export function DraggableSticker(props: DraggableStickerProps) {
       onMove={(translation: [number, number]) => {
         props.onImageChange({
           type: ImageChangeType.layer,
+          layerId: layer().id,
           layer: {
             translation
           },
@@ -112,6 +113,7 @@ export function DraggableSticker(props: DraggableStickerProps) {
 
         props.onImageChange({
           type: ImageChangeType.layer,
+          layerId: layer().id,
           layer: {
             width: newWidth,
             height: newHeight,
@@ -123,6 +125,7 @@ export function DraggableSticker(props: DraggableStickerProps) {
       onRotate={(rotation: number) => {
         props.onImageChange({
           type: ImageChangeType.layer,
+          layerId: layer().id,
           layer: {
             rotation
           },
@@ -132,7 +135,7 @@ export function DraggableSticker(props: DraggableStickerProps) {
       onRemove={() => {
         props.onImageChange({
           type: ImageChangeType.layer,
-          layer: layer(),
+          layerId: layer().id,
           action: AttachmentChangeAction.delete
         });
       }}>

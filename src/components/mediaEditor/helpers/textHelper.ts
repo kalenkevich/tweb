@@ -120,9 +120,8 @@ export interface StyledTextAreaStyles {
   rowWrapper: Record<string, string>,
 }
 
-export async function renderTextLayerMultiline(text: string, layer: TextLayer): Promise<ImageElementTextureSource> {
+export async function renderTextLayerMultiline(text: string, layer: TextLayer, ratio = window.devicePixelRatio || 1): Promise<ImageElementTextureSource> {
   const textBox = getTextBox(text, layer);
-  const ratio = window.devicePixelRatio || 1;
   const fontStyle = getCanvas2DFontStyle(layer);
   const canvas = new OffscreenCanvas(
     textBox.width * ratio,
