@@ -1,4 +1,4 @@
-import {JSX, For, createSignal, Show} from 'solid-js';
+import {JSX, For, createSignal, Show, createEffect, on} from 'solid-js';
 import {i18n} from '../../../lib/langPack';
 import {ImageAspectRatio, ImageChangeType} from '../types';
 import {ImageControlProps} from './imageControl';
@@ -91,6 +91,10 @@ const ASTECT_RATIO_CONFIGS = [{
 export function ImageResizeControl(props: ImageResizeControlProps): JSX.Element {
   // default value is aspect original
   const [selectedValue, setSelectedValue] = createSignal(ASTECT_RATIO_CONFIGS[1]);
+
+  createEffect(on(() => props.imageState.aspectRatio, (v) => {
+    setSelectedValue(ASTECT_RATIO_CONFIGS.find(c => c.value === v));
+  }));
 
   return (
     <>

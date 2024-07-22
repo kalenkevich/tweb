@@ -22,6 +22,8 @@ export interface ImageCropper {
   y: number;
   width: number;
   height: number;
+  surfaceWidth: number;
+  surfaceHeight: number;
   scale: [number, number];
   rows: ImageCropperRow[];
   columns: ImageCropperColumn[];
@@ -87,6 +89,8 @@ export function getImageCropper(
     width,
     height,
     scale,
+    surfaceWidth,
+    surfaceHeight,
     rows: getGridRows(width, height, rowsCount),
     columns: getGridColumns(width, height, columnsCount),
     styles: {
@@ -259,7 +263,7 @@ export function ImageCropperComponent(props: ImageCropperProps) {
 
   createEffect(on(() => props.imageState.aspectRatio, (aspectRatio) => {
     updateCropper(aspectRatio);
-    setDirtyState(true);
+    setDirtyState(aspectRatio !== ImageAspectRatio.original);
   }));
 
   const updateCropper = (aspectRatio: ImageAspectRatio | number) => {
@@ -347,18 +351,16 @@ export function ImageCropperComponent(props: ImageCropperProps) {
   const handleSave = () => {
     if(isDirty()) {
       const cropper = imageCropper();
+      const scale = [
+        props.imageState.originalWidth / cropper.surfaceWidth,
+        props.imageState.originalHeight / cropper.surfaceHeight
+      ];
       props.onImageChange({
-        // type: ImageChangeType.crop,
-        // x: cropper.x / window.devicePixelRatio * cropper.scale[0],
-        // y: cropper.y / window.devicePixelRatio * cropper.scale[1],
-        // width: cropper.width * window.devicePixelRatio * cropper.scale[0],
-        // height: cropper.height * window.devicePixelRatio * cropper.scale[1]
-
         type: ImageChangeType.crop,
         x: cropper.x,
         y: cropper.y,
-        width: cropper.width * window.devicePixelRatio,
-        height: cropper.height * window.devicePixelRatio
+        width: cropper.width * scale[0],
+        height: cropper.height * scale[1]
       });
       setDirtyState(false);
     } else {

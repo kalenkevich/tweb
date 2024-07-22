@@ -300,6 +300,7 @@ export class ImageEditorManager {
     });
 
     this.rerender(state, rerenderOptions);
+    this.compiler.resize(width, height);
 
     return state;
   }
