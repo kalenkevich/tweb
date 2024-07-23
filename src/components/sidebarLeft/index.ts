@@ -77,7 +77,7 @@ import setBlankToAnchor from '../../lib/richTextProcessor/setBlankToAnchor';
 import {AvatarNew} from '../avatarNew';
 import {AccountLimitReachedPopup} from '../popups/accountLimitReached';
 import {SignInFlowType, SignInFlowOptions} from '../../pages/signInFlow';
-import {dumpCurrentUserState, rebaseSessionStateToUser, pruneUserState} from '../..//helpers/accountStateHelper';
+import {dumpUserSessionData, rebaseSessionStateToUser, pruneUserState} from '../..//helpers/accountStateHelper';
 
 export const LEFT_COLUMN_ACTIVE_CLASSNAME = 'is-left-column-shown';
 const MAX_ACCOUNTS_FOR_NON_PREMIUM_USER = 3;
@@ -776,7 +776,7 @@ export class AppSidebarLeft extends SidebarSlider {
       const newUserAccount = await this.loginIntoAccount();
       await rootScope.managers.appUserAccountManager.addUserAccount(newUserAccount);
       await rootScope.managers.appUserAccountManager.switchToAccount(newUserAccount.id);
-      dumpCurrentUserState(newUserAccount.id);
+      dumpUserSessionData(newUserAccount.id);
     } else {
       try {
         await new Promise<void>((resolve, reject) => {
