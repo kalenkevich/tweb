@@ -20,11 +20,12 @@ import replaceContent from '../helpers/dom/replaceContent';
 import toggleDisability from '../helpers/dom/toggleDisability';
 import wrapEmojiText from '../lib/richTextProcessor/wrapEmojiText';
 import rootScope from '../lib/rootScope';
+import {SignInFlowOptions, SignInFlowType} from './signInFlow';
 
 const TEST = false;
 let passwordInput: HTMLInputElement;
 
-const onFirstMount = (): Promise<any> => {
+const onFirstMount = (options: SignInFlowOptions): Promise<any> => {
   const page = new LoginPage({
     className: 'page-password',
     withInputWrapper: true,
@@ -86,15 +87,19 @@ const onFirstMount = (): Promise<any> => {
     passwordInputField.setValueSilently('' + Math.random()); // prevent saving suggestion
     passwordInputField.setValueSilently(value); // prevent saving suggestion
 
-    rootScope.managers.passwordManager.check(value, state).then((response) => {
+    rootScope.managers.passwordManager.check(value, state).then(async(response) => {
       // console.log('passwordManager response:', response);
 
       switch(response._) {
         case 'auth.authorization':
           clearInterval(getStateInterval);
-          import('./pageIm').then((m) => {
-            m.default.mount();
-          });
+          if(options.type === SignInFlowType.firstAccountSignIn) {
+            await rootScope.managers.apiManager.setUser(response.user);
+            import('./pageIm').then((m) => m.default.mount());
+          } else if(options.type === SignInFlowType.addAccountSignIn && options.onSucessLoginCallback) {
+            options.onSucessLoginCallback(response);
+          }
+
           if(monkey) monkey.remove();
           break;
         default:

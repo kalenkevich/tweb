@@ -57,10 +57,12 @@ import AppStatisticsManager from './appStatisticsManager';
 import AppBusinessManager from './appBusinessManager';
 import AppTranslationsManager from './appTranslationsManager';
 import AppGifsManager from './appGifsManager';
+import AppUserAccountManager from './appAccountManager';
 
 export default function createManagers(appStoragesManager: AppStoragesManager, userId: UserId) {
   const managers = {
     appPeersManager: new AppPeersManager,
+    appUserAccountManager: new AppUserAccountManager,
     appChatsManager: new AppChatsManager,
     appDocsManager: new AppDocsManager,
     appPhotosManager: new AppPhotosManager,

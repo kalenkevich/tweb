@@ -24,7 +24,7 @@ export function ButtonMenuToggleHandler({
   el: HTMLElement,
   onOpen?: (e: Event) => any,
   options?: AttachClickOptions,
-  onClose?: () => void
+  onClose?: (...args: any[]) => void
 }) {
   const add = options?.listenerSetter ? options.listenerSetter.add(el) : el.addEventListener.bind(el);
 
@@ -49,6 +49,20 @@ export function ButtonMenuToggleHandler({
       callbackify(result, open);
     }
   });
+}
+
+export interface ButtonMenuToggleOptions {
+  buttonOptions?: Parameters<typeof ButtonIcon>[1],
+  listenerSetter?: ListenerSetter,
+  container?: HTMLElement
+  direction: 'bottom-left' | 'bottom-right' | 'top-left' | 'top-right',
+  buttons: ButtonMenuItemOptionsVerifiable[],
+  onOpenBefore?: (e: Event) => any,
+  onOpen?: (e: Event, element: HTMLElement) => any,
+  onClose?: () => void,
+  onCloseAfter?: () => void,
+  noIcon?: boolean,
+  icon?: string
 }
 
 export default function ButtonMenuToggle({
@@ -129,7 +143,11 @@ export default function ButtonMenuToggle({
     options: {
       listenerSetter: attachListenerSetter
     },
-    onClose: () => {
+    onClose: (_: boolean, targetEl?: HTMLElement) => {
+      if(targetEl?.classList.contains('btn-menu-toggle')) {
+        return;
+      }
+
       ++tempId;
       clearCloseTimeout();
       onClose?.();

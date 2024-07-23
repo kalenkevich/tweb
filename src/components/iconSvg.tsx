@@ -231,6 +231,24 @@ const SVG_ICON_LIB = {
     <svg xmlns="http://www.w3.org/2000/svg" width="6" height="4" viewBox="0 0 6 4" fill="none">
       <path d="M2.29289 0.707106L0.28033 2.71967C-0.192143 3.19214 0.142482 4 0.81066 4H5.18934C5.85752 4 6.19214 3.19214 5.71967 2.71967L3.70711 0.707107C3.31658 0.316583 2.68342 0.316582 2.29289 0.707106Z" fill="white"/>
     </svg>
+  ),
+  'person': (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="10" cy="5" r="4" fill="white"/>
+      <path fill-rule="evenodd" clip-rule="evenodd" d="M4.61328 18C3.17 18 2 16.83 2 15.3867C2 14.8048 2.14239 14.2266 2.53106 13.7935C3.44873 12.7711 5.66412 11 10 11C14.3359 11 16.5513 12.7711 17.4689 13.7935C17.8576 14.2266 18 14.8048 18 15.3867C18 16.83 16.83 18 15.3867 18H4.61328Z" fill="white"/>
+    </svg>
+  ),
+  'limit-pin-background': (
+    <svg width="58" height="41" viewBox="0 0 58 41" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path fill-rule="evenodd" clip-rule="evenodd" d="M16.5 0C7.66344 0 0.5 7.16344 0.5 16C0.5 24.8366 7.66344 32 16.5 32H18.0146C19.6059 32 21.132 32.6321 22.2572 33.7574L28.0857 39.5858C28.8667 40.3668 30.133 40.3668 30.9141 39.5858L36.7425 33.7574C37.8677 32.6321 39.3939 32 40.9852 32H41.5C50.3366 32 57.5 24.8366 57.5 16C57.5 7.16344 50.3366 0 41.5 0H16.5Z" fill="url(#paint0_linear_1_1521)"/>
+      <defs>
+        <linearGradient id="paint0_linear_1_1521" x1="-4.90517" y1="40" x2="151.205" y2="-26.0281" gradientUnits="userSpaceOnUse">
+          <stop stop-color="#6C93FF"/>
+          <stop offset="0.489583" stop-color="#976FFF"/>
+          <stop offset="1" stop-color="#DF69D1"/>
+        </linearGradient>
+      </defs>
+    </svg>
   )
 }
 

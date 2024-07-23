@@ -47,4 +47,11 @@ export default class Page {
 
     pagesManager.setPage(this);
   }
+
+  unmount() {
+    if(this.installed) {
+      this.installed = false;
+      this.pageEl.remove();
+    }
+  }
 }

@@ -19,10 +19,12 @@ import ripple from './ripple';
 import Icon from './icon';
 import RadioForm from './radioForm';
 import wrapAttachBotIcon from './wrappers/attachBotIcon';
+import ButtonMenuToggle, {ButtonMenuToggleOptions} from './buttonMenuToggle';
 
 type ButtonMenuItemInner = Omit<Parameters<typeof ButtonMenuSync>[0], 'listenerSetter'>;
 export type ButtonMenuItemOptions = {
   icon?: Icon,
+  iconElement?: HTMLElement;
   iconDoc?: Document.document,
   danger?: boolean,
   new?: boolean,
@@ -30,7 +32,7 @@ export type ButtonMenuItemOptions = {
   text?: LangPackKey,
   textArgs?: FormatterArguments,
   regularText?: Parameters<typeof setInnerHTML>[1],
-  onClick: (e: MouseEvent | TouchEvent) => any,
+  onClick?: (e: MouseEvent | TouchEvent) => any,
   checkForClose?: () => boolean,
   element?: HTMLElement,
   textElement?: HTMLElement,
@@ -45,18 +47,19 @@ export type ButtonMenuItemOptions = {
   loadPromise?: Promise<any>,
   waitForAnimation?: boolean,
   radioGroup?: string,
-  inner?: (() => MaybePromise<ButtonMenuItemInner>) | ButtonMenuItemInner
+  inner?: (() => MaybePromise<ButtonMenuItemInner>) | ButtonMenuItemInner;
+  submenu?: ButtonMenuToggleOptions;
   /* , cancelEvent?: true */
 };
 
 export type ButtonMenuItemOptionsVerifiable = ButtonMenuItemOptions & {
-  verify?: () => boolean | Promise<boolean>
+  verify?: () => boolean | Promise<boolean>;
 };
 
 function ButtonMenuItem(options: ButtonMenuItemOptions) {
   if(options.element) return [options.separator as HTMLElement, options.element].filter(Boolean);
 
-  const {icon, iconDoc, className, text, onClick, checkboxField, noCheckboxClickListener} = options;
+  const {icon, iconDoc, iconElement, className, text, onClick, checkboxField, noCheckboxClickListener, submenu} = options;
   const el = document.createElement('div');
   const iconSplitted = icon?.split(' ');
   el.className = 'btn-menu-item rp-overflow' +
@@ -64,12 +67,19 @@ function ButtonMenuItem(options: ButtonMenuItemOptions) {
     (className ? ' ' + className : '') +
     (options.danger ? ' danger' : '');
 
+  // + (submenu ? ' btn-menu-toggle' : '')
+
   if(IS_MOBILE) {
     ripple(el);
   }
 
   if(iconSplitted) {
     el.append(Icon(iconSplitted[0] as Icon, 'btn-menu-item-icon'));
+  }
+
+  if(iconElement) {
+    iconElement.classList.add('btn-menu-item-icon');
+    el.append(iconElement);
   }
 
   let textElement = options.textElement;
@@ -107,11 +117,29 @@ function ButtonMenuItem(options: ButtonMenuItemOptions) {
     el.append(badge);
   }
 
-  const keepOpen = !!checkboxField || !!options.keepOpen;
+  if(submenu) {
+    ButtonMenuToggle({
+      ...submenu,
+      container: el,
+      noIcon: true
+    });
+    // el.classList.add('btn-menu', 'btn-menu-toggle');
+    // submenuToggle.style.position = 'absolute';
+    // el.append(submenuToggle);
+  }
+
+  const keepOpen = !!submenu || !!checkboxField || !!options.keepOpen;
 
   // * cancel mobile keyboard close
-  onClick && attachClickEvent(el, /* CLICK_EVENT_NAME !== 'click' || keepOpen ? */ /* async */(e) => {
+  attachClickEvent(el, /* CLICK_EVENT_NAME !== 'click' || keepOpen ? */ /* async */(e) => {
     cancelEvent(e);
+
+    if(submenu) {
+      contextMenuController.openBtnMenu(el, () => {
+        contextMenuController.close();
+      }, true);
+      return;
+    }
 
     const menu = findUpClassName(e.target, 'btn-menu');
     if(menu && !menu.classList.contains('active')) {
@@ -129,7 +157,8 @@ function ButtonMenuItem(options: ButtonMenuItemOptions) {
     //   await pause(125);
     // }
 
-    onClick(e);
+    onClick?.(e);
+
     if(options.checkForClose?.() === false) {
       return;
     }

@@ -5,6 +5,8 @@ const lang = {
   'Appearance.Color.RGB': 'RGB',
   'BlockModal.Search.Placeholder': 'Block user...',
   'DarkMode': 'Dark Mode',
+  'More': 'More',
+  'AddAccount': 'Add Account',
   'FilterIncludeExcludeInfo': 'Choose chats and types of chats that will\nappear and never appear in this folder.',
   'FilterMenuDelete': 'Delete Folder',
   'FilterHeaderEdit': 'Edit Folder',
@@ -2875,7 +2877,12 @@ const lang = {
   'ImageEditor.DrawControl.Brush': 'Brush',
   'ImageEditor.DrawControl.Neon': 'Neon',
   'ImageEditor.DrawControl.Blur': 'Blur',
-  'ImageEditor.DrawControl.Eraser': 'Eraser'
+  'ImageEditor.DrawControl.Eraser': 'Eraser',
+  'AddAccountFlow.LimitReached': 'Limit reached',
+  'AddAccountFlow.Free': 'Free',
+  'AddAccountFlow.Premium': 'Premium',
+  'AddAccountFlow.LimitReachDescription': 'You have reached the limit of 3 connected accounts. You can add more by subscribing to',
+  'AddAccountFlow.IncreaseLimit': 'Increase limit'
 };
 
 export default lang;

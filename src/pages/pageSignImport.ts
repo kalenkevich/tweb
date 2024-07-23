@@ -10,10 +10,11 @@ import {STATE_INIT} from '../config/state';
 import rootScope from '../lib/rootScope';
 import {AuthState} from '../types';
 import Page from './page';
+import {SignInFlowOptions, SignInFlowType} from './signInFlow';
 
 let data: AuthState.signImport['data'];
 
-const importWebToken = async() => {
+const importWebToken = async(options: SignInFlowOptions) => {
   const {dcId, token, tgAddr} = data;
   let mountPageAfter: Promise<{default: Page}>;
   try {
@@ -49,16 +50,26 @@ const importWebToken = async() => {
 
   location.hash = tgAddr?.trim() ? '#?tgaddr=' + encodeURIComponent(tgAddr) : '';
   if(mountPageAfter) {
-    mountPageAfter.then((m) => m.default.mount());
+    mountPageAfter.then((m) => m.default.mount(options));
   }
 };
 
-const page = new Page('page-signImport', true, () => {
+const onFirstMount = (options: SignInFlowOptions) => {
   putPreloader(page.pageEl.firstElementChild, true);
-  importWebToken();
-}, (_data: typeof data) => {
-  data = _data;
-  rootScope.managers.appStateManager.pushToState('authState', {_: 'authStateSignImport', data});
+  return importWebToken(options);
+};
+
+let cachedPromise: Promise<void>;
+const page: Page = new Page('page-signImport', true, onFirstMount, (_data: typeof data, options: SignInFlowOptions) => {
+  if(options.type === SignInFlowType.firstAccountSignIn) {
+    if(!cachedPromise) cachedPromise = onFirstMount(options);
+    cachedPromise.then(() => {
+      data = _data;
+      rootScope.managers.appStateManager.pushToState('authState', {_: 'authStateSignImport', data});
+    });
+  } else {
+    onFirstMount(options);
+  }
 });
 
 export default page;

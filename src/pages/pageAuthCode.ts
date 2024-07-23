@@ -19,6 +19,7 @@ import RLottiePlayer from '../lib/rlottie/rlottiePlayer';
 import setBlankToAnchor from '../lib/richTextProcessor/setBlankToAnchor';
 import {attachClickEvent} from '../helpers/dom/clickEvent';
 import Icon from '../components/icon';
+import {SignInFlowOptions, SignInFlowType} from './signInFlow';
 
 let authSentCode: AuthSentCode.authSentCode = null;
 
@@ -34,7 +35,7 @@ const cleanup = () => {
   }, 300);
 };
 
-const submitCode = (code: string) => {
+const submitCode = (code: string, signInFlowOptions: SignInFlowOptions) => {
   codeInput.setAttribute('disabled', 'true');
 
   const params: AuthSignIn = {
@@ -51,11 +52,14 @@ const submitCode = (code: string) => {
 
     switch(response._) {
       case 'auth.authorization':
-        await rootScope.managers.apiManager.setUser(response.user);
-
-        import('./pageIm').then((m) => {
-          m.default.mount();
-        });
+        if(signInFlowOptions.type === SignInFlowType.firstAccountSignIn) {
+          await rootScope.managers.apiManager.setUser(response.user);
+          import('./pageIm').then((m) => {
+            m.default.mount();
+          });
+        } else if(signInFlowOptions.type === SignInFlowType.addAccountSignIn && signInFlowOptions.onSucessLoginCallback) {
+          signInFlowOptions.onSucessLoginCallback(response);
+        }
         cleanup();
         break;
       case 'auth.authorizationSignUpRequired':
@@ -65,7 +69,7 @@ const submitCode = (code: string) => {
           m.default.mount({
             'phone_number': authSentCode.phone_number,
             'phone_code_hash': authSentCode.phone_code_hash
-          });
+          }, signInFlowOptions);
         });
 
         cleanup();
@@ -81,7 +85,7 @@ const submitCode = (code: string) => {
         // console.warn('pageAuthCode: SESSION_PASSWORD_NEEDED');
         good = true;
         err.handled = true;
-        await (await import('./pagePassword')).default.mount(); // lol
+        await (await import('./pagePassword')).default.mount(signInFlowOptions); // lol
         setTimeout(() => {
           codeInput.value = '';
         }, 300);
@@ -108,13 +112,13 @@ const submitCode = (code: string) => {
   });
 };
 
-const onFirstMount = () => {
+const onFirstMount = (signInFlowOptions: SignInFlowOptions) => {
   page.pageEl.querySelector('.input-wrapper').append(codeInputField.container);
 
   const editButton = page.pageEl.querySelector('.phone-edit') as HTMLElement;
   editButton.append(Icon('edit'));
   attachClickEvent(editButton, () => {
-    return pageSignIn.mount();
+    return pageSignIn.mount(signInFlowOptions);
   });
 };
 
@@ -154,7 +158,7 @@ const getAnimation = () => {
   }
 };
 
-const page = new Page('page-authCode', true, onFirstMount, (_authCode: typeof authSentCode) => {
+const page: Page = new Page('page-authCode', true, onFirstMount, (_authCode: typeof authSentCode, signInFlowOptions: SignInFlowOptions) => {
   authSentCode = _authCode;
 
   if(!headerElement) {
@@ -175,7 +179,7 @@ const page = new Page('page-authCode', true, onFirstMount, (_authCode: typeof au
       name: randomLong(),
       length: CODE_LENGTH,
       onFill: (code) => {
-        submitCode(code);
+        submitCode(code, signInFlowOptions);
       }
     });
 

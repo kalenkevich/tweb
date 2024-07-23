@@ -39,6 +39,7 @@ import {nextRandomUint} from './helpers/random';
 import {IS_OVERLAY_SCROLL_SUPPORTED, USE_CUSTOM_SCROLL, USE_NATIVE_SCROLL} from './environment/overlayScrollSupport';
 import IMAGE_MIME_TYPES_SUPPORTED, {IMAGE_MIME_TYPES_SUPPORTED_PROMISE} from './environment/imageMimeTypesSupport';
 import MEDIA_MIME_TYPES_SUPPORTED from './environment/mediaMimeTypesSupport';
+import {SignInFlowOptions, SignInFlowType} from './pages/signInFlow';
 // import appNavigationController from './components/appNavigationController';
 
 IMAGE_MIME_TYPES_SUPPORTED_PROMISE.then((mimeTypes) => {
@@ -423,24 +424,27 @@ IMAGE_MIME_TYPES_SUPPORTED_PROMISE.then((mimeTypes) => {
 
     let pagePromise: Promise<void>;
     // langPromise.then(async() => {
+    const signInFlowOptions: SignInFlowOptions = {
+      type: SignInFlowType.firstAccountSignIn
+    };
     switch(authState._) {
       case 'authStateSignIn':
-        pagePromise = (await import('./pages/pageSignIn')).default.mount();
+        pagePromise = (await import('./pages/pageSignIn')).default.mount(signInFlowOptions);
         break;
       case 'authStateSignQr':
-        pagePromise = (await import('./pages/pageSignQR')).default.mount();
+        pagePromise = (await import('./pages/pageSignQR')).default.mount(signInFlowOptions);
         break;
       case 'authStateAuthCode':
-        pagePromise = (await import('./pages/pageAuthCode')).default.mount(authState.sentCode);
+        pagePromise = (await import('./pages/pageAuthCode')).default.mount(authState.sentCode, signInFlowOptions);
         break;
       case 'authStatePassword':
-        pagePromise = (await import('./pages/pagePassword')).default.mount();
+        pagePromise = (await import('./pages/pagePassword')).default.mount(signInFlowOptions);
         break;
       case 'authStateSignUp':
-        pagePromise = (await import('./pages/pageSignUp')).default.mount(authState.authCode);
+        pagePromise = (await import('./pages/pageSignUp')).default.mount(authState.authCode, signInFlowOptions);
         break;
       case 'authStateSignImport':
-        pagePromise = (await import('./pages/pageSignImport')).default.mount(authState.data);
+        pagePromise = (await import('./pages/pageSignImport')).default.mount(authState.data, signInFlowOptions);
         break;
     }
     // });

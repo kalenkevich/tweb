@@ -21,6 +21,7 @@ export class WholeDialogManagerTsx {
   private rootEl: HTMLElement;
   private overlayEl?: HTMLDivElement;
   private contentEl?: HTMLDivElement;
+  private active: boolean = false;
 
   constructor(private readonly anchorEl: HTMLElement = document.body) {
     this.rootEl = document.createElement('div');
@@ -29,6 +30,11 @@ export class WholeDialogManagerTsx {
   }
 
   show(renderFn: (renderProps: ContentRenderProps) => JSX.Element) {
+    // Allow only one in a time
+    if(this.active) {
+      this.hide();
+    }
+
     render(() => {
       onMount(() => {
         this.overlayEl?.focus();
@@ -48,11 +54,14 @@ export class WholeDialogManagerTsx {
         </div>
       );
     }, this.rootEl);
+
+    this.active = true;
   }
 
   hide() {
     if(this.overlayEl) {
       this.overlayEl.remove();
     }
+    this.active = false;
   }
 }

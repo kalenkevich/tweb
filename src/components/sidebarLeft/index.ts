@@ -6,6 +6,7 @@
 
 import appImManager from '../../lib/appManagers/appImManager';
 import rootScope from '../../lib/rootScope';
+import {User} from '../../layer';
 import {SearchGroup} from '../appSearch';
 import Scrollable, {ScrollableX} from '../scrollable';
 import InputSearch from '../inputSearch';
@@ -22,7 +23,7 @@ import AppArchivedTab from './tabs/archivedTab';
 import AppAddMembersTab from './tabs/addMembers';
 import I18n, {i18n} from '../../lib/langPack';
 import AppPeopleNearbyTab from './tabs/peopleNearby';
-import {ButtonMenuItemOptions} from '../buttonMenu';
+import {ButtonMenuItemOptions, ButtonMenuItemOptionsVerifiable} from '../buttonMenu';
 import CheckboxField from '../checkboxField';
 import {IS_MOBILE_SAFARI} from '../../environment/userAgent';
 import appNavigationController, {NavigationItem} from '../appNavigationController';
@@ -73,8 +74,13 @@ import wrapEmojiStatus from '../wrappers/emojiStatus';
 import {makeMediaSize} from '../../helpers/mediaSize';
 import ReactionElement from '../chat/reaction';
 import setBlankToAnchor from '../../lib/richTextProcessor/setBlankToAnchor';
+import {AvatarNew} from '../avatarNew';
+import {AccountLimitReachedPopup} from '../popups/accountLimitReached';
+import {SignInFlowType, SignInFlowOptions} from '../../pages/signInFlow';
+import {dumpCurrentUserState, rebaseSessionStateToUser, pruneUserState} from '../..//helpers/accountStateHelper';
 
 export const LEFT_COLUMN_ACTIVE_CLASSNAME = 'is-left-column-shown';
+const MAX_ACCOUNTS_FOR_NON_PREMIUM_USER = 3;
 
 export class AppSidebarLeft extends SidebarSlider {
   private toolsBtn: HTMLElement;
@@ -156,7 +162,7 @@ export class AppSidebarLeft extends SidebarSlider {
       themeCheckboxField.setValueSilently(themeController.getTheme().name === 'night');
     });
 
-    const menuButtons: (ButtonMenuItemOptions & {verify?: () => boolean | Promise<boolean>})[] = [{
+    const menuButtons: ButtonMenuItemOptionsVerifiable[] = [{
       icon: 'savedmessages',
       text: 'SavedMessages',
       onClick: () => {
@@ -268,57 +274,139 @@ export class AppSidebarLeft extends SidebarSlider {
       verify: () => !!getInstallPrompt()
     }];
 
-    const filteredButtons = menuButtons.filter(Boolean);
+    const menuButtonsV2: ButtonMenuItemOptionsVerifiable[] = [
+      {
+        icon: 'savedmessages',
+        text: 'SavedMessages',
+        onClick: () => {
+          setTimeout(() => { // menu doesn't close if no timeout (lol)
+            appImManager.setPeer({
+              peerId: appImManager.myId
+            });
+          }, 0);
+        }
+      }, btnArchive, {
+        icon: 'stories',
+        text: 'MyStories.Title',
+        onClick: () => {
+          this.createTab(AppMyStoriesTab).open();
+        },
+        verify: () => !TEST_NO_STORIES
+      }, {
+        icon: 'user',
+        text: 'Contacts',
+        onClick: onContactsClick,
+        separatorDown: true
+      },
+      {
+        icon: 'settings',
+        text: 'Settings',
+        onClick: () => {
+          this.createTab(AppSettingsTab).open();
+        }
+      },
+      {
+        icon: 'more',
+        text: 'More',
+        submenu: {
+          direction: 'bottom-right',
+          onOpen: (e, element) => {
+            const btnMenuFooter = this.createAppVersionLinkMenuFooter();
+            element.classList.add('has-footer');
+            element.append(btnMenuFooter);
+            const a = element.querySelector('.a .btn-menu-item-icon');
+            if(a) a.textContent = 'A';
+
+            btnArchive.element?.append(this.archivedCount);
+          },
+          buttons: [
+            {
+              icon: 'darkmode',
+              text: 'DarkMode',
+              onClick: () => {
+              },
+              checkboxField: themeCheckboxField
+            },
+            {
+              icon: 'animations',
+              text: 'Animations',
+              onClick: () => {
+              },
+              checkboxField: new CheckboxField({
+                toggle: true,
+                checked: liteMode.isAvailable('animations'),
+                stateKey: joinDeepPath('settings', 'liteMode', 'animations'),
+                stateValueReverse: true
+              }),
+              verify: () => !liteMode.isEnabled(),
+              separatorDown: true
+            },
+            {
+              icon: 'char' as Icon,
+              className: 'a',
+              text: 'ChatList.Menu.SwitchTo.A',
+              onClick: () => {
+                Promise.all([
+                  sessionStorage.set({kz_version: 'Z'}),
+                  sessionStorage.delete('tgme_sync')
+                ]).then(() => {
+                  location.href = 'https://web.telegram.org/a/';
+                });
+              },
+              verify: () => App.isMainDomain
+            },
+            {
+              icon: 'help',
+              text: 'TelegramFeatures',
+              onClick: () => {
+                const url = I18n.format('TelegramFeaturesUrl', true);
+                appImManager.openUrl(url);
+              }
+            }, {
+              icon: 'bug',
+              text: 'ReportBug',
+              onClick: () => {
+                const a = document.createElement('a');
+                setBlankToAnchor(a);
+                a.href = 'https://bugs.telegram.org/?tag_ids=40&sort=time';
+                document.body.append(a);
+                a.click();
+                setTimeout(() => {
+                  a.remove();
+                }, 0);
+              }
+            }
+          ]
+        }
+      }];
+
+    const filteredButtons = menuButtonsV2.filter(Boolean);
     const filteredButtonsSliced = filteredButtons.slice();
     this.toolsBtn = ButtonMenuToggle({
       direction: 'bottom-right',
       buttons: filteredButtons,
       onOpenBefore: async() => {
-        const attachMenuBots = await this.managers.appAttachMenuBotsManager.getAttachMenuBots();
+        const [
+          attachMenuBotsButtons,
+          userAccountsMenuButtons
+        ] = await Promise.all([
+          this.getBotsMenuButtons(),
+          this.getUserAccountsMenuButtons()
+        ]);
+
+        if(userAccountsMenuButtons.length > 0) {
+          userAccountsMenuButtons[userAccountsMenuButtons.length - 1].separatorDown = true;
+        }
+        if(attachMenuBotsButtons.length > 0) {
+          attachMenuBotsButtons[attachMenuBotsButtons.length - 1].separatorDown = true;
+        }
+
         const buttons = filteredButtonsSliced.slice();
-        const attachMenuBotsButtons = attachMenuBots.filter((attachMenuBot) => {
-          return attachMenuBot.pFlags.show_in_side_menu;
-        }).map((attachMenuBot) => {
-          const icon = getAttachMenuBotIcon(attachMenuBot);
-          const button: typeof buttons[0] = {
-            regularText: wrapEmojiText(attachMenuBot.short_name),
-            onClick: () => {
-              appImManager.openWebApp({
-                attachMenuBot,
-                botId: attachMenuBot.bot_id,
-                isSimpleWebView: true,
-                fromSideMenu: true
-              });
-            },
-            iconDoc: icon?.icon as MyDocument,
-            new: attachMenuBot.pFlags.side_menu_disclaimer_needed || attachMenuBot.pFlags.inactive
-          };
-
-          return button;
-        });
-
+        buttons.splice(0, 0, ...userAccountsMenuButtons);
         buttons.splice(3, 0, ...attachMenuBotsButtons);
         filteredButtons.splice(0, filteredButtons.length, ...buttons);
       },
       onOpen: (e, btnMenu) => {
-        const btnMenuFooter = document.createElement('a');
-        btnMenuFooter.href = 'https://github.com/morethanwords/tweb/blob/master/CHANGELOG.md';
-        setBlankToAnchor(btnMenuFooter);
-        btnMenuFooter.classList.add('btn-menu-footer');
-        btnMenuFooter.addEventListener(CLICK_EVENT_NAME, (e) => {
-          e.stopPropagation();
-          contextMenuController.close();
-        });
-        const t = document.createElement('span');
-        t.classList.add('btn-menu-footer-text');
-        t.textContent = 'Telegram Web' + App.suffix + ' '/* ' alpha ' */ + App.versionFull;
-        btnMenuFooter.append(t);
-        btnMenu.classList.add('has-footer');
-        btnMenu.append(btnMenuFooter);
-
-        const a = btnMenu.querySelector('.a .btn-menu-item-icon');
-        if(a) a.textContent = 'A';
-
         btnArchive.element?.append(this.archivedCount);
       },
       noIcon: true
@@ -596,6 +684,127 @@ export class AppSidebarLeft extends SidebarSlider {
 
     fastRaf(onResize);
     mediaSizes.addEventListener('resize', onResize);
+  }
+
+  private async getBotsMenuButtons(): Promise<ButtonMenuItemOptionsVerifiable[]> {
+    const attachMenuBots = await this.managers.appAttachMenuBotsManager.getAttachMenuBots();
+
+    return attachMenuBots.filter((attachMenuBot) => {
+      return attachMenuBot.pFlags.show_in_side_menu;
+    }).map((attachMenuBot) => {
+      const icon = getAttachMenuBotIcon(attachMenuBot);
+      const button: ButtonMenuItemOptionsVerifiable = {
+        regularText: wrapEmojiText(attachMenuBot.short_name),
+        onClick: () => {
+          appImManager.openWebApp({
+            attachMenuBot,
+            botId: attachMenuBot.bot_id,
+            isSimpleWebView: true,
+            fromSideMenu: true
+          });
+        },
+        iconDoc: icon?.icon as MyDocument,
+        new: attachMenuBot.pFlags.side_menu_disclaimer_needed || attachMenuBot.pFlags.inactive
+      };
+
+      return button;
+    });
+  }
+
+  private async getUserAccountsMenuButtons(): Promise<ButtonMenuItemOptionsVerifiable[]> {
+    const result: ButtonMenuItemOptionsVerifiable[] = [];
+    const currentUser = await rootScope.managers.appUserAccountManager.getCurrentUser();
+    const accounts = await rootScope.managers.appUserAccountManager.getAccountList();
+
+    // keep current account always on the top
+    accounts.sort((a, b) => a.id === currentUser.id ? -1 : 1);
+
+    for(const user of accounts) {
+      const avatar = AvatarNew({
+        isBig: false,
+        size: 20,
+        peerId: user.id as number
+      });
+
+      const userNameSpan = document.createElement('span');
+      userNameSpan.innerText = [user.first_name, user.last_name].filter(Boolean).join(' ').trim();
+
+      result.push({
+        iconElement: avatar.element as HTMLElement,
+        textElement: userNameSpan,
+        // messages
+        onClick: () => {
+          if(user.id === currentUser.id) {
+            return;
+          }
+
+          rootScope.managers.appUserAccountManager.switchToAccount(user.id);
+        }
+      });
+    }
+
+    result.push({
+      icon: 'plus',
+      text: 'AddAccount',
+      onClick: () => this.startAddUserAccountFlow()
+    })
+
+    return result;
+  }
+
+  private createAppVersionLinkMenuFooter() {
+    const btnMenuFooter = document.createElement('a');
+    btnMenuFooter.href = 'https://github.com/morethanwords/tweb/blob/master/CHANGELOG.md';
+    setBlankToAnchor(btnMenuFooter);
+    btnMenuFooter.classList.add('btn-menu-footer');
+    btnMenuFooter.addEventListener(CLICK_EVENT_NAME, (e) => {
+      e.stopPropagation();
+      contextMenuController.close();
+    });
+    const t = document.createElement('span');
+    t.classList.add('btn-menu-footer-text');
+    t.textContent = 'Telegram Web' + App.suffix + ' '/* ' alpha ' */ + App.versionFull;
+    btnMenuFooter.append(t);
+
+    return btnMenuFooter;
+  }
+
+  private async startAddUserAccountFlow() {
+    const canAddAccount = await rootScope.managers.appUserAccountManager.canAddAccount();
+
+    if(canAddAccount) {
+      const newUserAccount = await this.loginIntoAccount();
+      await rootScope.managers.appUserAccountManager.addUserAccount(newUserAccount);
+      await rootScope.managers.appUserAccountManager.switchToAccount(newUserAccount.id);
+      dumpCurrentUserState(newUserAccount.id);
+    } else {
+      try {
+        await new Promise<void>((resolve, reject) => {
+          const accountLimitPopup = new AccountLimitReachedPopup({
+            currentAccounts: MAX_ACCOUNTS_FOR_NON_PREMIUM_USER,
+            onCloseClick: () => reject(),
+            onLimitIncreseClick: () => {
+              accountLimitPopup.forceHide();
+              // navigate to buy premium and start over
+              resolve();
+            }
+          });
+        });
+      } catch(e) {
+        return;
+      }
+    }
+  }
+
+  private loginIntoAccount(): Promise<User.user> {
+    return new Promise(async(resolve) => {
+      const signInFlowOptions: SignInFlowOptions = {
+        type: SignInFlowType.addAccountSignIn,
+        onSucessLoginCallback: (auth) => resolve(auth.user as User.user)
+      };
+
+      (await import('../../pages/pageSignQR')).default.mount(signInFlowOptions);
+    });
   }
 
   private initSearch() {

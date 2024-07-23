@@ -28,7 +28,7 @@ import {JSX} from 'solid-js';
 import {render} from 'solid-js/web';
 
 export type PopupButton = {
-  text?: HTMLElement | DocumentFragment | Text,
+  text?: HTMLElement | DocumentFragment | Text | JSX.Element,
   callback?: (e: MouseEvent) => void | MaybePromise<boolean>,
   langKey?: LangPackKey,
   langArgs?: any[],
@@ -53,7 +53,7 @@ export type PopupOptions = Partial<{
   scrollable: boolean,
   buttons: Array<PopupButton>,
   title: boolean | LangPackKey | DocumentFragment | HTMLElement,
-  floatingHeader: boolean
+  floatingHeader: boolean;
 }>;
 
 export interface PopupElementConstructable<T extends PopupElement = any> {
@@ -254,7 +254,7 @@ export default class PopupElement<T extends EventListenerListeners = {}> extends
       }
 
       if(b.text) {
-        button.append(b.text);
+        button.append(b.text as Node);
       } else if(b.langKey) {
         button.append(i18n(b.langKey, b.langArgs));
       }

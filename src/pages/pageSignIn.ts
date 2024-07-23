@@ -28,11 +28,12 @@ import rootScope from '../lib/rootScope';
 import TelInputField from '../components/telInputField';
 import apiManagerProxy from '../lib/mtproto/mtprotoworker';
 import CountryInputField from '../components/countryInputField';
+import {SignInFlowType, SignInFlowOptions} from './signInFlow';
 
 // import _countries from '../countries_pretty.json';
 let btnNext: HTMLButtonElement = null, btnQr: HTMLButtonElement;
 
-const onFirstMount = () => {
+const onFirstMount = async(signInFlowOptions: SignInFlowOptions) => {
   /* if(Modes.test) {
     Countries.push({
       _: 'help.country',
@@ -166,15 +167,18 @@ const onFirstMount = () => {
       if(code._ === 'auth.sentCodeSuccess') {
         const {authorization} = code;
         if(authorization._ === 'auth.authorization') {
-          await rootScope.managers.apiManager.setUser(authorization.user);
-
-          import('./pageIm').then((m) => {
-            m.default.mount();
-          });
+          if(signInFlowOptions.type === SignInFlowType.firstAccountSignIn) {
+            await rootScope.managers.apiManager.setUser(authorization.user);
+            import('./pageIm').then((m) => {
+              m.default.mount();
+            });
+          } else if(signInFlowOptions.type === SignInFlowType.addAccountSignIn && signInFlowOptions.onSucessLoginCallback) {
+            signInFlowOptions.onSucessLoginCallback(authorization);
+          }
         }
       }
 
-      import('./pageAuthCode').then((m) => m.default.mount(Object.assign(code, {phone_number: phone_number})));
+      import('./pageAuthCode').then((m) => m.default.mount(Object.assign(code, {phone_number: phone_number}), signInFlowOptions));
     }).catch((err) => {
       toggle();
 
@@ -199,7 +203,7 @@ const onFirstMount = () => {
 
   const qrMounted = false;
   btnQr.addEventListener('click', () => {
-    pageSignQR.mount();
+    pageSignQR.mount(signInFlowOptions);
     /* const promise = import('./pageSignQR');
     btnQr.disabled = true;
 
@@ -297,7 +301,7 @@ const onFirstMount = () => {
   tryAgain();
 };
 
-const page = new Page('page-sign', true, onFirstMount, () => {
+const page = new Page('page-sign', true, onFirstMount, (options: SignInFlowOptions) => {
   if(btnNext) {
     replaceContent(btnNext, i18n('Login.Next'));
     ripple(btnNext, undefined, undefined, true);
@@ -308,7 +312,9 @@ const page = new Page('page-sign', true, onFirstMount, () => {
     btnQr.removeAttribute('disabled');
   }
 
-  rootScope.managers.appStateManager.pushToState('authState', {_: 'authStateSignIn'});
+  if(options.type === SignInFlowType.firstAccountSignIn) {
+    rootScope.managers.appStateManager.pushToState('authState', {_: 'authStateSignIn'});
+  }
 });
 
 export default page;

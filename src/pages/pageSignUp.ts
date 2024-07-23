@@ -20,10 +20,11 @@ import wrapEmojiText from '../lib/richTextProcessor/wrapEmojiText';
 import Button from '../components/button';
 import {putPreloader} from '../components/putPreloader';
 import Icon from '../components/icon';
+import {SignInFlowOptions, SignInFlowType} from './signInFlow';
 
 let authCode: AuthState.signUp['authCode'] = null;
 
-const onFirstMount = async() => {
+const onFirstMount = async(options: SignInFlowOptions) => {
   const page = new LoginPage({
     className: 'page-signUp',
     withInputWrapper: true,
@@ -127,12 +128,18 @@ const onFirstMount = async() => {
 
       switch(response._) {
         case 'auth.authorization': // success
-          await rootScope.managers.apiManager.setUser(response.user);
+          if(options.type === SignInFlowType.firstAccountSignIn) {
+            await rootScope.managers.apiManager.setUser(response.user);
+          }
 
           sendAvatar().finally(() => {
-            import('./pageIm').then((m) => {
-              m.default.mount();
-            });
+            if(options.type === SignInFlowType.firstAccountSignIn) {
+              import('./pageIm').then((m) => {
+                m.default.mount();
+              });
+            } else if(options.type === SignInFlowType.addAccountSignIn) {
+              options.onSucessLoginCallback(response);
+            }
           });
 
           break;
@@ -163,10 +170,11 @@ const onFirstMount = async() => {
   });
 };
 
-const page = new Page('page-signUp', true, onFirstMount, (_authCode: typeof authCode) => {
+const page = new Page('page-signUp', true, onFirstMount, (_authCode: typeof authCode, options: SignInFlowOptions) => {
   authCode = _authCode;
-
-  rootScope.managers.appStateManager.pushToState('authState', {_: 'authStateSignUp', authCode: _authCode});
+  if(options.type === SignInFlowType.firstAccountSignIn) {
+    rootScope.managers.appStateManager.pushToState('authState', {_: 'authStateSignUp', authCode: _authCode});
+  }
 });
 
 export default page;

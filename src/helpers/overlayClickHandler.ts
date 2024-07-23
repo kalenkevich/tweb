@@ -65,8 +65,10 @@ export default class OverlayClickHandler extends EventListenerBase<{
     }
   }
 
-  public open(element = document.body) {
-    this.close();
+  public open(element = document.body, keepOthers = false) {
+    if(!keepOthers) {
+      this.close();
+    }
 
     if(!IS_MOBILE_SAFARI && this.navigationType) {
       appNavigationController.pushItem({
@@ -115,6 +117,7 @@ export default class OverlayClickHandler extends EventListenerBase<{
     // ! safari iOS doesn't handle window click event on overlay, idk why
     document.addEventListener(CLICK_EVENT_NAME, this.onClick, this.listenerOptions);
 
-    this.dispatchEvent('toggle', true);
+    // @ts-ignore
+    this.dispatchEvent('toggle', true, element);
   }
 }

@@ -56,9 +56,11 @@ import type AppBusinessManager from './appBusinessManager';
 import type AppTranslationsManager from './appTranslationsManager';
 import type {AppManagers} from './managers';
 import AppGifsManager from './appGifsManager';
+import type AppUserAccountManager from './appAccountManager';
 
 export class AppManager {
   protected appPeersManager: AppPeersManager;
+  protected appUserAccountManager: AppUserAccountManager;
   protected appChatsManager: AppChatsManager;
   protected appDocsManager: AppDocsManager;
   protected appPhotosManager: AppPhotosManager;

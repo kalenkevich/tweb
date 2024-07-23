@@ -190,7 +190,6 @@ export class ImageEditorManager {
     }
 
     return false;
-    // return this.currentStateIndex > 0;
   }
 
   undo(rerenderOptions?: RenderOptions): ImageState {
@@ -219,7 +218,6 @@ export class ImageEditorManager {
     }
 
     return false;
-    // return this.currentStateIndex > 0 && this.currentStateIndex < this.imageStates.length - 1;
   }
 
   redo(rerenderOptions?: RenderOptions): ImageState {

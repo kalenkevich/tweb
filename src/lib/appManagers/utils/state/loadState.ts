@@ -457,3 +457,7 @@ let promise: ReturnType<typeof loadStateInner>;
 export default function loadState() {
   return promise ??= loadStateInner();
 }
+
+export function reloadState() {
+  return loadStateInner();
+}

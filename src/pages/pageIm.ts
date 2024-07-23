@@ -34,7 +34,8 @@ const onFirstMount = () => {
   ]).then(([appDialogsManager]) => {
     appDialogsManager.default.start();
     setTimeout(() => {
-      document.getElementById('auth-pages').remove();
+      document.getElementById('auth-pages').style.display = 'none';
+      document.getElementById('page-chats').style.display = 'block';
     }, 1e3);
   });
 };
