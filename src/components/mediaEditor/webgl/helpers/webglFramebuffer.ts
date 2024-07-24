@@ -1,5 +1,6 @@
 import {CompatibleWebGLRenderingContext} from '../webglContext';
 import {WebGlTexture} from './webglTexture';
+import {showErrorIfExist} from './webglDebugHelper';
 
 export interface CreateFrameBufferOptions {
   texture: WebGlTexture | WebGlTexture[];
@@ -41,6 +42,10 @@ export function createFrameBuffer(
       options.texture.texture,
       options.texture.level
     );
+
+    if(gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE) {
+      showErrorIfExist(gl, 'webgl create framebuffer attachment error');
+    }
   }
 
   gl.bindFramebuffer(gl.FRAMEBUFFER, null);
@@ -65,7 +70,8 @@ export function createFrameBuffer(
         // default is white
         gl.clearColor(1, 1, 1, 1);
       }
-      gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+      gl.clear(gl.COLOR_BUFFER_BIT);
+      showErrorIfExist(gl, 'webgl framebuffer clear COLOR_BUFFER_BIT');
 
       gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     }

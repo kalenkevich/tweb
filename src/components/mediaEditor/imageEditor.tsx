@@ -74,7 +74,7 @@ export function ImageEditor(props: MediaEditorProps) {
     group: 'MEDIA-EDITOR',
     managers: rootScope.managers
   }));
-  const [imageEditorManager] = createSignal(new ImageEditorManager(stickerRenderer(), createImageState(props.imgSource)));
+  const [imageEditorManager] = createSignal(new ImageEditorManager(createImageState(props.imgSource)));
   const [imageState, setImageState] = createSignal(createImageState(props.imgSource));
   const [layersToRender, setLayersToRender] = createSignal([ObjectLayerType.backgroundImage]);
   const [currentLayerIndex, setCurrentLayerIndex] = createSignal(-1);
@@ -238,10 +238,10 @@ export function ImageEditor(props: MediaEditorProps) {
           if(event.appearInRandomSpot) {
             const canvas = imageEditorManager().getCanvas();
             newLayerState.translation = getRandomLayerStartPosition(
-              canvas.width / 4,
-              canvas.height / 4,
-              canvas.width - canvas.width / 4,
-              canvas.height - canvas.height / 2
+              canvas.width * 0.25,
+              canvas.height * 0.25,
+              canvas.width * 0.75,
+              canvas.height * 0.75
             );
           }
           const newLayers = [...state.layers, newLayerState];

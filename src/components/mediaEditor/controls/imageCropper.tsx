@@ -246,11 +246,12 @@ export function ImageCropperComponent(props: ImageCropperProps) {
     props.surface.element.offsetWidth / 2,
     props.surface.element.offsetHeight / 2
   ]);
+  const [scale, setScale] = createSignal<[number, number]>([1, 1]);
   const [origin, setOrigin] = createSignal<[number, number]>([0, 0]);
   const [imageCropper, setImageCropper] = createSignal<ImageCropper>(
     getImageCropperFromAspectRatio(
-      translation()[0] - origin()[0],
-      translation()[1] - origin()[1],
+      translation()[0] + origin()[0],
+      translation()[1] + origin()[1],
       props.imageState.aspectRatio,
       props.surface.element.offsetWidth,
       props.surface.element.offsetHeight
@@ -315,8 +316,8 @@ export function ImageCropperComponent(props: ImageCropperProps) {
   }
 
   const onResize = (scale: [number, number]) => {
-    let newWidth = imageCropper().width * scale[0] * window.devicePixelRatio;
-    let newHeight = imageCropper().height * scale[1] * window.devicePixelRatio;
+    let newWidth = imageCropper().width * scale[0];
+    let newHeight = imageCropper().height * scale[1];
 
     if(newWidth > props.surface.element.offsetWidth) {
       newWidth = props.surface.element.offsetWidth;
@@ -324,19 +325,14 @@ export function ImageCropperComponent(props: ImageCropperProps) {
     if(newHeight > props.surface.element.offsetHeight) {
       newHeight = props.surface.element.offsetHeight;
     }
-
     const origin = [-newWidth / 2, -newHeight / 2] as [number, number];
-    const newTranslation = [
-      translation()[0] + origin[0],
-      translation()[1] + origin[1]
-    ] as [number, number];
 
     batch(() => {
       setDirtyState(true);
       setImageCropper(currentCropper =>
         getImageCropper(
-          newTranslation[0],
-          newTranslation[1],
+          translation()[0] + origin[0],
+          translation()[1] + origin[1],
           newWidth,
           newHeight,
           props.surface.element.offsetWidth,
@@ -344,6 +340,7 @@ export function ImageCropperComponent(props: ImageCropperProps) {
           currentCropper.scale
         )
       );
+      setScale([1, 1]);
       setOrigin(origin);
     });
   }
@@ -380,7 +377,7 @@ export function ImageCropperComponent(props: ImageCropperProps) {
           rotatable={false}
           removable={false}
           translation={translation()}
-          scale={[1, 1]}
+          scale={scale()}
           rotation={0}
           origin={origin()}
           onMove={onMove}

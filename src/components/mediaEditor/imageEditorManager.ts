@@ -4,7 +4,6 @@ import {ImageRenderer, RenderOptions, DEFAULT_RENDER_OPTIONS} from './imageRende
 import {WebglImageRenderer} from './webgl/webglImageRenderer';
 import {RenderQueue} from './helpers/renderQueue';
 import {easyAnimation} from './helpers/animation';
-import SuperStickerRenderer from '../emoticonsDropdown/tabs/SuperStickerRenderer';
 import {resetTextureIndex, createUint8TextureSource} from './webgl/helpers/webglTexture';
 import {precompileTextObjects, precompileStickerObjects, adjustDrawLayer, renderAnimatedStickerFrame} from './helpers/imageCompileHelper';
 import {GIFEncoder, quantize, applyPalette} from './gif/index';
@@ -28,7 +27,6 @@ export class ImageEditorManager {
   private imageStateId = 0;
 
   constructor(
-    private readonly stickerRenderer: SuperStickerRenderer,
     initialImageState: ImageState = DEFAULT_IMAGE_STATE,
     private readonly stateSnapshowCounts = 50
   ) {
@@ -106,7 +104,7 @@ export class ImageEditorManager {
         this.shadowCanvas.height
       );
 
-      for(let frameIndex = 0; frameIndex < totalFrames; frameIndex += 3) {
+      for(let frameIndex = 0; frameIndex < totalFrames; frameIndex += 4) {
         const preparedAnimatedStickerObjects = await Promise.all(
           stickerObjects.animatedStickers.map(async(stickerInfo) => {
             stickerInfo.object.texture = await renderAnimatedStickerFrame(stickerInfo, frameIndex);
@@ -128,12 +126,13 @@ export class ImageEditorManager {
         });
 
         const data = this.compiler.getRenderedData(true);
-        const palette = quantize(data, 256, {format: 'rgb444'});
+        const palette = quantize(data, 256);
         const index = applyPalette(data, palette);
-        gif.writeFrame(index, this.shadowCanvas.width, this.shadowCanvas.height, {
+        gif.writeFrame(index, 0, 0, this.shadowCanvas.width, this.shadowCanvas.height, {
           first: isFirstFrame,
           palette,
-          repeat: 0
+          repeat: 0,
+          dispose: isFirstFrame ? 1 : 2
         });
       }
 

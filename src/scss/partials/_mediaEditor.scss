@@ -382,6 +382,7 @@
     --anchor-size-half-minus: calc(-1 * var(--anchor-size) / 2);
 
     cursor: grab;
+    width: fit-content;
     padding: 14px 6px; 
     box-sizing: content-box;
     border: 2px dashed transparent;

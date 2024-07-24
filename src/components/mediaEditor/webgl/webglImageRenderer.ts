@@ -9,6 +9,7 @@ import {FramebufferProgram} from './programs/framebufferProgram';
 import {toImageDrawObject} from './drawObject/imageDrawObject';
 import {toBrushTouchDrawObject} from './drawObject/brushTouchDrawObject';
 import {Matrix3, createMatrix3, multiplyMatrix3, rotateMatrix3, translateMatrix3, scaleMatrix3} from '../helpers/matrixHelpers';
+import {showErrorIfExist} from './helpers/webglDebugHelper';
 
 export class WebglImageRenderer implements ImageRenderer {
   private canvas: HTMLCanvasElement;
@@ -59,6 +60,7 @@ export class WebglImageRenderer implements ImageRenderer {
     this.backgroundImageProgram.setupFramebuffer(this.canvas.width, this.canvas.height);
 
     this.inited = true;
+    showErrorIfExist(this.gl, 'init');
   }
 
   destroy() {
@@ -77,34 +79,24 @@ export class WebglImageRenderer implements ImageRenderer {
     }
 
     this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
+    showErrorIfExist(this.gl, 'resize, viewport');
     this.backgroundImageProgram?.resetFramebuffer(this.canvas.width, this.canvas.height);
+    showErrorIfExist(this.gl, 'resize, background reset framebuffer');
     this.brushTouchProgram?.resetFramebuffer(this.canvas.width, this.canvas.height);
+    showErrorIfExist(this.gl, 'resize, brush touch reset framebuffer');
   }
 
   public render(imageState: ImageState, options?: RenderOptions) {
     if(options.clearCanvas) {
       this.gl.clear(this.gl.COLOR_BUFFER_BIT);
     }
+    showErrorIfExist(this.gl, 'render, clear');
     const backgroundImageTexture = this.renderBackgroundImage(imageState, options);
+    showErrorIfExist(this.gl, 'render, background');
     this.renderBrushTouches(backgroundImageTexture, imageState.drawLayer.touches, options);
+    showErrorIfExist(this.gl, 'render, brush touches');
     this.renderLayerObjects(imageState.layers, options);
-
-    const error = this.gl.getError();
-    if(error) {
-      console.log(error);
-      // const div = document.createElement('div');
-      // div.innerText = `GL ERROR: ${error}`;
-      // div.style.position = 'fixed';
-      // div.style.fontSize = '32px';
-      // div.style.color = 'red';
-      // div.style.top = '25%';
-      // div.style.left = '25%';
-      // div.style.zIndex = '999999';
-      // div.style.width = '300px';
-      // div.style.height = '300px';
-      // div.style.background = 'white';
-      // document.body.appendChild(div);
-    }
+    showErrorIfExist(this.gl, 'render, objects');
   }
 
   public renderBrushTouch(imageState: ImageState, touch: BrushTouch, options?: RenderOptions) {

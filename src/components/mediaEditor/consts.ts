@@ -164,3 +164,5 @@ export const IMAGE_EDITOR_MOBILE_WIDTH_THRESHOLD = 840;
 export const MAX_FONT_SIZE = 128;
 
 export const WAIT_TILL_USER_FINISH_CHANGES_TO_COMMIT_STATE = 250;
+
+export const WEBGL_DEBUG_MODE = false;

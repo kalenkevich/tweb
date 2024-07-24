@@ -109,8 +109,10 @@ export interface TextRow {
   height: number;
   mesurement: TextMeasurements;
   styles?: Record<string, string>;
-  leftJoin?: Record<string, string>;
-  rightJoin?: Record<string, string>;
+  leftTopJoin?: Record<string, string>;
+  leftBottomJoin?: Record<string, string>;
+  rightTopJoin?: Record<string, string>;
+  rightBottomJoin?: Record<string, string>;
 }
 
 export interface StyledTextAreaStyles {
@@ -361,6 +363,7 @@ export function getTextRowStyles(box: TextBox, rows: TextRow[], index: number, l
 
   return {
     styles: {
+      'position': 'relative',
       'line-height': `${layer.fontSize}px`,
       'background-color': color,
       'width': `${row.width}px`,
@@ -368,8 +371,8 @@ export function getTextRowStyles(box: TextBox, rows: TextRow[], index: number, l
       ...marginStyles,
       ...paddingStyles,
       ...borderRadiusStyles
-    }
-    // ...getTextRowJoinStyles(rows, index, layer)
+    },
+    ...getTextRowJoinStyles(rows, index, layer)
   }
 };
 
@@ -636,158 +639,123 @@ export function getTextRowBorderRadiusStyles(rows: TextRow[], index: number, lay
 }
 
 export enum JoinType {
-  none = 'none',
-  rightFull = 'rightFull',
-  leftFull = 'leftFull',
   rightTop = 'rightTop',
   rightBottom = 'rightBottom',
   leftTop = 'leftTop',
   leftBottom = 'leftBottom'
 }
 
-export enum JoinSide {
-  left = 'left',
-  right = 'right'
-}
-
 export function getTextRowJoinStyles(rows: TextRow[], index: number, layer: TextLayer) {
-  const leftJoinType = getJoinType(rows, index, layer, JoinSide.left);
-  const rightJoinType = getJoinType(rows, index, layer, JoinSide.right);
+  const hasLeftTopJoin = hasJoin(rows, index, layer, JoinType.leftTop);
+  const hasLeftBottomJoin = hasJoin(rows, index, layer, JoinType.leftBottom);
+  const hasRightTopJoin = hasJoin(rows, index, layer, JoinType.rightTop);
+  const hasRightBottomJoin = hasJoin(rows, index, layer, JoinType.rightBottom);
 
   return {
-    leftJoin: getJoinStyles(rows, index, layer, leftJoinType),
-    rightJoin: getJoinStyles(rows, index, layer, rightJoinType)
+    leftTopJoin: hasLeftTopJoin ? getJoinStyles(rows, index, layer, JoinType.leftTop) : undefined,
+    leftBottomJoin: hasLeftBottomJoin ? getJoinStyles(rows, index, layer, JoinType.leftBottom) : undefined,
+    rightTopJoin: hasRightTopJoin ? getJoinStyles(rows, index, layer, JoinType.rightTop) : undefined,
+    rightBottomJoin: hasRightBottomJoin ? getJoinStyles(rows, index, layer, JoinType.rightBottom) : undefined
   };
 }
 
-export function getJoinType(rows: TextRow[], index: number, layer: TextLayer, side: JoinSide): JoinType {
+export function hasJoin(rows: TextRow[], index: number, layer: TextLayer, side: JoinType): boolean {
   const isFirstRow = index === 0;
   const isLastRow = index === rows.length - 1;
   const prevRow = isFirstRow ? undefined : rows[index - 1];
   const row = rows[index];
   const nextRow = isLastRow ? undefined : rows[index + 1];
-
-  if(isFirstRow) {
-    return JoinType.none;
-  }
-
-  if(isLastRow) {
-    return JoinType.none;
-  }
+  const radius = layer.borderRadius;
 
   if(layer.alignment === TextAlignment.left) {
-    if(side === JoinSide.left) {
-      return JoinType.none;
+    if(side === JoinType.rightTop) {
+      return isFirstRow ? false: row.width + radius < prevRow.width;
     }
 
-    if(row.width < prevRow.width && row.width < nextRow.width) {
-      return JoinType.rightFull;
+    if(side === JoinType.rightBottom) {
+      return isLastRow ? false : row.width + radius < nextRow.width;
     }
 
-    if(row.width < prevRow.width && row.width > nextRow.width) {
-      return JoinType.rightTop;
-    }
-
-    if(row.width > prevRow.width && row.width < nextRow.width) {
-      return JoinType.rightBottom;
-    }
-
-    return JoinType.none;
+    return false;
   }
 
   if(layer.alignment === TextAlignment.right) {
-    if(side === JoinSide.right) {
-      return JoinType.none;
+    if(side === JoinType.leftTop) {
+      return isFirstRow ? false : row.width + radius < prevRow.width;
     }
 
-    if(row.width < prevRow.width && row.width < nextRow.width) {
-      return JoinType.leftFull;
+    if(side === JoinType.leftBottom) {
+      return isLastRow ? false : row.width + radius < nextRow.width;
     }
 
-    if(row.width < prevRow.width && row.width > nextRow.width) {
-      return JoinType.leftTop;
-    }
-
-    if(row.width > prevRow.width && row.width < nextRow.width) {
-      return JoinType.leftBottom;
-    }
-
-    return JoinType.none;
+    return false;
   }
 
   if(layer.alignment = TextAlignment.center) {
-    if(side === JoinSide.right) {
-      if(row.width < prevRow.width && row.width < nextRow.width) {
-        return JoinType.rightFull;
-      }
-
-      if(row.width < prevRow.width && row.width > nextRow.width) {
-        return JoinType.rightTop;
-      }
-
-      if(row.width > prevRow.width && row.width < nextRow.width) {
-        return JoinType.rightBottom;
-      }
+    if(side === JoinType.rightTop) {
+      return isFirstRow ? false : row.width + radius < prevRow.width;
     }
 
-    if(row.width < prevRow.width && row.width < nextRow.width) {
-      return JoinType.leftFull;
+    if(side === JoinType.rightBottom) {
+      return isLastRow ? false : row.width + radius < nextRow.width;
     }
 
-    if(row.width < prevRow.width && row.width > nextRow.width) {
-      return JoinType.leftTop;
+    if(side === JoinType.leftTop) {
+      return isFirstRow ? false : row.width + radius < prevRow.width;
     }
 
-    if(row.width > prevRow.width && row.width < nextRow.width) {
-      return JoinType.leftBottom;
+    if(side === JoinType.leftBottom) {
+      return isLastRow ? false : row.width + radius < nextRow.width;
     }
   }
 
-  return JoinType.none;
+  return false;
 }
 
 export function getJoinStyles(rows: TextRow[], index: number, layer: TextLayer, type: JoinType) {
-  const [r, g, b, a] = anyColorToRgbaColor(layer.color);
-  const row = rows[index];
-  const size = row.height + layer.padding;
+  const backgroundColor = anyColorToHexColor(layer.color);
+  const radius = layer.borderRadius;
+  // || rows[index].height / 2;
 
   switch(type) {
-    case JoinType.none: return undefined;
-    case JoinType.rightFull: return {
-      'margin': '-1px',
-      'width': `${size}px`,
-      'height': `${size}px`,
-      'background-image': `radial-gradient(circle at ${size * 0.75}px ${size * 0.5}px, rgba(${r},${g},${b},0) 0%, rgba(${r},${g},${b},0) 70%, rgba(${r},${g},${b},1) 50%, rgba(${r},${g},${b},1) 100%)`
-    };
     case JoinType.rightTop: return {
-      'margin': '-1px',
-      'width': `${size}px`,
-      'height': `${size}px`,
-      'background-image': `radial-gradient(circle at ${size}px ${size}px, rgba(${r},${g},${b},0) 0%, rgba(${r},${g},${b},0) 70%, rgba(${r},${g},${b},1) 50%, rgba(${r},${g},${b},1) 100%)`
+      'position': 'absolute',
+      'right': `-${radius}px`,
+      'top': '0',
+      'width': `${radius}px`,
+      'height': `${radius}px`,
+      'clip-path': `path('M0,0 Q${radius},0 ${radius},${radius} L${radius},0')`,
+      'transform': 'rotateZ(-90deg)',
+      'background-color': backgroundColor
     };
     case JoinType.rightBottom: return {
-      'margin': '-1px',
-      'width': `${size}px`,
-      'height': `${size}px`,
-      'background-image': `radial-gradient(circle at ${size}px 0px, rgba(${r},${g},${b},0) 0%, rgba(${r},${g},${b},0) 70%, rgba(${r},${g},${b},1) 50%, rgba(${r},${g},${b},1) 100%)`
-    };
-    case JoinType.leftFull: return {
-      'margin': '-1px',
-      'width': `${size}px`,
-      'height': `${size}px`,
-      'background-image': `radial-gradient(circle at ${size * 0.25}px ${size * 0.5}px, rgba(${r},${g},${b},0) 0%, rgba(${r},${g},${b},0) 70%, rgba(${r},${g},${b},1) 50%, rgba(${r},${g},${b},1) 100%)`
+      'position': 'absolute',
+      'right': `-${radius}px`,
+      'bottom': '0',
+      'width': `${radius}px`,
+      'height': `${radius}px`,
+      'clip-path': `path('M0,0 Q${radius},0 ${radius},${radius} L${radius},0')`,
+      'transform': 'rotateZ(180deg)',
+      'background-color': backgroundColor
     };
     case JoinType.leftTop: return {
-      'margin': '-1px',
-      'width': `${size}px`,
-      'height': `${size}px`,
-      'background-image': `radial-gradient(circle at 0px ${size}px, rgba(${r},${g},${b},0) 0%, rgba(${r},${g},${b},0) 70%, rgba(${r},${g},${b},1) 50%, rgba(${r},${g},${b},1) 100%)`
+      'position': 'absolute',
+      'left': `-${radius}px`,
+      'top': '0',
+      'width': `${radius}px`,
+      'height': `${radius}px`,
+      'clip-path': `path('M0,0 Q${radius},0 ${radius},${radius} L${radius},0')`,
+      'background-color': backgroundColor
     };
     case JoinType.leftBottom: return {
-      'margin': '-1px',
-      'width': `${size}px`,
-      'height': `${size}px`,
-      'background-image': `radial-gradient(circle at 0px 0px, rgba(${r},${g},${b},0) 0%, rgba(${r},${g},${b},0) 70%, rgba(${r},${g},${b},1) 50%, rgba(${r},${g},${b},1) 100%)`
+      'position': 'absolute',
+      'left': `-${radius}px`,
+      'bottom': '0',
+      'width': `${radius}px`,
+      'height': `${radius}px`,
+      'clip-path': `path('M0,0 Q${radius},0 ${radius},${radius} L${radius},0')`,
+      'transform': 'rotateZ(90deg)',
+      'background-color': backgroundColor
     };
   }
 }

@@ -6,6 +6,7 @@ import {WebGlFrameBuffer, createFrameBuffer} from '../helpers/webglFramebuffer';
 import {WebGlTexture, createWebGlTexture, TextureSourceType} from '../helpers/webglTexture';
 import {ImageDrawObject} from '../drawObject/imageDrawObject';
 import {ImageFilterState, IMAGE_FILTER_NAMES} from '../../types';
+import {showErrorIfExist} from '../helpers/webglDebugHelper';
 
 const BackgroundImageShaders = {
   vertext: `#version 300 es
@@ -355,6 +356,7 @@ export class BackgroundImageProgram extends BaseWebglProgram {
       format: gl.RGBA,
       internalFormat: gl.RGBA
     });
+    showErrorIfExist(gl, 'background program setup texture');
   }
 
   draw(imageDrawObject: ImageDrawObject): void {
@@ -424,7 +426,12 @@ export class BackgroundImageProgram extends BaseWebglProgram {
       wrapS: gl.CLAMP_TO_EDGE,
       wrapT: gl.CLAMP_TO_EDGE
     });
+    showErrorIfExist(gl, 'background program create webgl texture');
+
     this.framebuffer = createFrameBuffer(gl, {texture: [this.framebufferTexture]});
+    showErrorIfExist(gl, 'background program create framebuffer');
+
     this.clearFramebuffer();
+    showErrorIfExist(gl, 'background program clear framebuffer');
   }
 }

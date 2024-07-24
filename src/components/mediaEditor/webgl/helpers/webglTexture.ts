@@ -35,11 +35,13 @@ export interface Uint8ArrayBufferTextureSource {
 }
 
 export interface CreateTextureSourceOptions {
-  sharedMemory: boolean;
-  flipY: boolean;
+  copy?: boolean;
+  sharedMemory?: boolean;
+  flipY?: boolean;
 }
 
 const DefaultCreateOptions: CreateTextureSourceOptions = {
+  copy: false,
   sharedMemory: false,
   flipY: false
 };
@@ -88,15 +90,6 @@ export function createImageElementTextureSource(
     data: source
   };
 }
-
-// export async function blobToArrayBufferSource(sourceBlob: Blob): Promise<Uint8ClampedArrayBufferTextureSource> {
-//   const sourceImage = await createImageBitmap(sourceBlob);
-//   const canvas = new OffscreenCanvas(sourceImage.width, sourceImage.height);
-//   const ctx = canvas.getContext('2d') as OffscreenCanvasRenderingContext2D;
-//   const resultData = new Uint8ClampedArray(ctx.getImageData(0, 0, sourceImage.width, sourceImage.height).data.buffer);
-
-//   return toUint8ClampedTextureSource(resultData, sourceImage.width, sourceImage.height);
-// }
 
 /** Bitmap image source. Ready to be used in canvas by GPU. */
 export interface ImageBitmapTextureSource {
@@ -218,6 +211,18 @@ export function createWebGlTexture(gl: CompatibleWebGLRenderingContext, options:
       options.format || gl.RGBA,
       options.type || gl.UNSIGNED_BYTE,
       options.pixels
+    );
+  } else {
+    gl.texImage2D(
+      gl.TEXTURE_2D,
+      level,
+      options.internalFormat || gl.RGBA,
+      0,
+      0,
+      0, // border
+      options.format || gl.RGBA,
+      options.type || gl.UNSIGNED_BYTE,
+      null
     );
   }
 

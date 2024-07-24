@@ -24,6 +24,7 @@ export function ImageStickerControl(props: ImageStickerControlProps): JSX.Elemen
       },
       onMediaClicked: (e) => {
         const el = e.target as HTMLDivElement;
+        const img = el.children[0] as HTMLImageElement | HTMLCanvasElement;
         const stickerId = el.dataset['docId'];
 
         props.onImageChange({
@@ -31,8 +32,8 @@ export function ImageStickerControl(props: ImageStickerControlProps): JSX.Elemen
           layerId: -1,
           layer: {
             ...DEFAULT_STICKER_LAYER,
-            width: el.offsetWidth,
-            height: el.offsetHeight,
+            width: img.width,
+            height: img.height,
             stickerId
           },
           action: AttachmentChangeAction.create,

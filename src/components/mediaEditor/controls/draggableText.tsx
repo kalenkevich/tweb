@@ -49,13 +49,20 @@ export function StyledTextarea(props: StyledInputProps) {
           <For each={textbox().rows}>
             {(row: TextRow) => (
               <div class="extarea-background--row-wrapper" style={textbox().styles.rowWrapper}>
-                <Show when={row.leftJoin}>
-                  <div class="textarea-background--row-join" style={row.leftJoin}></div>
-                </Show>
-                <div class="textarea-background--row" style={row.styles}></div>
-                <Show when={row.rightJoin}>
-                  <div class="textarea-background--row-join" style={row.rightJoin}></div>
-                </Show>
+                <div class="textarea-background--row" style={row.styles}>
+                  <Show when={row.leftTopJoin}>
+                    <div class="textarea-background--row-join" style={row.leftTopJoin}></div>
+                  </Show>
+                  <Show when={row.leftBottomJoin}>
+                    <div class="textarea-background--row-join" style={row.leftBottomJoin}></div>
+                  </Show>
+                  <Show when={row.rightTopJoin}>
+                    <div class="textarea-background--row-join" style={row.rightTopJoin}></div>
+                  </Show>
+                  <Show when={row.rightBottomJoin}>
+                    <div class="textarea-background--row-join" style={row.rightBottomJoin}></div>
+                  </Show>
+                </div>
               </div>
             )}
           </For>
@@ -192,6 +199,11 @@ export function DraggableText(props: DraggableTextProps) {
 
   const onClick = () => {
     setActiveInternalState(true);
+
+    if(document.activeElement !== inputRef()) {
+      inputRef().focus();
+    }
+
     props.onClick();
   };
 

@@ -66,7 +66,7 @@ export async function precompileStickerObjects(
         thumb: getStickerEffectThumb(doc)
       });
 
-      if(doc.sticker === 2) {
+      if(doc.sticker === 2 && doc.animated === true) {
         let fps: number;
         let totalFrames: number;
         const animationPlayer = await lottieLoader.loadAnimationWorker({
@@ -126,9 +126,8 @@ export async function renderStaticSticker(staticStickerInfo: StaticStickerData):
     doc: staticStickerInfo.doc,
     div: staticStickerInfo.el,
     group: 'none',
-    onlyThumb: true,
-    width: 512,
-    height: 512
+    width: staticStickerInfo.object.width * window.devicePixelRatio,
+    height: staticStickerInfo.object.height * window.devicePixelRatio
   });
   const img = staticStickerInfo.el.children[0] as HTMLImageElement;
 
@@ -145,21 +144,12 @@ export async function renderStaticSticker(staticStickerInfo: StaticStickerData):
 
 export async function renderAnimatedStickerFrame(animatedSticker: AnimatedStickerData, frameIndex: number): Promise<ImageElementTextureSource> {
   return new Promise<ImageElementTextureSource>((resolve) => {
-    // animatedSticker.animationPlayer.addEventListener('firstFrame', () => {
-    //   const texture = createImageElementTextureSource(animatedSticker.animationPlayer.canvas[0] as HTMLCanvasElement);
-
-    //   animatedSticker.animationPlayer.stop(false);
-
-    //   resolve(texture);
-    // });
-
     const frame = frameIndex % animatedSticker.totalFrames;
     animatedSticker.animationPlayer.playPart({
       from: frame,
       to: frame,
       callback: () => {
         const texture = createImageElementTextureSource(animatedSticker.animationPlayer.canvas[0] as HTMLCanvasElement);
-        // animatedSticker.animationPlayer.stop(false);
         resolve(texture);
       }
     });

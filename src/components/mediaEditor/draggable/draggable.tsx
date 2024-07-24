@@ -276,7 +276,8 @@ export function Draggable(props: DraggableProps) {
   }
 
   const onElementClick = (e: Event) => {
-    if(e.target === elRef() || e.target === c()) {
+    const el = e.target as HTMLElement;
+    if(!el.dataset['anchor']) {
       setCurrentMode(DraggableMode.move);
     }
 
@@ -313,7 +314,8 @@ export function Draggable(props: DraggableProps) {
     }}
     class={['draggable-object', props.class || ''].join(' ')}
     classList={{'active': props.active}}
-    onMouseDown={onElementClick}>
+    onMouseDown={onElementClick}
+    onTouchStart={onElementClick}>
       <Show when={props.removable}>
         <div class="draggable-object__remove-icon-wrapper"
           onTouchStart={onRemoveClick}
@@ -323,21 +325,25 @@ export function Draggable(props: DraggableProps) {
       </Show>
       <Show when={props.resizable}>
         <div class="resize-anchor resize-anchor--top-left"
+          data-anchor="true"
           data-anchor-position={ResizeAnchorPosition.topLeft}
           onMouseDown={onResizeAnchorClick}
           onTouchStart={onResizeAnchorClick}>
         </div>
         <div class="resize-anchor resize-anchor--top-right"
+          data-anchor="true"
           data-anchor-position={ResizeAnchorPosition.topRight}
           onMouseDown={onResizeAnchorClick}
           onTouchStart={onResizeAnchorClick}>
         </div>
         <div class="resize-anchor resize-anchor--bottom-left"
+          data-anchor="true"
           data-anchor-position={ResizeAnchorPosition.bottomLeft}
           onMouseDown={onResizeAnchorClick}
           onTouchStart={onResizeAnchorClick}>
         </div>
         <div class="resize-anchor resize-anchor--bottom-right"
+          data-anchor="true"
           data-anchor-position={ResizeAnchorPosition.bottomRight}
           onMouseDown={onResizeAnchorClick}
           onTouchStart={onResizeAnchorClick}>
@@ -345,6 +351,7 @@ export function Draggable(props: DraggableProps) {
       </Show>
       <Show when={props.rotatable}>
         <div class="rotate-anchor"
+          data-anchor="true"
           onMouseDown={onRotateAnchorClick}>
           <IconTsx class="rotate-anchor__icon" icon="rotate_left"/>
         </div>

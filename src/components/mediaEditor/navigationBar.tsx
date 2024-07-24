@@ -20,13 +20,13 @@ export function NavigationBar(props: MobileNavigationBarProps) {
       </div>
       <div class="navigation-bar-icons">
         <ButtonIconTsx
-          disabled={props.canUndo}
+          disabled={!props.canUndo}
           icon="undo"
           asSvgIcon={true}
           onClick={props.onUndo}
         />
         <ButtonIconTsx
-          disabled={props.canRedo}
+          disabled={!props.canRedo}
           icon="redo"
           asSvgIcon={true}
           onClick={props.onRedo}
