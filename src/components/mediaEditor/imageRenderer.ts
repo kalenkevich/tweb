@@ -1,10 +1,13 @@
 import {BrushTouch, ImageState, ObjectLayerType} from './types';
+import {ArrayBufferTextureSource} from './webgl/helpers/webglTexture';
 
 export interface ImageRendererOptions {
   compileMode?: boolean;
 }
 
 export interface RenderOptions {
+  clearCanvas?: boolean;
+  flipImageByYAxis?: boolean;
   render?: boolean;
   layers?: ObjectLayerType[] | 'all';
   clearBrushProgramFramebuffer?: boolean;
@@ -30,7 +33,9 @@ export interface ImageRenderer {
 
   render(imageState: ImageState, options?: RenderOptions): void;
 
-  renderBrushTouch(imageState: ImageState, brushTouch: BrushTouch, options?: RenderOptions): void;
+  renderTexture(texture: ArrayBufferTextureSource, options?: RenderOptions): void;
 
-  compileImage(imageState: ImageState, options?: RenderOptions): Promise<Blob>
+  getRenderedData(flipY?: boolean): Uint8Array;
+
+  renderBrushTouch(imageState: ImageState, brushTouch: BrushTouch, options?: RenderOptions): void;
 }

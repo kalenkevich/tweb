@@ -1,7 +1,7 @@
 import {ImageState, ObjectLayerType, BrushTouch, ObjectLayer} from '../types';
 import {ImageRenderer, ImageRendererOptions, RenderOptions} from '../imageRenderer';
 import {CompatibleWebGLRenderingContext, makeCompatibleWebGLRenderingContext} from './webglContext';
-import {WebGlTexture} from './helpers/webglTexture';
+import {createWebGlTexture, ArrayBufferTextureSource, WebGlTexture} from './helpers/webglTexture';
 import {ObjectLayerProgram} from './programs/objectLayerProgram';
 import {BrushTouchProgram} from './programs/brushTouchProgram';
 import {BackgroundImageProgram} from './programs/backgroundImageProgram';
@@ -9,17 +9,6 @@ import {FramebufferProgram} from './programs/framebufferProgram';
 import {toImageDrawObject} from './drawObject/imageDrawObject';
 import {toBrushTouchDrawObject} from './drawObject/brushTouchDrawObject';
 import {Matrix3, createMatrix3, multiplyMatrix3, rotateMatrix3, translateMatrix3, scaleMatrix3} from '../helpers/matrixHelpers';
-
-const a = document.createElement('a');
-document.body.appendChild(a);
-a.style.display = 'none';
-function saveBlobAsFile(blob: Blob, fileName: string) {
-  const url = window.URL.createObjectURL(blob);
-  a.href = url;
-  a.download = fileName;
-  a.click();
-  window.URL.revokeObjectURL(url);
-}
 
 export class WebglImageRenderer implements ImageRenderer {
   private canvas: HTMLCanvasElement;
@@ -93,6 +82,9 @@ export class WebglImageRenderer implements ImageRenderer {
   }
 
   public render(imageState: ImageState, options?: RenderOptions) {
+    if(options.clearCanvas) {
+      this.gl.clear(this.gl.COLOR_BUFFER_BIT);
+    }
     const backgroundImageTexture = this.renderBackgroundImage(imageState, options);
     this.renderBrushTouches(backgroundImageTexture, imageState.drawLayer.touches, options);
     this.renderLayerObjects(imageState.layers, options);
@@ -116,6 +108,9 @@ export class WebglImageRenderer implements ImageRenderer {
   }
 
   public renderBrushTouch(imageState: ImageState, touch: BrushTouch, options?: RenderOptions) {
+    if(options.clearCanvas) {
+      this.gl.clear(this.gl.COLOR_BUFFER_BIT);
+    }
     const backgroundImage = this.renderBackgroundImage(imageState, options);
     this.renderBrushTouches(backgroundImage, [touch], {...options, clearBrushProgramFramebuffer: false});
     this.renderLayerObjects(imageState.layers, options);
@@ -126,15 +121,68 @@ export class WebglImageRenderer implements ImageRenderer {
     }
   }
 
+  public renderTexture(textureSource: ArrayBufferTextureSource, options: RenderOptions) {
+    if(options.clearCanvas) {
+      this.gl.clear(this.gl.COLOR_BUFFER_BIT);
+    }
+    const canvasMatrix = getProjectionViewMatrix({
+      translation: [0, 0],
+      scale: [1, 1],
+      rotation: 0,
+      origin: [0, 0]
+    }, options.flipImageByYAxis);
+    const image = createWebGlTexture(this.gl, {
+      name: 'brush_touches_framebuffer_texture',
+      width: textureSource.width,
+      height: textureSource.height,
+      pixels: textureSource.data,
+      minFilter: this.gl.LINEAR,
+      magFilter: this.gl.LINEAR,
+      wrapS: this.gl.CLAMP_TO_EDGE,
+      wrapT: this.gl.CLAMP_TO_EDGE
+    });
+
+    this.framebufferProgram.link();
+    this.framebufferProgram.setMatrix(canvasMatrix);
+    this.framebufferProgram.setWidth(this.canvas.width);
+    this.framebufferProgram.setHeight(this.canvas.height);
+    this.framebufferProgram.setDevicePixelRatio(this.devicePixelRatio);
+    this.framebufferProgram.draw(image);
+    this.framebufferProgram.unlink();
+    image.destroy();
+  }
+
+  public getRenderedData(flipY: boolean = false): Uint8Array {
+    const width = this.canvas.width;
+    const height = this.canvas.height;
+    const length = width * height * 4;
+    const data = new Uint8Array(length);
+    this.gl.readPixels(0, 0, width, height, this.gl.RGBA, this.gl.UNSIGNED_BYTE, data);
+
+    if(!flipY) {
+      return data;
+    }
+
+    const row = width * 4;
+    const end = (height - 1) * row;
+    const pixels = new Uint8Array(length);
+    for(let i = 0; i < length; i += row) {
+      pixels.set(data.subarray(i, i + row), end - i);
+    }
+
+    return pixels;
+  }
+
   renderBackgroundImage(imageState: ImageState, options: RenderOptions): WebGlTexture {
     const renderAllLayers = options?.layers === 'all';
     const renderBackgroundLayer = renderAllLayers || (options?.layers || []).includes(ObjectLayerType.backgroundImage);
-    const imageMatrix = getProjectionViewMatrix(imageState);
-    const imageDrawObject = toImageDrawObject(imageState, this.canvas);
-
     if(!renderBackgroundLayer) {
       return;
     }
+
+    const imageMatrix = getProjectionViewMatrix(imageState, options.flipImageByYAxis);
+    const imageDrawObject = toImageDrawObject(imageState, this.canvas);
+
     // Render main image first
     this.backgroundImageProgram.link();
     this.backgroundImageProgram.setMatrix(imageMatrix);
@@ -146,13 +194,13 @@ export class WebglImageRenderer implements ImageRenderer {
     this.backgroundImageProgram.drawToFramebuffer(imageDrawObject);
     this.backgroundImageProgram.unlink();
 
-    const backgroundImage = this.backgroundImageProgram.getFramebufferTexture();;
+    const backgroundImage = this.backgroundImageProgram.getFramebufferTexture();
     const canvasMatrix = getProjectionViewMatrix({
       translation: [0, 0],
       scale: [1, 1],
       rotation: 0,
       origin: [0, 0]
-    });
+    }, options.flipImageByYAxis);
 
     this.framebufferProgram.link();
     this.framebufferProgram.setMatrix(canvasMatrix);
@@ -180,7 +228,7 @@ export class WebglImageRenderer implements ImageRenderer {
       scale: [1, 1],
       rotation: 0,
       origin: [0, 0]
-    });
+    }, options.flipImageByYAxis);
     this.brushTouchProgram.link();
     this.brushTouchProgram.setMatrix(canvasMatrix);
     this.brushTouchProgram.setWidth(this.canvas.width);
@@ -222,7 +270,7 @@ export class WebglImageRenderer implements ImageRenderer {
       if(!renderAllLayers && !options.layers.includes(object.type)) {
         continue;
       }
-      const objectLayerMatrix = getProjectionViewMatrix(object);
+      const objectLayerMatrix = getProjectionViewMatrix(object, options.flipImageByYAxis);
       const imageDrawObject = toImageDrawObject(object, this.canvas);
 
       this.imageProgram.setMatrix(objectLayerMatrix);
@@ -230,17 +278,6 @@ export class WebglImageRenderer implements ImageRenderer {
     }
 
     this.imageProgram.unlink();
-  }
-
-  async compileImage(imageState: ImageState, renderOptions: RenderOptions): Promise<Blob> {
-    this.render(imageState, renderOptions);
-
-    return new Promise(resolve => {
-      this.canvas.toBlob((blobResult) => {
-        saveBlobAsFile(blobResult, 'result_image');
-        resolve(blobResult);
-      });
-    });
   }
 }
 
@@ -250,10 +287,10 @@ export interface ProjectionProperties {
   scale: [number, number];
   origin: [number, number];
 }
-export function getProjectionViewMatrix(state: ProjectionProperties): Matrix3 {
+export function getProjectionViewMatrix(state: ProjectionProperties, flipY: boolean = false): Matrix3 {
   const translationMatrix = translateMatrix3(createMatrix3(), [state.translation[0], state.translation[1]]);
   const rotationMatrix = rotateMatrix3(createMatrix3(), degreesToRadians(state.rotation));
-  const scaleMatrix = scaleMatrix3(createMatrix3(), state.scale);
+  const scaleMatrix = scaleMatrix3(createMatrix3(), [state.scale[0], state.scale[1] * (flipY ? -1 : 1)]);
   const originMatrix = translateMatrix3(createMatrix3(), [state.origin[0], state.origin[1]]);
 
   return multiplyMatrix3(

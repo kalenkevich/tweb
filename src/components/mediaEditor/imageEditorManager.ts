@@ -1,14 +1,13 @@
-import {ImageState, ImageFilterState, ObjectLayerType, BrushTouch, ObjectLayer} from './types';
+import {ImageState, ImageFilterState, ObjectLayerType, BrushTouch, ObjectLayer, TextLayer, StickerLayer} from './types';
 import {DEFAULT_IMAGE_STATE, WAIT_TILL_USER_FINISH_CHANGES_TO_COMMIT_STATE} from './consts';
 import {ImageRenderer, RenderOptions, DEFAULT_RENDER_OPTIONS} from './imageRenderer';
 import {WebglImageRenderer} from './webgl/webglImageRenderer';
 import {RenderQueue} from './helpers/renderQueue';
 import {easyAnimation} from './helpers/animation';
-import {renderTextLayerMultiline} from './helpers/textHelper';
-import {createImageElementTextureSource} from './webgl/helpers/webglTexture';
-import rootScope from '../../lib/rootScope';
 import SuperStickerRenderer from '../emoticonsDropdown/tabs/SuperStickerRenderer';
-import {resetTextureIndex} from './webgl/helpers/webglTexture';
+import {resetTextureIndex, createUint8TextureSource} from './webgl/helpers/webglTexture';
+import {precompileTextObjects, precompileStickerObjects, adjustDrawLayer, renderAnimatedStickerFrame} from './helpers/imageCompileHelper';
+import {GIFEncoder, quantize, applyPalette} from './gif/index';
 
 export class ImageEditorManager {
   private canvas?: HTMLCanvasElement;
@@ -34,6 +33,7 @@ export class ImageEditorManager {
     private readonly stateSnapshowCounts = 50
   ) {
     this.shadowCanvas = document.createElement('canvas');
+    this.shadowCanvas.setAttribute('willReadFrequently', 'true');
     this.imageStates.push({
       id: this.getNextImageStateId(),
       state: initialImageState,
@@ -73,91 +73,88 @@ export class ImageEditorManager {
 
   async compileImage(renderOptions: RenderOptions): Promise<Blob> {
     const state = this.getCurrentImageState();
-    const promises = [];
-    for(const layer of state.layers) {
-      if(layer.type === ObjectLayerType.text && !!layer.text) {
-        promises.push(renderTextLayerMultiline(layer.text, layer).then(texture => {
-          layer.texture = texture;
-          const scaleX = state.resultWidth / this.canvas.width;
-          const scaleY = state.resultHeight / this.canvas.height;
+    const textObjectsRaw = state.layers.filter(l => l.type === ObjectLayerType.text && !!l.text) as TextLayer[];
+    const stickerObjectsRaw = state.layers.filter(l => l.type === ObjectLayerType.sticker) as StickerLayer[];
+    const [
+      preparedTextObjects,
+      stickerObjects
+    ] = await Promise.all([
+      precompileTextObjects(this.canvas.width, this.canvas.height, state, textObjectsRaw),
+      precompileStickerObjects(this.canvas.width, this.canvas.height, state, stickerObjectsRaw)
+    ]);
+    const preparedDrawLayer = adjustDrawLayer(this.canvas.width, this.canvas.height, state, state.drawLayer);
+    const preparedStaticStickersObjects = stickerObjects.staticStickers.map(s => s.object);
 
-          return {
-            ...layer,
-            width: texture.width,
-            height: texture.height,
-            translation: [
-              layer.translation[0] * scaleX,
-              layer.translation[1] * scaleY
-            ] as [number, number],
-            origin:[
-              layer.origin[0],
-              layer.origin[1]
-            ] as [number, number],
-            scale: [scaleX, scaleY] as [number, number]
-          };
-        }));
-      } else if(layer.type === ObjectLayerType.sticker) {
-        promises.push(
-          rootScope.managers.appDocsManager.getDoc(layer.stickerId).then(async(doc) => {
-            const el = document.createElement('div');
-            await new Promise<void>((resolve) => {
-              this.stickerRenderer.renderSticker(doc, el, undefined, undefined, 512, 512, () => {
-                const img = el.children[0] as HTMLImageElement;
-                if(img.complete) {
-                  resolve();
-                } else {
-                  img.addEventListener('load', () => resolve());
-                }
-              });
-            })
-            const img = el.children[0] as HTMLImageElement;
-            img.width = layer.width * window.devicePixelRatio;
-            img.height = layer.height * window.devicePixelRatio;
-            const texture = createImageElementTextureSource(el.children[0] as HTMLImageElement);
-            layer.texture = texture;
-            const scaleX = state.resultWidth / this.canvas.width;
-            const scaleY = state.resultHeight / this.canvas.height;
+    if(stickerObjects.animatedStickers.length > 0) {
+      const totalFrames = Math.max(...stickerObjects.animatedStickers.map(s => s.totalFrames));
+      const layers = [
+        ...preparedTextObjects,
+        ...preparedStaticStickersObjects
+      ].sort((l1, l2) => l1.zIndex - l2.zIndex);
 
-            return {
-              ...layer,
-              width: texture.width,
-              height: texture.height,
-              translation: [
-                layer.translation[0] * scaleX,
-                layer.translation[1] * scaleY
-              ] as [number, number],
-              origin:[
-                layer.origin[0],
-                layer.origin[1]
-              ] as [number, number],
-              scale: [scaleX, scaleY] as [number, number]
-            };
+      const gif = GIFEncoder();
+
+      // render static background first
+      this.compiler.render({
+        ...state,
+        drawLayer: preparedDrawLayer,
+        layers: layers
+      }, renderOptions);
+      const staticObjectsBackground = createUint8TextureSource(
+        this.compiler.getRenderedData(),
+        this.shadowCanvas.width,
+        this.shadowCanvas.height
+      );
+
+      for(let frameIndex = 0; frameIndex < totalFrames; frameIndex += 3) {
+        const preparedAnimatedStickerObjects = await Promise.all(
+          stickerObjects.animatedStickers.map(async(stickerInfo) => {
+            stickerInfo.object.texture = await renderAnimatedStickerFrame(stickerInfo, frameIndex);
+
+            return stickerInfo.object;
           })
         );
+        const isFirstFrame = frameIndex === 0;
+
+        this.compiler.renderTexture(staticObjectsBackground, {clearCanvas: true});
+        this.compiler.render({
+          ...state,
+          drawLayer: preparedDrawLayer,
+          layers: preparedAnimatedStickerObjects
+        }, {
+          ...renderOptions,
+          clearCanvas: false,
+          layers: [ObjectLayerType.sticker]
+        });
+
+        const data = this.compiler.getRenderedData(true);
+        const palette = quantize(data, 256, {format: 'rgb444'});
+        const index = applyPalette(data, palette);
+        gif.writeFrame(index, this.shadowCanvas.width, this.shadowCanvas.height, {
+          first: isFirstFrame,
+          palette,
+          repeat: 0
+        });
       }
+
+      gif.finish();
+      return new Blob([gif.bytes()], {type: 'image/gif'});
+    } else {
+      const layers = [
+        ...preparedTextObjects,
+        ...preparedStaticStickersObjects
+      ].sort((l1, l2) => l1.zIndex - l2.zIndex);
+
+      this.compiler.render({
+        ...state,
+        drawLayer: preparedDrawLayer,
+        layers
+      }, renderOptions);
+
+      return new Promise<Blob>(resolve => {
+        this.shadowCanvas.toBlob(blobResult => resolve(blobResult));
+      });
     }
-    const preparedLayers: ObjectLayer[] = await Promise.all(promises);
-    preparedLayers.sort((l1, l2) => l1.zIndex - l2.zIndex);
-
-    const scaleX = state.resultWidth / this.canvas.width;
-    const scaleY = state.resultHeight / this.canvas.height;
-    const preparedDrawLayer = {
-      ...state.drawLayer,
-      touches: state.drawLayer.touches.map(t => {
-        return {
-          ...t,
-          x: t.x * scaleX,
-          y: t.y * scaleY,
-          size: t.size * scaleX
-        }
-      })
-    };
-
-    return this.compiler.compileImage({
-      ...state,
-      drawLayer: preparedDrawLayer,
-      layers: preparedLayers
-    }, renderOptions);
   }
 
   canUndo(): boolean {

@@ -44,33 +44,18 @@ const DefaultCreateOptions: CreateTextureSourceOptions = {
   flipY: false
 };
 
-export function toUint8ClampedTextureSource(
-  source: Uint8ClampedArray | Uint8Array | number[],
+export function createUint8TextureSource(
+  source: Uint8Array,
   width: number,
   height: number,
   options: CreateTextureSourceOptions = DefaultCreateOptions
-): Uint8ClampedArrayBufferTextureSource {
-  let resultBuffer: Uint8ClampedArray;
-
-  if(options.flipY) {
-    source = flipYArray(source, width, height);
-  }
-
-  if(options.sharedMemory) {
-    const sharedMemoryBuffer = new SharedArrayBuffer(source.length * Uint8ClampedArray.BYTES_PER_ELEMENT);
-    resultBuffer = new Uint8ClampedArray(sharedMemoryBuffer);
-  } else {
-    resultBuffer = new Uint8ClampedArray(source.length);
-  }
-
-  resultBuffer.set(source);
-
+): Uint8ArrayBufferTextureSource {
   return {
     id: currentTextureId++,
-    type: TextureSourceType.UINT_8_CLAMPED_ARRAY_BUFFER,
+    type: TextureSourceType.UINT8_ARRAY_BUFFER,
     width,
     height,
-    data: resultBuffer
+    data: source
   };
 }
 
@@ -104,14 +89,14 @@ export function createImageElementTextureSource(
   };
 }
 
-export async function blobToArrayBufferSource(sourceBlob: Blob): Promise<Uint8ClampedArrayBufferTextureSource> {
-  const sourceImage = await createImageBitmap(sourceBlob);
-  const canvas = new OffscreenCanvas(sourceImage.width, sourceImage.height);
-  const ctx = canvas.getContext('2d') as OffscreenCanvasRenderingContext2D;
-  const resultData = new Uint8ClampedArray(ctx.getImageData(0, 0, sourceImage.width, sourceImage.height).data.buffer);
+// export async function blobToArrayBufferSource(sourceBlob: Blob): Promise<Uint8ClampedArrayBufferTextureSource> {
+//   const sourceImage = await createImageBitmap(sourceBlob);
+//   const canvas = new OffscreenCanvas(sourceImage.width, sourceImage.height);
+//   const ctx = canvas.getContext('2d') as OffscreenCanvasRenderingContext2D;
+//   const resultData = new Uint8ClampedArray(ctx.getImageData(0, 0, sourceImage.width, sourceImage.height).data.buffer);
 
-  return toUint8ClampedTextureSource(resultData, sourceImage.width, sourceImage.height);
-}
+//   return toUint8ClampedTextureSource(resultData, sourceImage.width, sourceImage.height);
+// }
 
 /** Bitmap image source. Ready to be used in canvas by GPU. */
 export interface ImageBitmapTextureSource {
@@ -172,13 +157,26 @@ export interface WebGlTexture {
   setPixels(texturePixels: ArrayBufferTextureSource): void;
   bind(): void;
   unbind(): void;
+  destroy(): void;
 }
 
 /** Global countaer of all used textures. */
 let CURRENT_TEXTURE_INDEX = 0;
+const FREE_TEXTURE_INDICIES = new Set<number>();
 
 export function resetTextureIndex() {
   CURRENT_TEXTURE_INDEX = 0;
+}
+
+export function getTextureIndex() {
+  if(FREE_TEXTURE_INDICIES.size) {
+    const val = [...FREE_TEXTURE_INDICIES][0];
+    FREE_TEXTURE_INDICIES.delete(val);
+
+    return val;
+  }
+
+  return CURRENT_TEXTURE_INDEX++;
 }
 
 /**
@@ -190,7 +188,7 @@ export function resetTextureIndex() {
 export function createWebGlTexture(gl: CompatibleWebGLRenderingContext, options: CreateTextureOptions): WebGlTexture {
   const texture = gl.createTexture();
   const level = options.level || 0;
-  const textureIndex = options.textureIndex !== undefined ? options.textureIndex : CURRENT_TEXTURE_INDEX++;
+  const textureIndex = options.textureIndex !== undefined ? options.textureIndex : getTextureIndex();
 
   gl.activeTexture(gl.TEXTURE0 + textureIndex);
   gl.bindTexture(gl.TEXTURE_2D, texture);
@@ -281,18 +279,10 @@ export function createWebGlTexture(gl: CompatibleWebGLRenderingContext, options:
     unbind() {
       gl.activeTexture(gl.TEXTURE0);
       gl.bindTexture(gl.TEXTURE_2D, null);
+    },
+    destroy() {
+      FREE_TEXTURE_INDICIES.add(textureIndex);
     }
   };
 }
 
-export function flipYArray(data: ArrayLike<number>, width: number, height: number): number[] {
-  const flippedSource: number[] = [];
-
-  for(let row = height - 1; row >= 0; row--) {
-    for(let column = 0; column < width * 4; column++) {
-      flippedSource.push(data[row * 4 * width + column]);
-    }
-  }
-
-  return flippedSource;
-}

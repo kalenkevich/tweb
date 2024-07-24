@@ -74,7 +74,7 @@ export function applyColorOnContext(
 
 export default class RLottiePlayer extends EventListenerBase<{
   enterFrame: (frameNo: number) => void,
-  ready: () => void,
+  ready: (frameCount: number, fps: number) => void,
   firstFrame: () => void,
   cached: () => void,
   destroy: () => void
@@ -686,7 +686,7 @@ export default class RLottiePlayer extends EventListenerBase<{
     return; */
 
     !this.skipFirstFrameRendering && this.requestFrame(curFrame);
-    this.dispatchEvent('ready');
+    this.dispatchEvent('ready', frameCount, fps);
     this.addEventListener('enterFrame', () => {
       this.dispatchEvent('firstFrame');
 

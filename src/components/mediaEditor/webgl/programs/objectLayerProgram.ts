@@ -67,6 +67,10 @@ export class ObjectLayerProgram extends BaseWebglProgram {
     super(gl, vertexShaderSource, fragmentShaderSource);
   }
 
+  public destroy(): void {
+    this.texture?.destroy();
+  }
+
   onLink(): void {
     const gl = this.gl;
 
@@ -108,8 +112,8 @@ export class ObjectLayerProgram extends BaseWebglProgram {
       premultiplyAlpha: true,
       wrapS: gl.CLAMP_TO_EDGE,
       wrapT: gl.CLAMP_TO_EDGE,
-      minFilter: gl.NEAREST,
-      magFilter: gl.NEAREST,
+      minFilter: gl.LINEAR,
+      magFilter: gl.LINEAR,
       format: gl.RGBA,
       internalFormat: gl.RGBA
     });

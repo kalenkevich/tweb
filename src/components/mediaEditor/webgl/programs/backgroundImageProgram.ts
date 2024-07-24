@@ -292,6 +292,10 @@ export class BackgroundImageProgram extends BaseWebglProgram {
     super(gl, vertexShaderSource, fragmentShaderSource);
   }
 
+  public destroy(): void {
+    this.texture?.destroy();
+  }
+
   onLink(): void {
     const gl = this.gl;
 

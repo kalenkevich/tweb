@@ -55,10 +55,7 @@ import pause from '../../helpers/schedulers/pause';
 import {Accessor, createRoot, createSignal, Setter} from 'solid-js';
 import SelectedEffect from '../chat/selectedEffect';
 import ButtonIcon from '../buttonIcon';
-import Icon from '../icon';
-import readBlobAsUint8Array from '../../helpers/blob/readBlobAsUint8Array';
 import {ImageEditor} from '../mediaEditor/imageEditor';
-import {blobToArrayBufferSource} from '../mediaEditor/webgl/helpers/webglTexture';
 import {WholeDialogManagerTsx, ContentRenderProps} from '../wholeDialogManager';
 
 type SendFileParams = SendFileDetails & {

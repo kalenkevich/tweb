@@ -231,6 +231,11 @@ export class BrushTouchProgram extends BaseWebglProgram {
     super(gl, vertexShaderSource, fragmentShaderSource);
   }
 
+  public destroy(): void {
+    this.framebufferTexture?.destroy();
+    this.backgroundImageTexture?.destroy();
+  }
+
   onLink(): void {
     const gl = this.gl;
 
