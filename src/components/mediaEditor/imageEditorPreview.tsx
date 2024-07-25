@@ -14,6 +14,7 @@ import SuperStickerRenderer from '../emoticonsDropdown/tabs/SuperStickerRenderer
 export interface ImagePreviewProps extends ImageControlProps {
   selectedTabId: TabType | undefined;
   stickerRenderer: SuperStickerRenderer;
+  animatedStickers: boolean;
   onCanvasMounted: (canvas: HTMLCanvasElement) => void;
   onContainerResized: (width: number, height: number) => void;
   onActiveLayerChange: (layer?: ObjectLayer) => void;
@@ -136,6 +137,7 @@ export function ImageEditorPreview(props: ImagePreviewProps): JSX.Element {
                 isMobile={props.isMobile}
                 surface={draggingSurface()}
                 stickerRenderer={props.stickerRenderer}
+                animatedStickers={props.animatedStickers}
                 imageState={props.imageState}
                 onImageChange={props.onImageChange}
                 currentLayerIndex={props.currentLayerIndex}

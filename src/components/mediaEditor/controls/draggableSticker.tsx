@@ -3,7 +3,6 @@ import {ImageChangeType, StickerLayer, AttachmentChangeAction, ImageChangeEvent}
 import {Draggable} from '../draggable/draggable';
 import {DraggingSurface} from '../draggable/surface';
 import rootScope from '../../../lib/rootScope';
-import {MyDocument} from '../../../lib/appManagers/appDocsManager';
 import SuperStickerRenderer from '../../emoticonsDropdown/tabs/SuperStickerRenderer';
 
 export interface SuperStickerProps {
@@ -15,7 +14,6 @@ export interface SuperStickerProps {
 }
 export function SuperSticker(props: SuperStickerProps) {
   const [elRef, setElRef] = createSignal<HTMLDivElement>();
-  const [doc, setDoc] = createSignal<MyDocument>();
 
   onMount(() => {
     rerenderSticker();
@@ -24,6 +22,14 @@ export function SuperSticker(props: SuperStickerProps) {
   createEffect(on(() => [props.width, props.height], () => {
     elRef().style.width = `${props.width}px`;
     elRef().style.height = `${props.height}px`;
+  }));
+
+  createEffect(on(() => props.animate, () => {
+    if(props.animate) {
+      props.stickerRenderer.observeAnimated(elRef());
+    } else {
+      props.stickerRenderer.unobserveAnimated(elRef());
+    }
   }));
 
   onCleanup(() => {
@@ -55,6 +61,7 @@ export interface DraggableStickerProps {
   isMobile: boolean;
   surface: DraggingSurface;
   stickerRenderer: SuperStickerRenderer;
+  animatedStickers: boolean;
   layer: StickerLayer;
   isActive: boolean;
   onClick: () => void;
@@ -140,7 +147,7 @@ export function DraggableSticker(props: DraggableStickerProps) {
         });
       }}>
       <SuperSticker
-        animate={true}
+        animate={props.animatedStickers}
         stickerRenderer={props.stickerRenderer}
         stickerId={layer().stickerId}
         width={layer().width}

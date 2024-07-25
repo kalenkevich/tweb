@@ -100,6 +100,26 @@
       flex-flow: row nowrap;
       padding: .5rem .75rem;
       gap: .25rem;
+
+      .btn-icon {
+        .svg-icon {
+          svg {
+            path, rect, circle {
+              fill: rgba(255, 255, 255, 0.7);
+            }
+          }
+        }
+
+        &:hover {
+          .svg-icon {
+            svg {
+              path, rect, circle {
+                fill: rgba(255, 255, 255, 1.0);
+              }
+            }
+          }
+        }
+      }
     }
   }
 }

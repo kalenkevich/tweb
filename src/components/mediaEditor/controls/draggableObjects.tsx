@@ -8,6 +8,7 @@ import SuperStickerRenderer from '../../emoticonsDropdown/tabs/SuperStickerRende
 
 export interface DraggableObjectsProps extends ImageControlProps {
   surface: DraggingSurface;
+  animatedStickers: boolean;
   stickerRenderer: SuperStickerRenderer;
   onActiveLayerChange: (layer?: ObjectLayer) => void;
 }
@@ -43,6 +44,7 @@ export function DraggableObjects(props: DraggableObjectsProps) {
           <DraggableSticker
             isMobile={props.isMobile}
             surface={props.surface}
+            animatedStickers={props.animatedStickers}
             stickerRenderer={props.stickerRenderer}
             layer={layer as StickerLayer}
             isActive={layer === props.imageState.layers[props.currentLayerIndex]}

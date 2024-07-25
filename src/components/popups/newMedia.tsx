@@ -853,18 +853,35 @@ export default class PopupNewMedia extends PopupElement {
             <ImageEditor
               imgSource={image}
               onSave={async(editedImage: Blob) => {
-                const newFile = new File([editedImage], params.file.name);
+                const newFile = new File([editedImage], params.file.name, {type: editedImage.type});
                 params.file = newFile;
+
                 const url = params.objectURL = await apiManagerProxy.invoke('createObjectURL', newFile);
                 await renderImageFromUrlPromise(img, url);
-                const mimeType = params.file.type as MTMimeType;
-                const scaled = await this.scaleImageForTelegram(img, mimeType, true);
-                if(scaled) {
-                  params.objectURL = scaled.url;
-                  params.scaledBlob = scaled.blob;
-                }
                 params.width = img.naturalWidth;
                 params.height = img.naturalHeight;
+
+                if(newFile.type === 'image/gif') {
+                  params.noSound = true;
+
+                  const [duration] = await Promise.all([
+                    getGifDuration(img),
+                    createPosterFromMedia(img).then(async(thumb) => {
+                      params.thumb = {
+                        url: await apiManagerProxy.invoke('createObjectURL', thumb.blob),
+                        ...thumb
+                      };
+                    })
+                  ]);
+                  params.duration = Math.ceil(duration);
+                } else {
+                  const mimeType = params.file.type as MTMimeType;
+                  const scaled = await this.scaleImageForTelegram(img, mimeType, true);
+                  if(scaled) {
+                    params.objectURL = scaled.url;
+                    params.scaledBlob = scaled.blob;
+                  }
+                }
 
                 this.btnConfirm.removeAttribute('disabled');
                 hide();

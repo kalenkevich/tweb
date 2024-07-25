@@ -6,6 +6,7 @@ import rootScope from '../../lib/rootScope';
 import mediaSizes from '../../helpers/mediaSizes';
 import debounce from '../../helpers/schedulers/debounce';
 import {anyColorToRgbaColor, ColorFormatType} from '../../helpers/color';
+import themeController from '../../helpers/themeController';
 import {
   ImageChangeType,
   ImageChangeEvent,
@@ -26,7 +27,9 @@ import {
   NEON_BRUSH_BORDER_WIDTH,
   TRANPARENT_COLOR,
   DRAW_ARROW_CAP_AFTER_MS,
-  IMAGE_EDITOR_MOBILE_WIDTH_THRESHOLD
+  IMAGE_EDITOR_MOBILE_WIDTH_THRESHOLD,
+  WHITE_COLOR_HEX,
+  BLACK_COLOR_HEX
 } from './consts';
 import {NavigationBar} from './navigationBar';
 import {ImageEditorManager} from './imageEditorManager';
@@ -45,6 +48,16 @@ function saveBlobAsFile(blob: Blob, fileName: string) {
   a.download = fileName;
   a.click();
   window.URL.revokeObjectURL(url);
+}
+
+function Preloader() {
+  return (
+    <div class="preloader">
+      <svg xmlns="http://www.w3.org/2000/svg" class="preloader-circular" viewBox="25 25 50 50">
+        <circle class="preloader-path" cx="50" cy="50" r="20" fill="none" stroke-miterlimit="10"/>
+      </svg>
+    </div>
+  );
 }
 
 export function createImageState(source: ImageSource): ImageState {
@@ -82,6 +95,7 @@ export function ImageEditor(props: MediaEditorProps) {
   const [currentBrushSequence, setCurrentBrushSequence] = createSignal(0);
   const [canRedo, setCanRedu] = createSignal(false);
   const [canUndo, setCanUndo] = createSignal(false);
+  const [compileInProgress, setCompileInProgress] = createSignal(false);
   const showSaveButton = () => !isMobile() && selectedTabId() !== TabType.RESIZE;
 
   onMount(() => {
@@ -357,11 +371,12 @@ export function ImageEditor(props: MediaEditorProps) {
   };
 
   const handleSave = async() => {
+    setCompileInProgress(true);
+
     const blob = await imageEditorManager().compileImage({render: true, layers: 'all'});
+    setCompileInProgress(false);
 
-    saveBlobAsFile(blob, 'result_image');
-
-    // props.onSave(resultImage);
+    props.onSave(blob);
   };
 
   const handleUndo = () => {
@@ -427,7 +442,12 @@ export function ImageEditor(props: MediaEditorProps) {
         type: ImageChangeType.layer,
         action: AttachmentChangeAction.create,
         layerId: -1,
-        layer: DEFAULT_TEXT_LAYER,
+        layer: {
+          ...DEFAULT_TEXT_LAYER,
+          color: themeController.isNight() ? WHITE_COLOR_HEX : BLACK_COLOR_HEX,
+          strokeColor: themeController.isNight() ? BLACK_COLOR_HEX : WHITE_COLOR_HEX,
+          secondColor: themeController.isNight() ? BLACK_COLOR_HEX : WHITE_COLOR_HEX
+        },
         appearInRandomSpot: true
       });
       // set new text layer as active
@@ -449,6 +469,9 @@ export function ImageEditor(props: MediaEditorProps) {
 
   return (
     <div class="image-editor" classList={{'mobile': isMobile()}}>
+      <Show when={compileInProgress()}>
+        <div class="image-editor__loading-backdrop"></div>
+      </Show>
       <Show when={isMobile()}>
         <NavigationBar
           canUndo={canUndo()}
@@ -469,6 +492,7 @@ export function ImageEditor(props: MediaEditorProps) {
         onContainerResized={onContainerResized}
         onImageChange={onImageChange}
         onActiveLayerChange={onActiveLayerChange}
+        animatedStickers={!compileInProgress()}
         onSave={handleSave}
       />
       <ImageEditorTabs
@@ -486,9 +510,15 @@ export function ImageEditor(props: MediaEditorProps) {
       />
       <Show when={showSaveButton()}>
         <div class="image-editor__save-button">
+          <Show when={compileInProgress()}>
+            <div class="preloade-wrapper">
+              <Preloader/>
+            </div>
+          </Show>
           <ButtonIconTsx
+            disabled={compileInProgress()}
             class="btn-circle btn-corner"
-            icon="check"
+            icon={compileInProgress() ? 'empty' : 'check'}
             onClick={handleSave}
           />
         </div>

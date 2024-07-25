@@ -1,7 +1,7 @@
-import {JSX, For, Show, createSignal} from 'solid-js';
+import {JSX, For, Show} from 'solid-js';
 import {i18n} from '../../../lib/langPack';
 import {ImageChangeType, TextAlignment, TextStyle, TextLayer, AttachmentChangeAction} from '../types';
-import {QUCIK_PALLETE_COLORS, WHITE_COLOR_HEX, BLACK_COLOR_HEX, DEFAULT_TEXT_LAYER, MAX_FONT_SIZE} from '../consts';
+import {QUICK_PALLETE_COLORS, QUICK_PALLETE_COLORS_NIGHT, WHITE_COLOR_HEX, BLACK_COLOR_HEX, DEFAULT_TEXT_LAYER, MAX_FONT_SIZE} from '../consts';
 import {ImageControlProps} from './imageControl';
 import {Color, ColorFormatType, anyColorToHexColor} from '../../../helpers/color';
 import {ColorPickerV2, ColorPickerV2Mobile} from '../../colorPickerV2';
@@ -12,6 +12,7 @@ import {ButtonIconTsx} from '../../buttonIconTsx';
 import {IconButtonToggler, IconConfig} from '../common/iconButtonToggler';
 import {Select} from '../common/select';
 import {MobileRangeSelector} from '../common/mobileRangeSelector';
+import themeController from '../../../helpers/themeController';
 
 const TEXT_ALIGNMENT_CONTROL_CONFIG: IconConfig[] = [{
   icon: 'text_alignment_left' as SvgIconType,
@@ -90,6 +91,7 @@ export function ImageTextControl(props: ImageTextControlProps): JSX.Element {
   const fontName = () => layer()?.fontName;
   const fontSize = () => layer()?.fontSize;
   const hexColor = () => color() && anyColorToHexColor(color());
+  const quickPallete = () => themeController.isNight() ? QUICK_PALLETE_COLORS_NIGHT : QUICK_PALLETE_COLORS;
 
   const onPropertyChange = (propertyType: TextAttachmentProperty, value: string | TextAlignment | TextStyle | number | Color) => {
     const newAttachmentState = {
@@ -176,7 +178,7 @@ export function ImageTextControl(props: ImageTextControlProps): JSX.Element {
           <div class="color-picker-container">
             <ColorPickerV2
               color={color()}
-              quickPallete={QUCIK_PALLETE_COLORS}
+              quickPallete={quickPallete()}
               outputColorFormat={ColorFormatType.hexa}
               onChange={(selectedColor) => onPropertyChange(TextAttachmentProperty.color, selectedColor)}
             />
@@ -254,7 +256,7 @@ export function ImageTextControl(props: ImageTextControlProps): JSX.Element {
         <div class="image-editor__image-control text-image-control">
           <ColorPickerV2Mobile
             color={color()}
-            quickPallete={QUCIK_PALLETE_COLORS}
+            quickPallete={quickPallete()}
             outputColorFormat={ColorFormatType.hexa}
             onChange={(selectedColor) => onPropertyChange(TextAttachmentProperty.color, selectedColor)}
           />

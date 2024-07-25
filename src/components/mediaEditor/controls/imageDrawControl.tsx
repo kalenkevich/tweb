@@ -4,12 +4,13 @@ import {Color, ColorFormatType, anyColorToHexColor} from '../../../helpers/color
 import {ImageControlProps} from './imageControl';
 import {ColorPickerV2, ColorPickerV2Mobile} from '../../colorPickerV2';
 import {i18n} from '../../../lib/langPack';
-import {QUCIK_PALLETE_COLORS} from '../consts';
+import {QUICK_PALLETE_COLORS, QUICK_PALLETE_COLORS_NIGHT} from '../consts';
 import {PEN_TOOL_SVG, ARROW_TOOL_SVG, BRUSH_TOOL_SVG, NEON_TOOL_SVG, BLUR_TOOL_SVG, ERASER_TOOL_SVG} from './paintToolsSvgImages';
 import RowTsx from '../../rowTsx';
 import {RangeSelectorTsx} from '../../rangeSelectorTsx';
 import {Select} from '../common/select';
 import {MobileRangeSelector} from '../common/mobileRangeSelector';
+import themeController from '../../../helpers/themeController';
 
 export interface ImageDrawControlProps extends ImageControlProps {}
 
@@ -52,6 +53,7 @@ export function ImageDrawControl(props: ImageDrawControlProps): JSX.Element {
   const size = () => layer().size;
   const style = () => layer().style;
   const hexColor = () => anyColorToHexColor(color());
+  const quickPallete = () => themeController.isNight() ? QUICK_PALLETE_COLORS_NIGHT : QUICK_PALLETE_COLORS;
 
   createEffect(on(() => props.imageState.drawLayer.color.value, (v) => {
     el().style.setProperty('--selected-brush-color', hexColor());
@@ -92,7 +94,7 @@ export function ImageDrawControl(props: ImageDrawControlProps): JSX.Element {
           <div class="color-picker-container">
             <ColorPickerV2
               color={color()}
-              quickPallete={QUCIK_PALLETE_COLORS}
+              quickPallete={quickPallete()}
               outputColorFormat={ColorFormatType.hex}
               onChange={(selectedColor) => onPropertyChange(DrawAttachmentProperty.color, selectedColor)}
             />
@@ -147,7 +149,7 @@ export function ImageDrawControl(props: ImageDrawControlProps): JSX.Element {
         <div class="image-editor__image-control draw-image-control">
           <ColorPickerV2Mobile
             color={color()}
-            quickPallete={QUCIK_PALLETE_COLORS}
+            quickPallete={quickPallete()}
             outputColorFormat={ColorFormatType.hexa}
             onChange={(color) => onPropertyChange(DrawAttachmentProperty.color, color)}
           />
