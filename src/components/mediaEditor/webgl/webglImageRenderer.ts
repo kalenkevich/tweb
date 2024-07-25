@@ -106,11 +106,6 @@ export class WebglImageRenderer implements ImageRenderer {
     const backgroundImage = this.renderBackgroundImage(imageState, options);
     this.renderBrushTouches(backgroundImage, [touch], {...options, clearBrushProgramFramebuffer: false});
     this.renderLayerObjects(imageState.layers, options);
-
-    const error = this.gl.getError();
-    if(error) {
-      console.log(error);
-    }
   }
 
   public renderTexture(textureSource: ArrayBufferTextureSource, options: RenderOptions) {

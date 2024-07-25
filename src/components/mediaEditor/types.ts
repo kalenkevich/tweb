@@ -1,5 +1,5 @@
 import {Color} from '../../helpers/color';
-import {ImageElementTextureSource} from './webgl/helpers/webglTexture';
+import {TextureSource, ImageElementTextureSource} from './webgl/helpers/webglTexture';
 
 export type ImageSource = HTMLImageElement;
 
@@ -110,7 +110,7 @@ export interface StickerLayer {
   origin: [number, number];
   translation: [number, number];
   scale: [number, number];
-  texture?: ImageElementTextureSource;
+  texture?: TextureSource;
 }
 
 export enum ImageFilterType {

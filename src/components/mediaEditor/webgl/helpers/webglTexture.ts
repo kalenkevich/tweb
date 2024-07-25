@@ -61,6 +61,22 @@ export function createUint8TextureSource(
   };
 }
 
+export function createUint8TextureSourceFromCanvas(
+  source: HTMLCanvasElement | OffscreenCanvas,
+  options: CreateTextureSourceOptions = DefaultCreateOptions
+): Uint8ArrayBufferTextureSource {
+  const ctx = source.getContext('2d') as CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D;
+  const data = ctx.getImageData(0, 0, source.width, source.height).data;
+
+  return {
+    id: currentTextureId++,
+    type: TextureSourceType.UINT8_ARRAY_BUFFER,
+    width: source.width,
+    height: source.height,
+    data: new Uint8Array(data)
+  };
+}
+
 export function createImageDataTextureSource(
   source: Uint8ClampedArray,
   width: number,
