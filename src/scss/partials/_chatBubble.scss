@@ -445,11 +445,11 @@
   }
 
   &.is-date {
-    position: sticky;
+    // position: sticky;
     top: $bubble-overflow-big;
     padding-bottom: #{$bubble-overflow-big + $bubble-margin};
     z-index: 2;
-    transition: opacity .3s ease;
+    // transition: opacity .3s ease;
     opacity: .99999; // for safari
     pointer-events: none;
     font-weight: var(--font-weight-bold);
@@ -523,7 +523,7 @@
     }
 
     html.no-touch body.animation-level-2 & {
-      transition: opacity .2s ease-in-out, transform .2s ease-in-out;
+      // transition: opacity .2s ease-in-out, transform .2s ease-in-out;
     }
   }
 
@@ -804,7 +804,7 @@
         opacity: .8;
 
         &.fade-in {
-          animation: thumbnail-fade-in-opacity .2s ease-in-out forwards;
+          // animation: thumbnail-fade-in-opacity .2s ease-in-out forwards;
         }
       }
     }
@@ -1850,9 +1850,9 @@
       z-index: 2;
       opacity: 1;
 
-      @include animation-level(2) {
-        transition: opacity var(--transition-standard-in);
-      }
+      // @include animation-level(2) {
+      //   // transition: opacity var(--transition-standard-in);
+      // }
 
       .time-inner {
         color: #fff;
@@ -1923,9 +1923,9 @@
     line-height: 1;
     opacity: 1;
 
-    @include animation-level(2) {
-      transition: opacity var(--transition-standard-in);
-    }
+    // @include animation-level(2) {
+    //   transition: opacity var(--transition-standard-in);
+    // }
 
     &-icon {
       // * same as .iconVolume
@@ -3356,9 +3356,9 @@
           transform: translateX(calc((var(--chat-input-size) + #{$btn-send-margin}) * var(--reflect) * -1)) scale3d(.8, .8, 1);
         }
 
-        @include animation-level(2) {
-          transition: var(--bubble-transition-out);
-        }
+        // @include animation-level(2) {
+        //   transition: var(--bubble-transition-out);
+        // }
 
         //@include respond-to(no-floating-left-sidebar) {
           body.is-right-column-shown & {

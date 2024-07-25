@@ -5,6 +5,8 @@
  */
 
 import type {RLottieColor} from '../lib/rlottie/rlottiePlayer';
+import {LRUMap} from './lruMap';
+import {IS_MOBILE} from '../environment/userAgent';
 
 export type FramesCacheMap = Map<number, Uint8ClampedArray>;
 export type FramesCacheMapNew = Map<number, HTMLCanvasElement | ImageBitmap>;
@@ -17,6 +19,8 @@ export type FramesCacheItem = {
   counter: number
 };
 
+const DEFAULT_CACHE_SIZE = IS_MOBILE ? 128 : 128;
+
 export class FramesCache {
   private cache: Map<string, FramesCacheItem>;
 
@@ -24,11 +28,11 @@ export class FramesCache {
     this.cache = new Map();
   }
 
-  public static createCache(): FramesCacheItem {
+  public static createCache(cacheSize: number = DEFAULT_CACHE_SIZE): FramesCacheItem {
     const cache: FramesCacheItem = {
-      frames: new Map(),
-      framesNew: new Map(),
-      framesURLs: new Map(),
+      frames: new LRUMap<number, Uint8ClampedArray>(cacheSize),
+      framesNew: new LRUMap<number, HTMLCanvasElement | ImageBitmap>(cacheSize),
+      framesURLs: new LRUMap<number, string>(cacheSize),
       clearCache: () => {
         cache.framesNew.forEach((value) => {
           (value as ImageBitmap).close?.();

@@ -196,9 +196,9 @@ export default class ProgressivePreloader {
       } else {
         if(this.tryAgainOnFail) {
           this.attach(this.preloader.parentElement);
-          fastRaf(() => {
-            this.setManual();
-          });
+          // fastRaf(() => {
+          //   this.setManual();
+          // });
         } else {
           this.detach();
         }

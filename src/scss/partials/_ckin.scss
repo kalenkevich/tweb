@@ -468,7 +468,7 @@ input[type=range] {
   }
 
   &-wrap {
-    transition: opacity var(--transition-standard-in);
+    // transition: opacity var(--transition-standard-in);
     opacity: 0;
     border-radius: inherit;
 

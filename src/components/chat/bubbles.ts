@@ -183,6 +183,7 @@ import clearfix from '../../helpers/dom/clearfix';
 import {usePeer} from '../../stores/peers';
 import safeWindowOpen from '../../helpers/dom/safeWindowOpen';
 import findAndSplice from '../../helpers/array/findAndSplice';
+import {RLottiePlayerSuperviser} from '../../lib/rlottie/rlottiePlayer';
 
 export const USER_REACTIONS_INLINE = false;
 export const TEST_BUBBLES_DELETION = false;
@@ -3007,6 +3008,7 @@ export default class ChatBubbles {
 
   private onScroll = (ignoreHeavyAnimation?: boolean, scrollDimensions?: ScrollStartCallbackDimensions, forceDown?: boolean) => {
     // return;
+    RLottiePlayerSuperviser.checkAndHideInvisiblePlayers();
 
     if(this.isHeavyAnimationInProgress) {
       this.sliceViewportDebounced?.clearTimeout();

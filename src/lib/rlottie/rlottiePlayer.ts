@@ -72,6 +72,54 @@ export function applyColorOnContext(
   context.globalCompositeOperation = 'source-over';
 }
 
+enum PlayerStatus {
+  visible = 'visible',
+  notVisible = 'notVisible',
+  notVisibleRemoved = 'notVisibleRemoved'
+}
+enum PlayerCommandType {
+  applyColorForAllContexts = 'applyColorForAllContexts'
+}
+interface PlayerCommand {
+  type: PlayerCommandType;
+  args: any[];
+}
+export class RLottiePlayerSuperviser {
+  static srollableEl: HTMLElement;
+  static instances: RLottiePlayer[] = [];
+
+  static watchInstance(player: RLottiePlayer) {
+    this.instances.push(player);
+  }
+
+  static unwatchInstance(player: RLottiePlayer) {
+    this.instances = this.instances.filter(p => p !== player);
+  }
+
+  static checkAndHideInvisiblePlayers() {
+    for(const p of this.instances) {
+      if(!this.isPlayerVisibleOnScreen(p)) {
+        p.removeFromPage();
+      } else if(this.isPlayerVisibleOnScreen(p) && this.wasRemoved(p)) {
+        p.restoreToPage();
+      }
+    }
+  }
+
+  static isPlayerVisibleOnScreen(player: RLottiePlayer) {
+    return player.el.some(el => {
+      const rect = el.getBoundingClientRect();
+      const viewHeight = Math.max(document.documentElement.clientHeight, window.innerHeight);
+
+      return !(rect.bottom < 0 || rect.top - viewHeight >= 0);
+    });
+  }
+
+  static wasRemoved(player: RLottiePlayer) {
+    return player.getStatus() === PlayerStatus.notVisibleRemoved;
+  }
+}
+
 export default class RLottiePlayer extends EventListenerBase<{
   enterFrame: (frameNo: number) => void,
   ready: (frameCount: number, fps: number) => void,
@@ -141,6 +189,8 @@ export default class RLottiePlayer extends EventListenerBase<{
   private renderedFirstFrame: boolean;
 
   private raw: boolean;
+  private status: PlayerStatus = PlayerStatus.visible;
+  private options: RLottieOptions;
 
   constructor({el, worker, options}: {
     el: RLottiePlayer['el'],
@@ -152,7 +202,13 @@ export default class RLottiePlayer extends EventListenerBase<{
     this.reqId = ++RLottiePlayer['reqId'];
     this.el = el;
     this.worker = worker;
+    this.options = options;
 
+    this.init(options);
+    RLottiePlayerSuperviser.watchInstance(this);
+  }
+
+  init(options: RLottieOptions) {
     for(const i in options) {
       if(this.hasOwnProperty(i)) {
         // @ts-ignore
@@ -194,12 +250,6 @@ export default class RLottiePlayer extends EventListenerBase<{
 
     // options.needUpscale = true;
 
-    // * Pixel ratio
-    const pixelRatio = getLottiePixelRatio(this.width, this.height, options.needUpscale);
-
-    this.width = Math.round(this.width * pixelRatio);
-    this.height = Math.round(this.height * pixelRatio);
-
     // options.noCache = true;
 
     // * Cache frames params
@@ -214,11 +264,27 @@ export default class RLottiePlayer extends EventListenerBase<{
       }
     }
 
+    this.initCanvas(options);
+
     // this.cachingDelta = Infinity;
     // this.cachingDelta = 0;
     // if(isApple) {
     //   this.cachingDelta = 0; //2 // 50%
     // }
+
+    if(this.name) {
+      this.cache = RLottiePlayer.CACHE.getCache(this.cacheName);
+    } else {
+      this.cache = FramesCache.createCache();
+    }
+  }
+
+  initCanvas(options: RLottieOptions) {
+    // * Pixel ratio
+    const pixelRatio = getLottiePixelRatio(this.width, this.height, options.needUpscale);
+
+    this.width = Math.round(this.width * pixelRatio);
+    this.height = Math.round(this.height * pixelRatio);
 
     if(!this.canvas) {
       this.canvas = this.el.map(() => {
@@ -240,11 +306,70 @@ export default class RLottiePlayer extends EventListenerBase<{
         this.clamped = new Uint8ClampedArray(this.width * this.height * 4);
       }
     }
+  }
 
-    if(this.name) {
-      this.cache = RLottiePlayer.CACHE.getCache(this.cacheName);
-    } else {
-      this.cache = FramesCache.createCache();
+  destroyCanvas() {
+    for(const canvas of this.canvas) {
+      canvas.remove();
+    }
+  }
+
+  public isVisibleOnScreen() {
+    return this.status === PlayerStatus.visible;
+  }
+
+  public getStatus(): PlayerStatus {
+    return this.status;
+  }
+
+  public setStatus(status: PlayerStatus) {
+    this.status = status;
+  }
+
+  delayedCommands: PlayerCommand[] = [];
+
+  restoreToPage() {
+    this.status = PlayerStatus.visible;
+    this.initCanvas(this.options);
+
+    while(this.delayedCommands.length) {
+      this.executeCommand(this.delayedCommands.shift());
+    }
+
+    if(!this.canvas[0].parentNode && this.el?.[0] && !this.overrideRender) {
+      this.el.forEach((container, idx) => container.append(this.canvas[idx]));
+    }
+
+    this.playOrRestart();
+  }
+
+  removeFromPage() {
+    this.pause();
+    this.status = PlayerStatus.notVisibleRemoved;
+    this.destroyCanvas();
+    clearTimeout(this.rafId);
+    if(this.cacheName) RLottiePlayer.CACHE.releaseCache(this.cacheName);
+    this.rafId = undefined;
+  }
+
+  public addDelayedCommand(command: PlayerCommand) {
+    this.delayedCommands.push(command);
+  }
+
+  public executeCommand(command: PlayerCommand) {
+    switch(command.type) {
+      case PlayerCommandType.applyColorForAllContexts: {
+        const origColor = this.color;
+        const origTextcolor = this.textColor;
+
+        this.color = command.args[0];
+        this.textColor = command.args[1];
+        this.applyColorForAllContexts();
+        this.color = origColor;
+        this.textColor = origTextcolor;
+
+        return;
+      }
     }
   }
 
@@ -368,6 +493,7 @@ export default class RLottiePlayer extends EventListenerBase<{
     if(this.cacheName) RLottiePlayer.CACHE.releaseCache(this.cacheName);
     this.dispatchEvent('destroy');
     this.cleanup();
+    RLottiePlayerSuperviser.unwatchInstance(this);
   }
 
   public applyColor(context: CanvasRenderingContext2D) {
@@ -383,6 +509,15 @@ export default class RLottiePlayer extends EventListenerBase<{
   }
 
   public applyColorForAllContexts() {
+    if(!this.isVisibleOnScreen()) {
+      this.addDelayedCommand({
+        type: PlayerCommandType.applyColorForAllContexts,
+        args: [this.color, this.textColor]
+      });
+
+      return;
+    }
+
     if(!this.color && !this.textColor) {
       return;
     }
