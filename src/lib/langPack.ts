@@ -9,7 +9,7 @@ import type langSign from '../langSign';
 import type {State} from '../config/state';
 import DEBUG, {MOUNT_CLASS_TO} from '../config/debug';
 import {HelpCountriesList, HelpCountry, LangPackDifference, LangPackString} from '../layer';
-import stateStorage from './stateStorage';
+import {StateStorage} from './storages/state';
 import App from '../config/app';
 import rootScope from './rootScope';
 import {IS_MOBILE} from '../environment/userAgent';
@@ -107,7 +107,7 @@ namespace I18n {
   export function getCacheLangPack(): Promise<LangPackDifference> {
     if(cacheLangPackPromise) return cacheLangPackPromise;
     return cacheLangPackPromise = Promise.all([
-      stateStorage.get('langPack') as Promise<LangPackDifference>,
+      StateStorage.getInstance().get('langPack') as Promise<LangPackDifference>,
       polyfillPromise
     ]).then(([langPack]) => {
       if(!langPack/*  || true */) {
@@ -266,7 +266,7 @@ namespace I18n {
   export function saveLangPack(langPack: LangPackDifference) {
     langPack.appVersion = App.langPackVersion;
 
-    return stateStorage.set({langPack}).then(() => {
+    return StateStorage.getInstance().set({langPack}).then(() => {
       applyLangPack(langPack);
       return langPack;
     });

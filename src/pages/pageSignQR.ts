@@ -19,14 +19,15 @@ import bytesCmp from '../helpers/bytes/bytesCmp';
 import bytesToBase64 from '../helpers/bytes/bytesToBase64';
 import textToSvgURL from '../helpers/textToSvgURL';
 import {SignInFlowType, SignInFlowOptions} from './signInFlow';
-import IS_TOUCH_SUPPORTED from '../environment/touchSupport';
-import {IS_MOBILE_SAFARI} from '../environment/userAgent';
+import {setupCloseButton, setupSignInFlow} from './common';
 
 const FETCH_INTERVAL = 3;
 
 const onFirstMount = async(signInFlowOptions: SignInFlowOptions) => {
   const pageElement = page.pageEl;
   const imageDiv = pageElement.querySelector('.auth-image') as HTMLDivElement;
+
+  setupCloseButton(page, signInFlowOptions);
 
   let preloader = putPreloader(imageDiv, true);
 
@@ -66,7 +67,6 @@ const onFirstMount = async(signInFlowOptions: SignInFlowOptions) => {
   let stop = false;
   rootScope.addEventListener('user_auth', () => {
     stop = true;
-    cachedPromise = null;
   }, {once: true});
 
   const options: {dcId?: DcId, ignoreErrors: true} = {ignoreErrors: true};
@@ -95,10 +95,10 @@ const onFirstMount = async(signInFlowOptions: SignInFlowOptions) => {
       if(loginToken._ === 'auth.loginTokenSuccess') {
         const authorization = loginToken.authorization as any as AuthAuthorization.authAuthorization;
 
-        if(signInFlowOptions.type === SignInFlowType.firstAccountSignIn) {
+        if(signInFlowOptions.type === SignInFlowType.firstUserSignIn) {
           await rootScope.managers.apiManager.setUser(authorization.user);
-          import('./pageIm').then((m) => m.default.mount());
-        } else if(signInFlowOptions.type === SignInFlowType.addAccountSignIn && signInFlowOptions.onSucessLoginCallback) {
+          import('./pageIm').then((m) => m.default.mount(signInFlowOptions, authorization));
+        } else if(signInFlowOptions.type === SignInFlowType.addUserSignIn && signInFlowOptions.onSucessLoginCallback) {
           signInFlowOptions.onSucessLoginCallback(authorization);
         }
 
@@ -204,7 +204,6 @@ const onFirstMount = async(signInFlowOptions: SignInFlowOptions) => {
           (err as ApiError).handled = true;
           import('./pagePassword').then((m) => m.default.mount(signInFlowOptions));
           stop = true;
-          cachedPromise = null;
           break;
         default:
           console.error('pageSignQR: default error:', err);
@@ -236,40 +235,14 @@ const onFirstMount = async(signInFlowOptions: SignInFlowOptions) => {
   };
 };
 
-let cachedPromise: Promise<() => Promise<void>>;
-const page = new Page('page-signQR', true, (options: SignInFlowOptions) => {
-  return cachedPromise;
-}, (options: SignInFlowOptions) => {
-  prepareSignInFlow();
+const page: Page = new Page('page-signQR', true, onFirstMount, (options: SignInFlowOptions) => {
+  if(options.type === SignInFlowType.addUserSignIn) {
+    setupSignInFlow();
+  }
 
-  if(!cachedPromise) cachedPromise = onFirstMount(options);
-  cachedPromise.then((func) => {
-    func();
-  });
-
-  if(options.type === SignInFlowType.firstAccountSignIn) {
+  if(options.type === SignInFlowType.firstUserSignIn) {
     rootScope.managers.appStateManager.pushToState('authState', {_: 'authStateSignQr'});
   }
 });
-
-function prepareSignInFlow() {
-  const el = document.getElementById('auth-pages');
-  el.style.display = 'block';
-  document.getElementById('page-chats').style.display = 'none';
-  let scrollable: HTMLElement;
-
-  if(el) {
-    scrollable = el.querySelector('.scrollable') as HTMLElement;
-    if((!IS_TOUCH_SUPPORTED || IS_MOBILE_SAFARI)) {
-      scrollable.classList.add('no-scrollbar');
-    }
-
-    const placeholder = document.createElement('div');
-    placeholder.classList.add('auth-placeholder');
-
-    scrollable.prepend(placeholder);
-    scrollable.append(placeholder.cloneNode());
-  }
-}
 
 export default page;

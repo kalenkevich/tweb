@@ -17,7 +17,7 @@ import EventListenerBase from '../../helpers/eventListenerBase';
 import idleController from '../../helpers/idleController';
 import {logger} from '../logger';
 import rootScope from '../rootScope';
-import sessionStorage from '../sessionStorage';
+import {SessionStorage} from '../storages/session';
 import apiManagerProxy from './mtprotoworker';
 
 export type AppInstance = {
@@ -80,7 +80,7 @@ export class SingleInstance extends EventListenerBase<{
   private clearInstance = () => {
     if(this.masterInstance && !this.deactivated) {
       this.log.warn('clear master instance');
-      sessionStorage.delete('xt_instance');
+      SessionStorage.getInstance().delete('xt_instance');
     }
   };
 
@@ -124,8 +124,8 @@ export class SingleInstance extends EventListenerBase<{
     };
 
     const [curInstance, build = App.build] = await Promise.all([
-      sessionStorage.get('xt_instance', false),
-      sessionStorage.get('k_build', false)
+      SessionStorage.getInstance().get('xt_instance', false),
+      SessionStorage.getInstance().get('k_build', false)
     ]);
 
     if(build > App.build) {
@@ -135,7 +135,7 @@ export class SingleInstance extends EventListenerBase<{
       apiManagerProxy.toggleStorages(false, false);
       return;
     } else if(IS_MULTIPLE_TABS_SUPPORTED) {
-      sessionStorage.set({xt_instance: newInstance});
+      SessionStorage.getInstance().set({xt_instance: newInstance});
       return;
     }
 
@@ -144,7 +144,7 @@ export class SingleInstance extends EventListenerBase<{
         !curInstance ||
         curInstance.id === this.instanceId ||
         curInstance.time < (time - MULTIPLE_TABS_THRESHOLD)) {
-      sessionStorage.set({xt_instance: newInstance});
+      SessionStorage.getInstance().set({xt_instance: newInstance});
 
       if(!this.masterInstance) {
         this.masterInstance = true;

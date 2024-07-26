@@ -24,7 +24,7 @@ import {SignInFlowOptions, SignInFlowType} from './signInFlow';
 
 let authCode: AuthState.signUp['authCode'] = null;
 
-const onFirstMount = async(options: SignInFlowOptions) => {
+const onFirstMount = async(signInFlowOptions: SignInFlowOptions) => {
   const page = new LoginPage({
     className: 'page-signUp',
     withInputWrapper: true,
@@ -128,17 +128,17 @@ const onFirstMount = async(options: SignInFlowOptions) => {
 
       switch(response._) {
         case 'auth.authorization': // success
-          if(options.type === SignInFlowType.firstAccountSignIn) {
+          if(signInFlowOptions.type === SignInFlowType.firstUserSignIn) {
             await rootScope.managers.apiManager.setUser(response.user);
           }
 
           sendAvatar().finally(() => {
-            if(options.type === SignInFlowType.firstAccountSignIn) {
+            if(signInFlowOptions.type === SignInFlowType.firstUserSignIn) {
               import('./pageIm').then((m) => {
-                m.default.mount();
+                m.default.mount(signInFlowOptions, response);
               });
-            } else if(options.type === SignInFlowType.addAccountSignIn) {
-              options.onSucessLoginCallback(response);
+            } else if(signInFlowOptions.type === SignInFlowType.addUserSignIn) {
+              signInFlowOptions.onSucessLoginCallback(response);
             }
           });
 
@@ -172,7 +172,7 @@ const onFirstMount = async(options: SignInFlowOptions) => {
 
 const page = new Page('page-signUp', true, onFirstMount, (_authCode: typeof authCode, options: SignInFlowOptions) => {
   authCode = _authCode;
-  if(options.type === SignInFlowType.firstAccountSignIn) {
+  if(options.type === SignInFlowType.firstUserSignIn) {
     rootScope.managers.appStateManager.pushToState('authState', {_: 'authStateSignUp', authCode: _authCode});
   }
 });

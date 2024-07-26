@@ -13,7 +13,7 @@ import type {UserAuth} from './mtproto_config';
 import type {DcAuthKey, DcId, DcServerSalt, InvokeApiOptions} from '../../types';
 import type {MethodDeclMap} from '../../layer';
 import type TcpObfuscated from './transports/tcpObfuscated';
-import sessionStorage from '../sessionStorage';
+import {SessionStorage} from '../storages/session';
 import MTPNetworker, {MTMessage} from './networker';
 import {ConnectionType, constructTelegramWebSocketUrl, DcConfigurator, TransportType} from './dcConfigurator';
 import {logger} from '../logger';
@@ -238,7 +238,7 @@ export class ApiManager extends ApiManagerMethods {
       return this.baseDcId;
     }
 
-    const baseDcId = await sessionStorage.get('dc');
+    const baseDcId = await SessionStorage.getInstance().get('dc');
     if(!this.baseDcId) {
       if(!baseDcId) {
         this.setBaseDcId(App.baseDcId);
@@ -262,7 +262,7 @@ export class ApiManager extends ApiManagerMethods {
       userAuth.dcID = baseDcId;
     }
 
-    sessionStorage.set({
+    SessionStorage.getInstance().set({
       user_auth: userAuth
     });
 
@@ -279,7 +279,7 @@ export class ApiManager extends ApiManagerMethods {
 
     this.baseDcId = dcId;
 
-    sessionStorage.set({
+    SessionStorage.getInstance().set({
       dc: this.baseDcId
     });
   }
@@ -298,7 +298,7 @@ export class ApiManager extends ApiManagerMethods {
     }
 
     // WebPushApiManager.forceUnsubscribe(); // WARNING // moved to worker's master
-    const storageResult = await Promise.all(storageKeys.map((key) => sessionStorage.get(key)));
+    const storageResult = await Promise.all(storageKeys.map((key) => SessionStorage.getInstance().get(key)));
 
     const logoutPromises: Promise<any>[] = [];
     for(let i = 0; i < storageResult.length; i++) {
@@ -308,6 +308,7 @@ export class ApiManager extends ApiManagerMethods {
     }
 
     const clear = async() => {
+      debugger;
       this.baseDcId = undefined;
       // this.telegramMeNotify(false);
       await toggleStorages(false, true);
@@ -388,7 +389,7 @@ export class ApiManager extends ApiManagerMethods {
     const ss: DcServerSalt = `dc${dcId}_server_salt` as any;
 
     let transport = this.chooseServer(dcId, connectionType, transportType);
-    return this.gettingNetworkers[getKey] = Promise.all([ak, ss].map((key) => sessionStorage.get(key)))
+    return this.gettingNetworkers[getKey] = Promise.all([ak, ss].map((key) => SessionStorage.getInstance().get(key)))
     .then(async([authKeyHex, serverSaltHex]) => {
       let networker: MTPNetworker, error: any;
       if(authKeyHex?.length === 512) {
@@ -409,12 +410,12 @@ export class ApiManager extends ApiManagerMethods {
           serverSaltHex = bytesToHex(auth.serverSalt);
 
           if(dcId === App.baseDcId) {
-            sessionStorage.set({
+            SessionStorage.getInstance().set({
               auth_key_fingerprint: authKeyHex.slice(0, 8)
             });
           }
 
-          sessionStorage.set({
+          SessionStorage.getInstance().set({
             [ak]: authKeyHex,
             [ss]: serverSaltHex
           });
@@ -544,6 +545,7 @@ export class ApiManager extends ApiManagerMethods {
 
       if((error.code === 401 && error.type === 'SESSION_REVOKED') ||
         (error.code === 406 && error.type === 'AUTH_KEY_DUPLICATED')) {
+        debugger;
         this.logOut();
       }
 
@@ -603,8 +605,9 @@ export class ApiManager extends ApiManagerMethods {
 
         if(error.code === 401 && this.baseDcId === dcId) {
           if(error.type !== 'SESSION_PASSWORD_NEEDED') {
-            sessionStorage.delete('dc')
-            sessionStorage.delete('user_auth'); // ! возможно тут вообще не нужно это делать, но нужно проверить случай с USER_DEACTIVATED (https://core.telegram.org/api/errors)
+            debugger;
+            SessionStorage.getInstance().delete('dc')
+            SessionStorage.getInstance().delete('user_auth'); // ! возможно тут вообще не нужно это делать, но нужно проверить случай с USER_DEACTIVATED (https://core.telegram.org/api/errors)
             // this.telegramMeNotify(false);
           }
 

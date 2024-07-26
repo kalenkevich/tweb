@@ -84,6 +84,11 @@ export default abstract class ApiManagerMethods extends AppManager {
     return this.setUserAuth(user.id);
   }
 
+  public removeUser(user: User) {
+    this.appUsersManager.saveApiUser(user);
+    return this.setUserAuth(user.id);
+  }
+
   abstract invokeApi<T extends keyof MethodDeclMap>(method: T, params?: MethodDeclMap[T]['req'], options?: InvokeApiOptions): Promise<MethodDeclMap[T]['res']>;
 
   public invokeApiAfter<T extends keyof MethodDeclMap>(method: T, params: MethodDeclMap[T]['req'] = {}, options: InvokeApiOptions = {}): Promise<MethodDeclMap[T]['res']> {

@@ -121,7 +121,8 @@ function ButtonMenuItem(options: ButtonMenuItemOptions) {
     ButtonMenuToggle({
       ...submenu,
       container: el,
-      noIcon: true
+      noIcon: true,
+      allowMultiple: true
     });
     // el.classList.add('btn-menu', 'btn-menu-toggle');
     // submenuToggle.style.position = 'absolute';
@@ -136,7 +137,7 @@ function ButtonMenuItem(options: ButtonMenuItemOptions) {
 
     if(submenu) {
       contextMenuController.openBtnMenu(el, () => {
-        contextMenuController.close();
+        // contextMenuController.close();
       }, true);
       return;
     }

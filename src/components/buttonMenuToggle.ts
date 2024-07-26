@@ -19,12 +19,14 @@ export function ButtonMenuToggleHandler({
   el,
   onOpen,
   options,
-  onClose
+  onClose,
+  allowMultiple
 }: {
   el: HTMLElement,
   onOpen?: (e: Event) => any,
   options?: AttachClickOptions,
-  onClose?: (...args: any[]) => void
+  onClose?: (...args: any[]) => void,
+  allowMultiple?: boolean
 }) {
   const add = options?.listenerSetter ? options.listenerSetter.add(el) : el.addEventListener.bind(el);
 
@@ -43,7 +45,7 @@ export function ButtonMenuToggleHandler({
           return;
         }
 
-        contextMenuController.openBtnMenu(openedMenu, onClose);
+        contextMenuController.openBtnMenu(openedMenu, onClose, allowMultiple);
       };
 
       callbackify(result, open);
@@ -76,7 +78,8 @@ export default function ButtonMenuToggle({
   onClose,
   onCloseAfter,
   noIcon,
-  icon = 'more'
+  icon = 'more',
+  allowMultiple
 }: {
   buttonOptions?: Parameters<typeof ButtonIcon>[1],
   listenerSetter?: ListenerSetter,
@@ -88,7 +91,8 @@ export default function ButtonMenuToggle({
   onClose?: () => void,
   onCloseAfter?: () => void,
   noIcon?: boolean,
-  icon?: string
+  icon?: string,
+  allowMultiple?: boolean
 }) {
   if(buttonOptions) {
     buttonOptions.asDiv = true;
@@ -107,6 +111,7 @@ export default function ButtonMenuToggle({
   let element: HTMLElement, closeTimeout: number, tempId = 0;
   ButtonMenuToggleHandler({
     el: button,
+    allowMultiple,
     onOpen: async(e) => {
       const _tempId = ++tempId;
       await onOpenBefore?.(e);

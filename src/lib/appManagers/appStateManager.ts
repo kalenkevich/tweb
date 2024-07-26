@@ -6,13 +6,13 @@
 
 import type {State} from '../../config/state';
 import rootScope from '../rootScope';
-import stateStorage from '../stateStorage';
 import setDeepProperty, {splitDeepPath} from '../../helpers/object/setDeepProperty';
 import MTProtoMessagePort from '../mtproto/mtprotoMessagePort';
+import {StateStorage} from '../storages/state';
 
 export class AppStateManager {
   private state: State = {} as any;
-  private storage = stateStorage;
+  private storage = StateStorage.getInstance();
 
   // ! for mtproto worker use only
   public newVersion: string;
@@ -49,16 +49,6 @@ export class AppStateManager {
       [key]: value
     }, onlyLocal);
   }
-
-  /* public resetState() {
-    for(let i in this.state) {
-      // @ts-ignore
-      this.state[i] = false;
-    }
-    sessionStorage.set(this.state).then(() => {
-      location.reload();
-    });
-  } */
 }
 
 const appStateManager = new AppStateManager();

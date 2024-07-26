@@ -47,6 +47,8 @@ export default class OverlayClickHandler extends EventListenerBase<{
   };
 
   public close() {
+    console.log('close');
+
     if(this.element) {
       this.overlay?.remove();
       this.element = undefined;
@@ -65,8 +67,8 @@ export default class OverlayClickHandler extends EventListenerBase<{
     }
   }
 
-  public open(element = document.body, keepOthers = false) {
-    if(!keepOthers) {
+  public open(element = document.body, allowMultiple = false) {
+    if(!allowMultiple) {
       this.close();
     }
 

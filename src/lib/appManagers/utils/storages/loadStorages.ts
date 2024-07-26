@@ -4,10 +4,10 @@
  * https://github.com/morethanwords/tweb/blob/master/LICENSE
  */
 
-import type {Chat} from '../../../../layer';
+import type {Chat, MessagesStickerSet} from '../../../../layer';
 import type {Dialog} from '../../appMessagesManager';
 import type {User} from '../../appUsersManager';
-import type {StoragesStorages} from './createStorages';
+import type {StoragesStorages} from './createUserStorages';
 import {recordPromiseBound} from '../../../../helpers/recordPromise';
 import {Awaited} from '../../../../types';
 import {logger} from '../../../logger';
@@ -27,7 +27,8 @@ async function loadStoragesInner(storages: StoragesStorages) {
   const storagesResults: {
     users: User[],
     chats: Chat[],
-    dialogs: Dialog[]
+    dialogs: Dialog[],
+    stickerSets: MessagesStickerSet.messagesStickerSet[]
   } = {} as any;
   const arr = await Promise.all(storagesPromises);
   for(let i = 0, length = storagesKeys.length; i < length; ++i) {

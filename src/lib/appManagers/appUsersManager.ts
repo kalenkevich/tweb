@@ -61,7 +61,11 @@ export class AppUsersManager extends AppManager {
   private isPremiumRequiredToContactUserIds: Map<UserId, CancellablePromise<boolean>>;
   private isPremiumRequiredToContactUserIdsProcessing: boolean;
 
-  protected after() {
+  after() {
+    this.clear(true);
+  }
+
+  init() {
     this.clear(true);
 
     setInterval(this.updateUsersStatuses, 60000);
@@ -150,7 +154,7 @@ export class AppUsersManager extends AppManager {
 
     return Promise.all([
       this.appStateManager.getState(),
-      this.appStoragesManager.loadStorage('users')
+      this.appStoragesManager.loadStorage(this.appStateManager.userId.toString(), 'users')
     ]).then(([state, {results: users, storage}]) => {
       this.storage = storage;
 
@@ -677,6 +681,10 @@ export class AppUsersManager extends AppManager {
   }
 
   private setUserToStateIfNeeded(user: User) {
+    if(!this.storage) {
+      return;
+    }
+
     if(this.peersStorage.isPeerNeeded(user.id.toPeerId())) {
       this.storage.set({
         [user.id]: user

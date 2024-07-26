@@ -31,7 +31,7 @@ import findUpClassName from '../../helpers/dom/findUpClassName';
 import findUpTag from '../../helpers/dom/findUpTag';
 import App from '../../config/app';
 import ButtonMenuToggle from '../buttonMenuToggle';
-import sessionStorage from '../../lib/sessionStorage';
+import {SessionStorage} from '../../lib/storages/session';
 import {attachClickEvent, CLICK_EVENT_NAME, simulateClickEvent} from '../../helpers/dom/clickEvent';
 import ButtonIcon from '../buttonIcon';
 import confirmationPopup from '../confirmationPopup';
@@ -77,7 +77,7 @@ import setBlankToAnchor from '../../lib/richTextProcessor/setBlankToAnchor';
 import {AvatarNew} from '../avatarNew';
 import {AccountLimitReachedPopup} from '../popups/accountLimitReached';
 import {SignInFlowType, SignInFlowOptions} from '../../pages/signInFlow';
-import {dumpUserSessionData, rebaseSessionStateToUser, pruneUserState} from '../..//helpers/accountStateHelper';
+import {SharedUsersStateStorage} from '../../lib/storages/sharedUsersState';
 
 export const LEFT_COLUMN_ACTIVE_CLASSNAME = 'is-left-column-shown';
 const MAX_ACCOUNTS_FOR_NON_PREMIUM_USER = 3;
@@ -248,8 +248,8 @@ export class AppSidebarLeft extends SidebarSlider {
       text: 'ChatList.Menu.SwitchTo.A',
       onClick: () => {
         Promise.all([
-          sessionStorage.set({kz_version: 'Z'}),
-          sessionStorage.delete('tgme_sync')
+          SessionStorage.getInstance().set({kz_version: 'Z'}),
+          SessionStorage.getInstance().delete('tgme_sync')
         ]).then(() => {
           location.href = 'https://web.telegram.org/a/';
         });
@@ -259,7 +259,7 @@ export class AppSidebarLeft extends SidebarSlider {
       icon: 'char w',
       text: 'ChatList.Menu.SwitchTo.Webogram',
       onClick: () => {
-        sessionStorage.delete('tgme_sync').then(() => {
+        SessionStorage.getInstance().delete('tgme_sync').then(() => {
           location.href = 'https://web.telegram.org/?legacy=1';
         });
       },
@@ -347,8 +347,8 @@ export class AppSidebarLeft extends SidebarSlider {
               text: 'ChatList.Menu.SwitchTo.A',
               onClick: () => {
                 Promise.all([
-                  sessionStorage.set({kz_version: 'Z'}),
-                  sessionStorage.delete('tgme_sync')
+                  SessionStorage.getInstance().set({kz_version: 'Z'}),
+                  SessionStorage.getInstance().delete('tgme_sync')
                 ]).then(() => {
                   location.href = 'https://web.telegram.org/a/';
                 });
@@ -385,6 +385,7 @@ export class AppSidebarLeft extends SidebarSlider {
     this.toolsBtn = ButtonMenuToggle({
       direction: 'bottom-right',
       buttons: filteredButtons,
+      allowMultiple: true,
       onOpenBefore: async() => {
         const [
           attachMenuBotsButtons,
@@ -713,13 +714,13 @@ export class AppSidebarLeft extends SidebarSlider {
 
   private async getUserAccountsMenuButtons(): Promise<ButtonMenuItemOptionsVerifiable[]> {
     const result: ButtonMenuItemOptionsVerifiable[] = [];
-    const currentUser = await rootScope.managers.appUserAccountManager.getCurrentUser();
-    const accounts = await rootScope.managers.appUserAccountManager.getAccountList();
+    const currentUser = await rootScope.managers.appUsersManager.getSelf();
+    const users = await SharedUsersStateStorage.getInstance().getAll();
 
     // keep current account always on the top
-    accounts.sort((a, b) => a.id === currentUser.id ? -1 : 1);
+    users.sort((a, b) => a.id === currentUser.id ? -1 : 1);
 
-    for(const user of accounts) {
+    for(const user of users) {
       const avatar = AvatarNew({
         isBig: false,
         size: 20,
@@ -732,13 +733,12 @@ export class AppSidebarLeft extends SidebarSlider {
       result.push({
         iconElement: avatar.element as HTMLElement,
         textElement: userNameSpan,
-        // messages
         onClick: () => {
           if(user.id === currentUser.id) {
             return;
           }
 
-          rootScope.managers.appUserAccountManager.switchToAccount(user.id);
+          this.switchToAccount(user);
         }
       });
     }
@@ -773,10 +773,16 @@ export class AppSidebarLeft extends SidebarSlider {
     const canAddAccount = await rootScope.managers.appUserAccountManager.canAddAccount();
 
     if(canAddAccount) {
-      const newUserAccount = await this.loginIntoAccount();
+      let newUserAccount;
+      try {
+        newUserAccount = await this.loginIntoAccount();
+      } catch(e) {
+        return;
+      }
+
       await rootScope.managers.appUserAccountManager.addUserAccount(newUserAccount);
       await rootScope.managers.appUserAccountManager.switchToAccount(newUserAccount.id);
-      dumpUserSessionData(newUserAccount.id);
+      // dumpUserSessionData(newUserAccount.id);
     } else {
       try {
         await new Promise<void>((resolve, reject) => {
@@ -797,13 +803,35 @@ export class AppSidebarLeft extends SidebarSlider {
   }
 
   private loginIntoAccount(): Promise<User.user> {
-    return new Promise(async(resolve) => {
+    return new Promise(async(resolve, reject) => {
       const signInFlowOptions: SignInFlowOptions = {
-        type: SignInFlowType.addAccountSignIn,
+        type: SignInFlowType.addUserSignIn,
+        onClose: () => {
+          rootScope.managers.apiManager.setUser();
+          Promise.all([
+            import('../../pages/pageSignQR').then(module => module.default.unmount()),
+            import('../../pages/pageSignIn').then(module => module.default.unmount()),
+            import('../../pages/pageSignImport').then(module => module.default.unmount()),
+            import('../../pages/pageAuthCode').then(module => module.default.unmount()),
+            import('../../pages/pagePassword').then(module => module.default.unmount())
+          ]);
+          document.getElementById('auth-pages').style.display = 'none';
+          document.getElementById('page-chats').style.display = 'block';
+          reject();
+        },
         onSucessLoginCallback: (auth) => resolve(auth.user as User.user)
       };
 
+      SessionStorage.resetInstance();
+
       (await import('../../pages/pageSignQR')).default.mount(signInFlowOptions);
+    });
+  }
+
+  private async switchToAccount(user : User.user) {
+    (await import('../../pages/pageIm')).default.mount({
+      type: SignInFlowType.switchUserSignIn,
+      userId: user.id.toString()
     });
   }
 

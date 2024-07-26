@@ -74,12 +74,12 @@ class ContextMenuController extends OverlayClickHandler {
     }
   }
 
-  public openBtnMenu(element: HTMLElement, onClose?: () => void, keepOthers = false) {
+  public openBtnMenu(element: HTMLElement, onClose?: () => void, allowMultiple = false) {
     if(overlayCounter.isDarkOverlayActive) {
       element.classList.add('night');
     }
 
-    super.open(element, keepOthers);
+    super.open(element, allowMultiple);
 
     this.element.classList.add('active', 'was-open');
     this.element.parentElement.classList.add('menu-open');

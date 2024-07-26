@@ -21,17 +21,20 @@ import toggleDisability from '../helpers/dom/toggleDisability';
 import wrapEmojiText from '../lib/richTextProcessor/wrapEmojiText';
 import rootScope from '../lib/rootScope';
 import {SignInFlowOptions, SignInFlowType} from './signInFlow';
+import {setupCloseButton} from './common';
 
 const TEST = false;
 let passwordInput: HTMLInputElement;
 
-const onFirstMount = (options: SignInFlowOptions): Promise<any> => {
-  const page = new LoginPage({
+const onFirstMount = (signInFlowOptions: SignInFlowOptions): Promise<any> => {
+  const loginPage = new LoginPage({
     className: 'page-password',
     withInputWrapper: true,
     titleLangKey: 'Login.Password.Title',
     subtitleLangKey: 'Login.Password.Subtitle'
   });
+
+  setupCloseButton(page, signInFlowOptions);
 
   const btnNext = Button('btn-primary btn-color-primary');
   const btnNextI18n = new I18n.IntlElement({key: 'Login.Next'});
@@ -45,7 +48,7 @@ const onFirstMount = (options: SignInFlowOptions): Promise<any> => {
 
   passwordInput = passwordInputField.input as HTMLInputElement;
 
-  page.inputWrapper.append(passwordInputField.container, btnNext);
+  loginPage.inputWrapper.append(passwordInputField.container, btnNext);
 
   let getStateInterval: number;
 
@@ -93,11 +96,11 @@ const onFirstMount = (options: SignInFlowOptions): Promise<any> => {
       switch(response._) {
         case 'auth.authorization':
           clearInterval(getStateInterval);
-          if(options.type === SignInFlowType.firstAccountSignIn) {
+          if(signInFlowOptions.type === SignInFlowType.firstUserSignIn) {
             await rootScope.managers.apiManager.setUser(response.user);
-            import('./pageIm').then((m) => m.default.mount());
-          } else if(options.type === SignInFlowType.addAccountSignIn && options.onSucessLoginCallback) {
-            options.onSucessLoginCallback(response);
+            import('./pageIm').then((m) => m.default.mount(signInFlowOptions, response));
+          } else if(signInFlowOptions.type === SignInFlowType.addUserSignIn && signInFlowOptions.onSucessLoginCallback) {
+            signInFlowOptions.onSucessLoginCallback(response);
           }
 
           if(monkey) monkey.remove();
@@ -139,7 +142,7 @@ const onFirstMount = (options: SignInFlowOptions): Promise<any> => {
 
   const size = mediaSizes.isMobile ? 100 : 166;
   const monkey = new PasswordMonkey(passwordInputField, size);
-  page.imageDiv.append(monkey.container);
+  loginPage.imageDiv.append(monkey.container);
   return Promise.all([
     monkey.load(),
     getState()

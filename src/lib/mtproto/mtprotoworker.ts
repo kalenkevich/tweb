@@ -17,7 +17,7 @@ import type {AppAvatarsManager, PeerPhotoSize} from '../appManagers/appAvatarsMa
 import rootScope from '../rootScope';
 import webpWorkerController from '../webp/webpWorkerController';
 import {MOUNT_CLASS_TO} from '../../config/debug';
-import sessionStorage from '../sessionStorage';
+import {SessionStorage} from '../storages/session';
 import webPushApiManager from './webPushApiManager';
 import appRuntimeManager from '../appManagers/appRuntimeManager';
 import telegramMeWebManager from './telegramMeWebManager';
@@ -210,7 +210,7 @@ class ApiManagerProxy extends MTProtoMessagePort {
 
       localStorageProxy: (payload) => {
         const storageTask = payload;
-        return (sessionStorage[storageTask.type] as any)(...storageTask.args);
+        return (SessionStorage.getInstance()[storageTask.type] as any)(...storageTask.args);
       },
 
       mirror: this.onMirrorTask,
@@ -293,7 +293,7 @@ class ApiManagerProxy extends MTProtoMessagePort {
       const toClear: CacheStorageDbName[] = ['cachedFiles', 'cachedStreamChunks'];
       Promise.all([
         toggleStorages(false, true),
-        sessionStorage.clear(),
+        SessionStorage.getInstance().clear(),
         Promise.race([
           telegramMeWebManager.setAuthorized(false),
           pause(3000)
@@ -393,6 +393,7 @@ class ApiManagerProxy extends MTProtoMessagePort {
         // ! doubtful fix for hard refresh
         return registration.unregister().then(() => {
           url.searchParams.set(FIX_KEY, '' + (swfix + 1));
+          debugger;
           window.location.href = url.toString();
         });
       }

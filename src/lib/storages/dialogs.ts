@@ -11,7 +11,7 @@
 
 import type {Chat, ForumTopic as MTForumTopic, DialogPeer, Message, MessagesForumTopics, MessagesPeerDialogs, Update, Peer, MessagesMessages, MessagesSavedDialogs} from '../../layer';
 import type {AppMessagesManager, Dialog, ForumTopic, MyMessage, SavedDialog} from '../appManagers/appMessagesManager';
-import type DATABASE_STATE from '../../config/databases/state';
+import type {USER_DATABASE_STATE} from '../../config/databases/state';
 import tsNow from '../../helpers/tsNow';
 import SearchIndex from '../searchIndex';
 import {SliceEnd} from '../../helpers/slicedArray';
@@ -107,6 +107,10 @@ export default class DialogsStorage extends AppManager {
 
   protected after() {
     this.clear(true);
+  }
+
+  init() {
+    this.clear(true);
 
     const onFilterUpdate = (filter: MyDialogFilter) => {
       const dialogs = this.getCachedDialogs(false);
@@ -198,7 +202,7 @@ export default class DialogsStorage extends AppManager {
 
     return Promise.all([
       this.appStateManager.getState(),
-      this.appStoragesManager.loadStorage('dialogs')
+      this.appStoragesManager.loadStorage(this.appStateManager.userId.toString(), 'dialogs')
     ]).then(([state, {results: dialogs, storage}]) => {
       this.storage = storage;
       this.dialogs = this.storage.getCache();
@@ -214,7 +218,7 @@ export default class DialogsStorage extends AppManager {
       }
 
       if(dialogs.length) {
-        AppStorage.freezeSaving<typeof DATABASE_STATE>(this.setDialogsFromState.bind(this, dialogs), ['chats', 'dialogs', 'messages', 'users']);
+        AppStorage.freezeSaving<typeof USER_DATABASE_STATE>(this.setDialogsFromState.bind(this, dialogs), ['chats', 'dialogs', 'messages', 'users']);
       }
 
       this.allDialogsLoaded = state.allDialogsLoaded || {};
@@ -466,7 +470,7 @@ export default class DialogsStorage extends AppManager {
     if(this.isVirtualFilter(filterId)) return getDialogIndexKey();
     if(REAL_FOLDERS.has(filterId)) return getDialogIndexKey(filterId as REAL_FOLDER_ID);
     const filter = this.filtersStorage.getFilter(filterId);
-    return getDialogIndexKey(filter.localId);
+    return getDialogIndexKey(filter?.localId);
   }
 
   private isDialogUnmuted(dialog: Dialog | ForumTopic) {

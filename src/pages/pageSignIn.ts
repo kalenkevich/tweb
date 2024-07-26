@@ -19,16 +19,17 @@ import cancelEvent from '../helpers/dom/cancelEvent';
 import {attachClickEvent} from '../helpers/dom/clickEvent';
 import replaceContent from '../helpers/dom/replaceContent';
 import toggleDisability from '../helpers/dom/toggleDisability';
-import sessionStorage from '../lib/sessionStorage';
+import {SessionStorage} from '../lib/storages/session';
 import {DcAuthKey} from '../types';
 import placeCaretAtEnd from '../helpers/dom/placeCaretAtEnd';
 import {HelpCountry, HelpCountryCode} from '../layer';
-import stateStorage from '../lib/stateStorage';
+import {StateStorage} from '../lib/storages/state';
 import rootScope from '../lib/rootScope';
 import TelInputField from '../components/telInputField';
 import apiManagerProxy from '../lib/mtproto/mtprotoworker';
 import CountryInputField from '../components/countryInputField';
 import {SignInFlowType, SignInFlowOptions} from './signInFlow';
+import {setupCloseButton} from './common';
 
 // import _countries from '../countries_pretty.json';
 let btnNext: HTMLButtonElement = null, btnQr: HTMLButtonElement;
@@ -52,6 +53,8 @@ const onFirstMount = async(signInFlowOptions: SignInFlowOptions) => {
   // const countries: Country[] = _countries.default.filter((c) => c.emoji);
   // const countries: Country[] = Countries.filter((c) => c.emoji).sort((a, b) => a.name.localeCompare(b.name));
   // const countries = I18n.countriesList.filter((country) => !country.pFlags?.hidden);
+
+  setupCloseButton(page, signInFlowOptions);
 
   const inputWrapper = document.createElement('div');
   inputWrapper.classList.add('input-wrapper');
@@ -128,7 +131,7 @@ const onFirstMount = async(signInFlowOptions: SignInFlowOptions) => {
   });
 
   apiManagerProxy.getState().then((state) => {
-    if(!stateStorage.isAvailable()) {
+    if(!StateStorage.getInstance().isAvailable()) {
       signedCheckboxField.checked = false;
       signedCheckboxField.label.classList.add('checkbox-disabled');
     } else {
@@ -167,12 +170,12 @@ const onFirstMount = async(signInFlowOptions: SignInFlowOptions) => {
       if(code._ === 'auth.sentCodeSuccess') {
         const {authorization} = code;
         if(authorization._ === 'auth.authorization') {
-          if(signInFlowOptions.type === SignInFlowType.firstAccountSignIn) {
+          if(signInFlowOptions.type === SignInFlowType.firstUserSignIn) {
             await rootScope.managers.apiManager.setUser(authorization.user);
             import('./pageIm').then((m) => {
-              m.default.mount();
+              m.default.mount(signInFlowOptions, authorization);
             });
-          } else if(signInFlowOptions.type === SignInFlowType.addAccountSignIn && signInFlowOptions.onSucessLoginCallback) {
+          } else if(signInFlowOptions.type === SignInFlowType.addUserSignIn && signInFlowOptions.onSucessLoginCallback) {
             signInFlowOptions.onSucessLoginCallback(authorization);
           }
         }
@@ -239,7 +242,7 @@ const onFirstMount = async(signInFlowOptions: SignInFlowOptions) => {
 
   const tryAgain = () => {
     rootScope.managers.apiManager.invokeApi('help.getNearestDc').then((nearestDcResult) => {
-      const langPack = stateStorage.getFromCache('langPack');
+      const langPack = StateStorage.getInstance().getFromCache('langPack');
       if(langPack && !langPack.countries?.hash) {
         I18n.getLangPack(langPack.lang_code).then(() => {
           telInputField.simulateInputEvent();
@@ -267,7 +270,7 @@ const onFirstMount = async(signInFlowOptions: SignInFlowOptions) => {
           if(!dcId) return;
 
           const dbKey: DcAuthKey = `dc${dcId}_auth_key` as any;
-          const key = await sessionStorage.get(dbKey);
+          const key = await SessionStorage.getInstance().get(dbKey);
           if(key) {
             return g();
           }
@@ -301,7 +304,7 @@ const onFirstMount = async(signInFlowOptions: SignInFlowOptions) => {
   tryAgain();
 };
 
-const page = new Page('page-sign', true, onFirstMount, (options: SignInFlowOptions) => {
+const page: Page = new Page('page-sign', true, onFirstMount, (options: SignInFlowOptions) => {
   if(btnNext) {
     replaceContent(btnNext, i18n('Login.Next'));
     ripple(btnNext, undefined, undefined, true);
@@ -312,7 +315,7 @@ const page = new Page('page-sign', true, onFirstMount, (options: SignInFlowOptio
     btnQr.removeAttribute('disabled');
   }
 
-  if(options.type === SignInFlowType.firstAccountSignIn) {
+  if(options.type === SignInFlowType.firstUserSignIn) {
     rootScope.managers.appStateManager.pushToState('authState', {_: 'authStateSignIn'});
   }
 });

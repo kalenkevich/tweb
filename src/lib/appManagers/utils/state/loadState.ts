@@ -12,8 +12,8 @@ import copy from '../../../../helpers/object/copy';
 import validateInitObject from '../../../../helpers/object/validateInitObject';
 import {UserAuth} from '../../../mtproto/mtproto_config';
 import rootScope from '../../../rootScope';
-import stateStorage from '../../../stateStorage';
-import sessionStorage from '../../../sessionStorage';
+import {StateStorage} from '../../../storages/state';
+import {SessionStorage} from '../../../storages/session';
 import {recordPromiseBound} from '../../../../helpers/recordPromise';
 // import RESET_STORAGES_PROMISE from "../storages/resetStoragesPromise";
 import {StoragesResults} from '../storages/loadStorages';
@@ -44,16 +44,22 @@ async function loadStateInner() {
   const totalPerf = performance.now();
   const recordPromise = recordPromiseBound(log);
 
-  const promises = ALL_KEYS.map((key) => recordPromise(stateStorage.get(key), 'state ' + key))
+  const user = await SessionStorage.getInstance().get('user_auth');
+  if(user) {
+    StateStorage.setUserInstance(user.id.toString());
+    SessionStorage.setUserInstance(user.id.toString());
+  }
+
+  const promises = ALL_KEYS.map((key) => recordPromise(StateStorage.getInstance().get(key, false), 'state ' + key))
   .concat(
-    recordPromise(sessionStorage.get('user_auth'), 'auth'),
-    recordPromise(sessionStorage.get('state_id'), 'auth'),
-    recordPromise(sessionStorage.get('k_build'), 'auth'),
-    recordPromise(sessionStorage.get('auth_key_fingerprint'), 'auth'),
-    recordPromise(sessionStorage.get(`dc${App.baseDcId}_auth_key`), 'auth')
+    recordPromise(SessionStorage.getInstance().get('user_auth'), 'auth'),
+    recordPromise(SessionStorage.getInstance().get('state_id'), 'auth'),
+    recordPromise(SessionStorage.getInstance().get('k_build'), 'auth'),
+    recordPromise(SessionStorage.getInstance().get('auth_key_fingerprint'), 'auth'),
+    recordPromise(SessionStorage.getInstance().get(`dc${App.baseDcId}_auth_key`), 'auth')
   )
   .concat( // support old webk format
-    recordPromise(stateStorage.get('user_auth'), 'old auth')
+    recordPromise(StateStorage.getInstance().get('user_auth', false), 'old auth')
   );
 
   const arr = await Promise.all(promises);
@@ -140,7 +146,7 @@ async function loadStateInner() {
       keys.push(`dc${i}_auth_key`);
     }
 
-    const values = await Promise.all(keys.map((key) => stateStorage.get(key as any)));
+    const values = await Promise.all(keys.map((key) => StateStorage.getInstance().get(key as any)));
     keys.push('user_auth');
     values.push(typeof(auth) === 'number' || typeof(auth) === 'string' ? {dcID: values[0] || App.baseDcId, date: Date.now() / 1000 | 0, id: auth.toPeerId(false)} as UserAuth : auth);
 
@@ -149,7 +155,7 @@ async function loadStateInner() {
       obj[key] = values[idx];
     });
 
-    await sessionStorage.set(obj);
+    await SessionStorage.getInstance().set(obj);
   }
 
   /* if(!auth) { // try to read Webogram's session from localStorage
@@ -165,12 +171,12 @@ async function loadStateInner() {
           //console.error(err);
         }
 
-        sessionStorage.set({
+        SessionStorage.getInstance().set({
           [key as any]: value
         });
       }
 
-      auth = sessionStorage.getFromCache('user_auth');
+      auth = SessionStorage.getInstance().getFromCache('user_auth');
     } catch(err) {
       this.log.error('localStorage import error', err);
     }
@@ -212,7 +218,7 @@ async function loadStateInner() {
       resetState([]);
     }
 
-    await sessionStorage.set({
+    await SessionStorage.getInstance().set({
       state_id: state.stateId
     });
   }
@@ -226,7 +232,7 @@ async function loadStateInner() {
     }
 
     if(authKeyFingerprint !== _authKeyFingerprint) {
-      await sessionStorage.set({
+      await SessionStorage.getInstance().set({
         auth_key_fingerprint: _authKeyFingerprint
       });
     }
@@ -434,7 +440,7 @@ async function loadStateInner() {
   }
 
   if(sessionBuild !== BUILD && (!sessionBuild || sessionBuild < BUILD)) {
-    sessionStorage.set({k_build: BUILD});
+    SessionStorage.getInstance().set({k_build: BUILD});
   }
 
   // ! probably there is better place for it

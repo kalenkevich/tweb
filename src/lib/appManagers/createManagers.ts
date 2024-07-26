@@ -59,7 +59,7 @@ import AppTranslationsManager from './appTranslationsManager';
 import AppGifsManager from './appGifsManager';
 import AppUserAccountManager from './appAccountManager';
 
-export default function createManagers(appStoragesManager: AppStoragesManager, userId: UserId) {
+export default function createManagers(userId?: UserId) {
   const managers = {
     appPeersManager: new AppPeersManager,
     appUserAccountManager: new AppUserAccountManager,
@@ -97,7 +97,7 @@ export default function createManagers(appStoragesManager: AppStoragesManager, u
     authorizer: new Authorizer,
     dcConfigurator: new DcConfigurator,
     timeManager: new TimeManager,
-    appStoragesManager: appStoragesManager,
+    appStoragesManager: new AppStoragesManager,
     appStateManager: appStateManager,
     appWebDocsManager: new AppWebDocsManager,
     appPaymentsManager: new AppPaymentsManager,

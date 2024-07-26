@@ -11,7 +11,7 @@ import isObject from '../../helpers/object/isObject';
 import validateInitObject from '../../helpers/object/validateInitObject';
 import fixEmoji from '../richTextProcessor/fixEmoji';
 import SearchIndex from '../searchIndex';
-import stateStorage from '../stateStorage';
+import {StateStorage} from '../storages/state';
 import {AppManager} from './manager';
 import deferredPromise, {CancellablePromise} from '../../helpers/cancellablePromise';
 import pause from '../../helpers/schedulers/pause';
@@ -124,7 +124,7 @@ export class AppEmojiManager extends AppManager {
     }
 
     const storageKey: any = 'emojiKeywords_' + langCode;
-    return this.getKeywordsPromises[langCode] = stateStorage.get(storageKey).then((pack: EmojiLangPack) => {
+    return this.getKeywordsPromises[langCode] = StateStorage.getInstance().get(storageKey).then((pack: EmojiLangPack) => {
       if(!isObject(pack)) {
         pack = {} as any;
       }
@@ -148,7 +148,7 @@ export class AppEmojiManager extends AppManager {
           packKeywords[keyword] = emoticons;
         }
 
-        stateStorage.set({
+        StateStorage.getInstance().set({
           [storageKey]: pack
         });
 

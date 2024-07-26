@@ -5,9 +5,12 @@
  */
 
 import pagesManager from './pagesManager';
+import {setupCloseButton} from './common';
+import {SignInFlowType} from './signInFlow';
 
 export default class Page {
   public pageEl: HTMLDivElement;
+  public originalHtml: string;
   private installed = false;
 
   constructor(
@@ -18,6 +21,7 @@ export default class Page {
     public onShown?: () => void
   ) {
     this.pageEl = document.body.querySelector('.' + className) as HTMLDivElement;
+    this.originalHtml = this.pageEl.innerHTML;
   }
 
   public async mount(...args: any[]) {
@@ -48,10 +52,15 @@ export default class Page {
     pagesManager.setPage(this);
   }
 
+  reset() {
+    this.pageEl.innerHTML = this.originalHtml;
+  }
+
   unmount() {
+    setupCloseButton(this, {type: SignInFlowType.firstUserSignIn});
     if(this.installed) {
       this.installed = false;
-      this.pageEl.remove();
+      this.reset();
     }
   }
 }

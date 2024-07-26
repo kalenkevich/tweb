@@ -9,7 +9,7 @@ import DEBUG from '../config/debug';
 import {LangPackKey, i18n} from '../lib/langPack';
 import {logger} from '../lib/logger';
 import rootScope from '../lib/rootScope';
-import sessionStorage from '../lib/sessionStorage';
+import {SessionStorage} from '../lib/storages/session';
 import {ConnectionStatus} from '../lib/mtproto/connectionStatus';
 import cancelEvent from '../helpers/dom/cancelEvent';
 import {attachClickEvent} from '../helpers/dom/clickEvent';
@@ -103,7 +103,7 @@ export default class ConnectionStatusComponent {
 
   private setConnectionStatus = (overrideStatus?: ConnectionStatus) => {
     Promise.all([
-      sessionStorage.get('dc'),
+      SessionStorage.getInstance().get('dc'),
       rootScope.managers.rootScope.getConnectionStatus()
     ]).then(([baseDcId, connectionStatus]) => {
       if(!baseDcId) {

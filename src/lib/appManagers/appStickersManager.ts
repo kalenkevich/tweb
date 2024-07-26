@@ -8,8 +8,7 @@ import type {MyDocument} from './appDocsManager';
 import type {DownloadOptions} from '../mtproto/apiFileManager';
 import {Document, InputFileLocation, InputStickerSet, MessageEntity, MessagesAllStickers, MessagesFavedStickers, MessagesFeaturedStickers, MessagesFoundStickerSets, MessagesRecentStickers, MessagesStickers, MessagesStickerSet, PhotoSize, StickerPack, StickerSet, StickerSetCovered, Update, VideoSize} from '../../layer';
 import {Modify} from '../../types';
-import AppStorage from '../storage';
-import DATABASE_STATE from '../../config/databases/state';
+import {AppStoragesManager} from './appStoragesManager';
 import assumeType from '../../helpers/assumeType';
 import fixBase64String from '../../helpers/fixBase64String';
 import forEachReverse from '../../helpers/array/forEachReverse';
@@ -56,7 +55,7 @@ export type MyStickerSetInput = {
 export type MyMessagesStickerSet = MessagesStickerSet.messagesStickerSet;
 
 export class AppStickersManager extends AppManager {
-  private storage = new AppStorage<Record<Long, MyMessagesStickerSet>, typeof DATABASE_STATE>(DATABASE_STATE, 'stickerSets');
+  private storage: AppStoragesManager['storages']['stickerSets'];
 
   private getStickerSetPromises: {[setId: Long]: Promise<MyMessagesStickerSet>};
   private getStickersByEmoticonsPromises: {[emoticon: string]: Promise<MyDocument[]>};
@@ -78,8 +77,16 @@ export class AppStickersManager extends AppManager {
     emojis: SearchIndex<DocId>
   }>;
 
-  protected after() {
+  after() {
     this.clear(true);
+  }
+
+  init() {
+    this.clear(true);
+
+    this.appStoragesManager.loadStorage(this.appStateManager.userId.toString(), 'stickerSets').then(({storage}) => {
+      this.storage = storage;
+    });
 
     this.rootScope.addEventListener('user_auth', () => {
       setTimeout(() => {

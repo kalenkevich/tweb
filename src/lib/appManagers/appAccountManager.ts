@@ -67,6 +67,10 @@ export default class AppUserAccountManager extends AppManager {
     // return this.getAccount(user.id);
   }
 
+  getCurrentUserId(): string {
+    return this.currentUserId.toString();
+  }
+
   getAccountList(): User.user[] {
     return [this.getCurrentUser()];
   }

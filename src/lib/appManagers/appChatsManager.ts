@@ -44,6 +44,10 @@ export class AppChatsManager extends AppManager {
 
   protected after() {
     this.clear(true);
+  }
+
+  init() {
+    this.clear(true);
 
     this.apiUpdatesManager.addMultipleEventsListeners({
       updateChannelParticipant: this.onUpdateChannelParticipant,
@@ -53,7 +57,7 @@ export class AppChatsManager extends AppManager {
 
     return Promise.all([
       this.appStateManager.getState(),
-      this.appStoragesManager.loadStorage('chats')
+      this.appStoragesManager.loadStorage(this.appStateManager.userId.toString(), 'chats')
     ]).then(([state, {results: chats, storage}]) => {
       this.storage = storage;
 

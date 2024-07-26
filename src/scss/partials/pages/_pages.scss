@@ -9,6 +9,14 @@
   overflow: hidden;
   background: var(--surface-color);
 
+  .auth-page__close-button {
+    position: absolute;
+    left: 16px;
+    top: 16px;
+    display: none;
+    z-index: 1;
+  }
+
   .btn-primary {
     text-transform: uppercase;
 

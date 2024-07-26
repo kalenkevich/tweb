@@ -4,41 +4,35 @@
  * https://github.com/morethanwords/tweb/blob/master/LICENSE
  */
 
-import {logger} from '../logger';
 import {AppManager} from './manager';
-import createStorages from './utils/storages/createStorages';
+import createUserStorages from './utils/storages/createUserStorages';
 import loadStorages from './utils/storages/loadStorages';
 
 export class AppStoragesManager extends AppManager {
-  private storages: ReturnType<typeof createStorages>;
+  private storages: ReturnType<typeof createUserStorages>;
 
-  // private loadPromise: CancellablePromise<StoragesResults>;
+  public createStorages(userId: string) {
+    if(this.storages) {
+      return;
+    }
 
-  private log: ReturnType<typeof logger>;
-
-  constructor() {
-    super();
-
-    this.log = logger('STORAGES');
-    this.storages = createStorages();
-    // this.loadPromise = deferredPromise();
+    this.storages = createUserStorages(`.${userId}`);
   }
 
-  public loadStorages() {
+  public loadStorages(userId: string) {
+    this.createStorages(userId);
+
     return loadStorages(this.storages);
-    // loadStorages(this.storages).then((storagesResults) => {
-    // this.loadPromise.resolve(storagesResults);
-    // });
-
-    // return this.loadPromise;
   }
 
-  // public setStoragesResults(storagesResults: StoragesResults) {
-  //   this.loadPromise.resolve(storagesResults);
-  // }
+  public reloadStorages(userId: string) {
+    this.storages = createUserStorages(`.${userId}`);
 
-  public async loadStorage<T extends keyof AppStoragesManager['storages']>(name: T) {
-    return this.loadStorages().then((storagesResults) => {
+    return loadStorages(this.storages);
+  }
+
+  public async loadStorage<T extends keyof AppStoragesManager['storages']>(userId: string, name: T) {
+    return this.loadStorages(userId).then((storagesResults) => {
       return {
         storage: this.storages[name],
         results: storagesResults[name]

@@ -425,7 +425,7 @@ IMAGE_MIME_TYPES_SUPPORTED_PROMISE.then((mimeTypes) => {
     let pagePromise: Promise<void>;
     // langPromise.then(async() => {
     const signInFlowOptions: SignInFlowOptions = {
-      type: SignInFlowType.firstAccountSignIn
+      type: SignInFlowType.firstUserSignIn
     };
     switch(authState._) {
       case 'authStateSignIn':
@@ -493,6 +493,6 @@ IMAGE_MIME_TYPES_SUPPORTED_PROMISE.then((mimeTypes) => {
   } else {
     console.log('Will mount IM page:', Date.now() / 1000);
     fadeInWhenFontsReady(document.getElementById('main-columns'), loadFonts());
-    (await import('./pages/pageIm')).default.mount();
+    (await import('./pages/pageIm')).default.mount({type: SignInFlowType.alreadySignedIn});
   }
 });

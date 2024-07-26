@@ -11,9 +11,8 @@ import callbackify from '../../helpers/callbackify';
 import deferredPromise, {CancellablePromise} from '../../helpers/cancellablePromise';
 import cryptoMessagePort from '../crypto/cryptoMessagePort';
 import MTProtoMessagePort from '../mtproto/mtprotoMessagePort';
-import appStateManager from './appStateManager';
-import {AppStoragesManager} from './appStoragesManager';
 import createManagers from './createManagers';
+import appStateManager from './appStateManager';
 
 type Managers = Awaited<ReturnType<typeof createManagers>>;
 
@@ -84,15 +83,12 @@ export class AppManagersManager {
   }
 
   private async createManagers() {
-    const appStoragesManager = new AppStoragesManager();
-
     await Promise.all([
       // new Promise(() => {}),
-      appStoragesManager.loadStorages(),
       this.cryptoPortPromise
     ]);
 
-    const managers = await createManagers(appStoragesManager, appStateManager.userId);
+    const managers = await createManagers(appStateManager.userId);
     return this.managers = managers; // have to overwrite cached promise
   }
 

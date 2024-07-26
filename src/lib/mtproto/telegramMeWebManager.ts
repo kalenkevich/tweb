@@ -14,7 +14,7 @@ import {MOUNT_CLASS_TO} from '../../config/debug';
 import Modes from '../../config/modes';
 import loadScript from '../../helpers/dom/loadScript';
 import tsNow from '../../helpers/tsNow';
-import sessionStorage from '../sessionStorage';
+import {SessionStorage} from '../storages/session';
 
 export class TelegramMeWebManager {
   private disabled = /* false &&  */(Modes.test || !App.domains.includes(location.hostname));
@@ -24,7 +24,7 @@ export class TelegramMeWebManager {
       return;
     }
 
-    return sessionStorage.get('tgme_sync').then((curValue) => {
+    return SessionStorage.getInstance().get('tgme_sync').then((curValue) => {
       const ts = tsNow(true);
       if(
         canRedirect &&
@@ -34,7 +34,7 @@ export class TelegramMeWebManager {
         return;
       }
 
-      sessionStorage.set({
+      SessionStorage.getInstance().set({
         tgme_sync: {
           canRedirect,
           ts

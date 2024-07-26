@@ -5,9 +5,8 @@
  */
 
 import type {Database} from '.';
-import type {IDBIndex} from '../../lib/files/idb';
 
-const DATABASE_STATE: Database<'session' | 'stickerSets' | 'users' | 'chats' | 'messages' | 'dialogs'> = {
+export const USER_DATABASE_STATE: Database<'session' | 'stickerSets' | 'users' | 'chats' | 'messages' | 'dialogs'> = {
   name: 'tweb',
   version: 7,
   stores: [{
@@ -20,21 +19,17 @@ const DATABASE_STATE: Database<'session' | 'stickerSets' | 'users' | 'chats' | '
     name: 'chats'
   }, {
     name: 'dialogs'
-    // indexes: [
-    //   ...(new Array(20 + 2).fill(0)).map((_, idx) => {
-    //     const name = `index_${idx}`;
-    //     const index: IDBIndex = {
-    //       indexName: name,
-    //       keyPath: name,
-    //       objectParameters: {}
-    //     };
-
-    //     return index
-    //   })
-    // ]
   }, {
     name: 'messages'
   }]
 };
 
-export default DATABASE_STATE;
+export const SHARED_DATABASE_STATE: Database<'users' | 'settings'> = {
+  name: 'tweb.shared',
+  version: 1,
+  stores: [{
+    name: 'users'
+  }, {
+    name: 'settings'
+  }]
+};

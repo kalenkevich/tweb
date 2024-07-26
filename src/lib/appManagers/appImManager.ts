@@ -21,7 +21,7 @@ import SetTransition from '../../components/singleTransition';
 import ChatDragAndDrop from '../../components/chat/dragAndDrop';
 import {doubleRaf} from '../../helpers/schedulers';
 import useHeavyAnimationCheck, {dispatchHeavyAnimationEvent} from '../../hooks/useHeavyAnimationCheck';
-import stateStorage from '../stateStorage';
+import {StateStorage} from '../storages/state';
 import {MOUNT_CLASS_TO} from '../../config/debug';
 import appNavigationController from '../../components/appNavigationController';
 import AppPrivateSearchTab from '../../components/sidebarRight/tabs/search';
@@ -594,7 +594,7 @@ export class AppImManager extends EventListenerBase<{
     });
 
     // stateStorage.get('chatPositions').then((c) => {
-    stateStorage.setToCache('chatPositions', /* c ||  */{});
+    StateStorage.getInstance().setToCache('chatPositions', /* c ||  */{});
     // });
 
     if(IS_CALL_SUPPORTED || IS_GROUP_CALL_SUPPORTED) {
@@ -887,6 +887,7 @@ export class AppImManager extends EventListenerBase<{
     };
 
     const onUrlAuthResultAccepted = (urlAuthResult: UrlAuthResult.urlAuthResultAccepted) => {
+      debugger;
       openWindow(urlAuthResult.url);
     };
 
@@ -1697,7 +1698,7 @@ export class AppImManager extends EventListenerBase<{
     // const top = bubble.getBoundingClientRect().top;
     const chatBubbles = chat.bubbles;
     const key = chat.peerId + (chat.threadId ? '_' + chat.threadId : '');
-    const chatPositions = stateStorage.getFromCache('chatPositions');
+    const chatPositions = StateStorage.getInstance().getFromCache('chatPositions');
     if(
       !(chatBubbles.scrollable.getDistanceToEnd() <= 16 && chatBubbles.scrollable.loadedAll.bottom) &&
       chatBubbles.getRenderedLength() &&
@@ -1721,7 +1722,7 @@ export class AppImManager extends EventListenerBase<{
       this.log('deleted chat position');
     }
 
-    stateStorage.set({chatPositions}, true);
+    StateStorage.getInstance().set({chatPositions}, true);
     // }
   }
 
@@ -1731,7 +1732,7 @@ export class AppImManager extends EventListenerBase<{
     }
 
     const key = chat.peerId + (chat.threadId ? '_' + chat.threadId : '');
-    const cache = stateStorage.getFromCache('chatPositions');
+    const cache = StateStorage.getInstance().getFromCache('chatPositions');
     return cache && cache[key];
   }
 

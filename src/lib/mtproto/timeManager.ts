@@ -9,7 +9,7 @@
  * https://github.com/zhukov/webogram/blob/master/LICENSE
  */
 
-import sessionStorage from '../sessionStorage';
+import {SessionStorage} from '../storages/session';
 import {nextRandomUint} from '../../helpers/random';
 import {WorkerTaskVoidTemplate} from '../../types';
 import ulongFromInts from '../../helpers/long/ulongFromInts';
@@ -45,7 +45,7 @@ export class TimeManager extends AppManager {
     this.lastMessageId = [0, 0];
     this.timeOffset = 0;
 
-    sessionStorage.get('server_time_offset').then((to) => {
+    SessionStorage.getInstance().get('server_time_offset').then((to) => {
       if(to) {
         this.timeOffset = to;
       }
@@ -103,7 +103,7 @@ export class TimeManager extends AppManager {
     this.lastMessageId = [0, 0];
 
     if(this.timeOffset !== newTimeOffset) {
-      sessionStorage.set({
+      SessionStorage.getInstance().set({
         server_time_offset: newTimeOffset
       });
 

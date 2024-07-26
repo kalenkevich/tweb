@@ -20,6 +20,7 @@ import setBlankToAnchor from '../lib/richTextProcessor/setBlankToAnchor';
 import {attachClickEvent} from '../helpers/dom/clickEvent';
 import Icon from '../components/icon';
 import {SignInFlowOptions, SignInFlowType} from './signInFlow';
+import {setupCloseButton} from './common';
 
 let authSentCode: AuthSentCode.authSentCode = null;
 
@@ -46,18 +47,19 @@ const submitCode = (code: string, signInFlowOptions: SignInFlowOptions) => {
 
   // console.log('invoking auth.signIn with params:', params);
 
+  debugger;
   rootScope.managers.apiManager.invokeApi('auth.signIn', params, {ignoreErrors: true})
   .then(async(response) => {
     // console.log('auth.signIn response:', response);
 
     switch(response._) {
       case 'auth.authorization':
-        if(signInFlowOptions.type === SignInFlowType.firstAccountSignIn) {
+        if(signInFlowOptions.type === SignInFlowType.firstUserSignIn) {
           await rootScope.managers.apiManager.setUser(response.user);
           import('./pageIm').then((m) => {
-            m.default.mount();
+            m.default.mount(signInFlowOptions, response);
           });
-        } else if(signInFlowOptions.type === SignInFlowType.addAccountSignIn && signInFlowOptions.onSucessLoginCallback) {
+        } else if(signInFlowOptions.type === SignInFlowType.addUserSignIn && signInFlowOptions.onSucessLoginCallback) {
           signInFlowOptions.onSucessLoginCallback(response);
         }
         cleanup();
@@ -114,6 +116,8 @@ const submitCode = (code: string, signInFlowOptions: SignInFlowOptions) => {
 
 const onFirstMount = (signInFlowOptions: SignInFlowOptions) => {
   page.pageEl.querySelector('.input-wrapper').append(codeInputField.container);
+
+  setupCloseButton(page, signInFlowOptions);
 
   const editButton = page.pageEl.querySelector('.phone-edit') as HTMLElement;
   editButton.append(Icon('edit'));

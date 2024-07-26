@@ -11,6 +11,7 @@ import rootScope from '../lib/rootScope';
 import {AuthState} from '../types';
 import Page from './page';
 import {SignInFlowOptions, SignInFlowType} from './signInFlow';
+import {setupCloseButton} from './common';
 
 let data: AuthState.signImport['data'];
 
@@ -56,12 +57,14 @@ const importWebToken = async(options: SignInFlowOptions) => {
 
 const onFirstMount = (options: SignInFlowOptions) => {
   putPreloader(page.pageEl.firstElementChild, true);
+  setupCloseButton(page, options);
+
   return importWebToken(options);
 };
 
 let cachedPromise: Promise<void>;
 const page: Page = new Page('page-signImport', true, onFirstMount, (_data: typeof data, options: SignInFlowOptions) => {
-  if(options.type === SignInFlowType.firstAccountSignIn) {
+  if(options.type === SignInFlowType.firstUserSignIn) {
     if(!cachedPromise) cachedPromise = onFirstMount(options);
     cachedPromise.then(() => {
       data = _data;

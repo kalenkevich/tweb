@@ -11,7 +11,7 @@
 
 import {TLDeserialization, TLSerialization} from './tl_utils';
 import CryptoWorker from '../crypto/cryptoMessagePort';
-import sessionStorage from '../sessionStorage';
+import {SessionStorage} from '../storages/session';
 import Schema from './schema';
 import {NetworkerFactory} from './networkerFactory';
 import {logger, LogTypes} from '../logger';
@@ -642,7 +642,7 @@ export default class MTPNetworker {
     log('check', this.longPollPending);
 
     const isClean = this.cleanupSent();
-    sessionStorage.get('dc').then((baseDcId) => {
+    SessionStorage.getInstance().get('dc').then((baseDcId) => {
       if(isClean && (
         baseDcId !== this.dcId ||
           (this.sleepAfter && Date.now() > this.sleepAfter)
@@ -1523,7 +1523,7 @@ export default class MTPNetworker {
   private applyServerSalt(newServerSalt: string) {
     const serverSalt = longToBytes(newServerSalt);
 
-    sessionStorage.set({
+    SessionStorage.getInstance().set({
       ['dc' + this.dcId + '_server_salt']: bytesToHex(serverSalt)
     });
 
@@ -1871,7 +1871,7 @@ export default class MTPNetworker {
         this.processMessageAck(message.first_msg_id);
         this.applyServerSalt(message.server_salt);
 
-        sessionStorage.get('dc').then((baseDcId) => {
+        SessionStorage.getInstance().get('dc').then((baseDcId) => {
           if(baseDcId === this.dcId && !this.isFileNetworker) {
             this.networkerFactory.updatesProcessor?.(message);
           }

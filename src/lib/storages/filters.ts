@@ -83,6 +83,7 @@ export default class FiltersStorage extends AppManager {
     });
 
     return this.appStateManager.getState().then((state) => {
+      debugger;
       const filtersArr = this.prependFilters(state.filtersArr);
       filtersArr.map((filter) => {
         this.saveDialogFilter(filter, false, true);
@@ -93,7 +94,7 @@ export default class FiltersStorage extends AppManager {
   /**
    * ! use it only with saving
    */
-  private prependFilters(filters: DialogFilter[]) {
+  private prependFilters(filters: DialogFilter[] = []) {
     filters = filters.slice();
 
     const allChatsFilter = this.localFilters[FOLDER_ID_ALL];

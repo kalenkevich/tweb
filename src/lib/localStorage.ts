@@ -21,7 +21,8 @@ class LocalStorage<Storage extends Record<string, any>> {
   private cache: Partial<Storage> = {};
   private useStorage = true;
 
-  constructor(/* private preserveKeys: (keyof Storage)[] */) {
+  constructor(prefix: string = '') {
+    this.prefix = prefix;
     if(Modes.test) {
       this.prefix = 't_';
     }
@@ -172,11 +173,11 @@ export default class LocalStorageController<Storage extends Record<string, any>>
 
   private storage: LocalStorage<Storage>;
 
-  constructor(/* private preserveKeys: (keyof Storage)[] = [] */) {
+  constructor(prefix: string = '') {
     LocalStorageController.STORAGES.push(this);
 
     if(!IS_WORKER) {
-      this.storage = new LocalStorage(/* preserveKeys */);
+      this.storage = new LocalStorage(prefix);
     }
   }
 
