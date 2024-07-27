@@ -39,17 +39,6 @@ import {createImageElementTextureSource} from './webgl/helpers/webglTexture';
 import {getLayerNextId, getRandomLayerStartPosition} from './helpers/layerHelper';
 import {canDrawArrow, getArrowCapTouches} from './helpers/arrowBrushHelper';
 
-const a = document.createElement('a');
-document.body.appendChild(a);
-a.style.display = 'none';
-function saveBlobAsFile(blob: Blob, fileName: string) {
-  const url = window.URL.createObjectURL(blob);
-  a.href = url;
-  a.download = fileName;
-  a.click();
-  window.URL.revokeObjectURL(url);
-}
-
 function Preloader() {
   return (
     <div class="preloader">

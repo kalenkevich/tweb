@@ -8,18 +8,6 @@ import {WebGlFrameBuffer, createFrameBuffer} from '../helpers/webglFramebuffer';
 import {WebGlTexture, createWebGlTexture} from '../helpers/webglTexture';
 import {WebGlUniform, createWebGlUniform} from '../helpers/webglUniform';
 
-function isPowerOfTwo(x: number) {
-  return (x & (x - 1)) == 0;
-}
-
-function nextHighestPowerOfTwo(x: number) {
-  --x;
-  for(var i = 1; i < 32; i <<= 1) {
-    x = x | x >> i;
-  }
-  return x + 1;
-}
-
 const BrushTouchProgramShaders = {
   vertext: `#version 300 es
     precision highp float;

@@ -34,6 +34,10 @@ export function ImageStickerControl(props: ImageStickerControlProps): JSX.Elemen
             ...DEFAULT_STICKER_LAYER,
             width: img.width,
             height: img.height,
+            origin: [
+              -img.width / 2,
+              -img.height / 2
+            ],
             stickerId
           },
           action: AttachmentChangeAction.create,

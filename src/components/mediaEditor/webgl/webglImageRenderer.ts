@@ -42,6 +42,7 @@ export class WebglImageRenderer implements ImageRenderer {
       gl = this.gl = makeCompatibleWebGLRenderingContext(gl1);
     }
 
+    gl.clearColor(0, 0, 0, 0);
     gl.clear(gl.COLOR_BUFFER_BIT);
     this.resize(this.canvas.width, this.canvas.height);
 
@@ -86,9 +87,14 @@ export class WebglImageRenderer implements ImageRenderer {
     showErrorIfExist(this.gl, 'resize, brush touch reset framebuffer');
   }
 
+  public clear() {
+    this.gl.clearColor(0, 0, 0, 0);
+    this.gl.clear(this.gl.COLOR_BUFFER_BIT);
+  }
+
   public render(imageState: ImageState, options?: RenderOptions) {
     if(options.clearCanvas) {
-      this.gl.clear(this.gl.COLOR_BUFFER_BIT);
+      this.clear();
     }
     showErrorIfExist(this.gl, 'render, clear');
     const backgroundImageTexture = this.renderBackgroundImage(imageState, options);
@@ -101,27 +107,29 @@ export class WebglImageRenderer implements ImageRenderer {
 
   public renderBrushTouch(imageState: ImageState, touch: BrushTouch, options?: RenderOptions) {
     if(options.clearCanvas) {
-      this.gl.clear(this.gl.COLOR_BUFFER_BIT);
+      this.clear();
     }
     const backgroundImage = this.renderBackgroundImage(imageState, options);
     this.renderBrushTouches(backgroundImage, [touch], {...options, clearBrushProgramFramebuffer: false});
     this.renderLayerObjects(imageState.layers, options);
   }
 
-  public renderTexture(textureSource: ArrayBufferTextureSource, options: RenderOptions) {
-    if(options.clearCanvas) {
-      this.gl.clear(this.gl.COLOR_BUFFER_BIT);
+  public renderTexture(textureSource: ArrayBufferTextureSource, x: number, y: number, options?: RenderOptions) {
+    if(options?.clearCanvas) {
+      this.clear();
     }
+    const width = textureSource.width;
+    const height = textureSource.height;
     const canvasMatrix = getProjectionViewMatrix({
-      translation: [0, 0],
+      translation: [x, y],
       scale: [1, 1],
       rotation: 0,
       origin: [0, 0]
-    }, options.flipImageByYAxis);
+    }, options?.flipImageByYAxis);
     const image = createWebGlTexture(this.gl, {
       name: 'brush_touches_framebuffer_texture',
-      width: textureSource.width,
-      height: textureSource.height,
+      width,
+      height,
       pixels: textureSource.data,
       minFilter: this.gl.LINEAR,
       magFilter: this.gl.LINEAR,
@@ -139,12 +147,16 @@ export class WebglImageRenderer implements ImageRenderer {
     image.destroy();
   }
 
-  public getRenderedData(flipY: boolean = false): Uint8Array {
-    const width = this.canvas.width;
-    const height = this.canvas.height;
+  public getRenderedData(
+    x: number = 0,
+    y: number = 0,
+    width: number = this.canvas.width,
+    height: number = this.canvas.height,
+    flipY: boolean = false
+  ): Uint8Array {
     const length = width * height * 4;
     const data = new Uint8Array(length);
-    this.gl.readPixels(0, 0, width, height, this.gl.RGBA, this.gl.UNSIGNED_BYTE, data);
+    this.gl.readPixels(x, this.canvas.height - y - height, width, height, this.gl.RGBA, this.gl.UNSIGNED_BYTE, data);
 
     if(!flipY) {
       return data;

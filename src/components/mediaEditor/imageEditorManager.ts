@@ -7,6 +7,7 @@ import {easyAnimation} from './helpers/animation';
 import {resetTextureIndex, createUint8TextureSource} from './webgl/helpers/webglTexture';
 import {precompileTextObjects, precompileStickerObjects, adjustDrawLayer, renderAnimatedStickerFrame} from './helpers/imageCompileHelper';
 import {GIFEncoder, quantize, applyPalette} from './gif/index';
+import {saveBlobAsFile} from './helpers/fileHelder';
 
 export class ImageEditorManager {
   private canvas?: HTMLCanvasElement;
@@ -90,8 +91,6 @@ export class ImageEditorManager {
         ...preparedStaticStickersObjects
       ].sort((l1, l2) => l1.zIndex - l2.zIndex);
 
-      const gif = GIFEncoder();
-
       // render static background first
       this.compiler.render({
         ...state,
@@ -104,35 +103,62 @@ export class ImageEditorManager {
         this.shadowCanvas.height
       );
 
+      const gif = GIFEncoder();
+
       for(let frameIndex = 0; frameIndex < totalFrames; frameIndex += 4) {
-        const preparedAnimatedStickerObjects = await Promise.all(
+        const preparedAnimatedSticker = await Promise.all(
           stickerObjects.animatedStickers.map(async(stickerInfo) => {
             stickerInfo.object.texture = await renderAnimatedStickerFrame(stickerInfo, frameIndex);
 
-            return stickerInfo.object;
+            return stickerInfo;
           })
         );
         const isFirstFrame = frameIndex === 0;
 
-        this.compiler.renderTexture(staticObjectsBackground, {clearCanvas: true});
+        // render current frame
+        this.compiler.renderTexture(staticObjectsBackground, 0, 0, {clearCanvas: true});
         this.compiler.render({
           ...state,
           drawLayer: preparedDrawLayer,
-          layers: preparedAnimatedStickerObjects
+          layers: preparedAnimatedSticker.map(s => s.object)
         }, {
           ...renderOptions,
           clearCanvas: false,
           layers: [ObjectLayerType.sticker]
         });
 
-        const data = this.compiler.getRenderedData(true);
-        const palette = quantize(data, 256);
-        const index = applyPalette(data, palette);
+        // get textures of sticker frame with background
+        const stickerTexturesWithBackground = preparedAnimatedSticker.map(s => {
+          const x = s.object.translation[0] + s.object.origin[0];
+          const y = s.object.translation[1] + s.object.origin[1];
+          const data = this.compiler.getRenderedData(x, y, s.object.width, s.object.height);
+
+          return {
+            x: x,
+            y: y,
+            texture: createUint8TextureSource(
+              data,
+              s.object.width,
+              s.object.height
+            )
+          }
+        });
+        if(!isFirstFrame) {
+          this.compiler.clear();
+        }
+        for(const textureWithBackground of stickerTexturesWithBackground) {
+          this.compiler.renderTexture(textureWithBackground.texture, textureWithBackground.x, textureWithBackground.y);
+        }
+
+        const data = this.compiler.getRenderedData(0, 0, this.shadowCanvas.width, this.shadowCanvas.height, true);
+        const palette = quantize(data, 256, {format: 'rgba4444', clearAlpha: false});
+        const index = applyPalette(data, palette, 'rgba4444');
         gif.writeFrame(index, 0, 0, this.shadowCanvas.width, this.shadowCanvas.height, {
           first: isFirstFrame,
           palette,
           repeat: 0,
-          dispose: isFirstFrame ? 1 : 2
+          transparent: !isFirstFrame,
+          dispose: isFirstFrame ? 1 : 3
         });
       }
 

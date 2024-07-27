@@ -1,4 +1,4 @@
-import {DrawLayer, ImageState, StickerLayer, TextLayer} from '../types';
+import {DrawLayer, ImageState, ObjectLayerType, StickerLayer, TextLayer} from '../types';
 import {renderTextLayerMultiline} from './textHelper';
 import {Document} from '../../../layer';
 import rootScope from '../../../lib/rootScope';
@@ -8,6 +8,11 @@ import RLottiePlayer from '../../../lib/rlottie/rlottiePlayer';
 import appDownloadManager from '../../../lib/appManagers/appDownloadManager';
 import getStickerEffectThumb from '../../../lib/appManagers/utils/stickers/getStickerEffectThumb';
 import {createImageElementTextureSource, ImageElementTextureSource} from '../webgl/helpers/webglTexture';
+
+const DRAGABLE_OBJECT_PADDING_LEFT = 14;
+const DRAGABLE_OBJECT_PADDING_TOP = 6;
+const DRAGABLE_OBJECT_PADDING_RIGHT = 14;
+const DRAGABLE_OBJECT_PADDING_BOTTOM = 6;
 
 export function precompileTextObjects(
   canvasWidth: number,
@@ -173,11 +178,12 @@ export function adjustObject(
       obj.translation[0] * scaleX,
       obj.translation[1] * scaleY
     ] as [number, number],
-    origin:[
-      obj.origin[0],
-      obj.origin[1]
-    ] as [number, number],
-    scale: [scaleX, scaleY] as [number, number]
+    origin: obj.type === ObjectLayerType.text ?
+    [
+      obj.origin[0] + DRAGABLE_OBJECT_PADDING_TOP + DRAGABLE_OBJECT_PADDING_BOTTOM,
+      obj.origin[1] + DRAGABLE_OBJECT_PADDING_LEFT + DRAGABLE_OBJECT_PADDING_RIGHT
+    ] : obj.origin,
+    scale: [1, 1] as [number, number]
   }
 }
 
