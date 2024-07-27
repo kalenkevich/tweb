@@ -13,7 +13,6 @@ import appNavigationController from '../../components/appNavigationController';
 
 export class AppRuntimeManager {
   public reload() {
-    debugger;
     try {
       appNavigationController.spliceItems(0, Infinity);
       appNavigationController.overrideHash();

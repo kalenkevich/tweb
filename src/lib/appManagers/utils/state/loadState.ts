@@ -44,10 +44,11 @@ async function loadStateInner() {
   const totalPerf = performance.now();
   const recordPromise = recordPromiseBound(log);
 
-  const user = await SessionStorage.getInstance().get('user_auth');
-  if(user) {
-    StateStorage.setUserInstance(user.id.toString());
-    SessionStorage.setUserInstance(user.id.toString());
+  const currentUserId = await SessionStorage.getInstance().get('current_user_id');
+  if(currentUserId) {
+    await SessionStorage.setUserStateAsCurrent(currentUserId.toString());
+    StateStorage.setUserInstance(currentUserId.toString());
+    SessionStorage.setUserInstance(currentUserId.toString());
   }
 
   const promises = ALL_KEYS.map((key) => recordPromise(StateStorage.getInstance().get(key, false), 'state ' + key))

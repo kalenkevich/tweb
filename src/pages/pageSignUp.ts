@@ -133,13 +133,13 @@ const onFirstMount = async(signInFlowOptions: SignInFlowOptions) => {
           }
 
           sendAvatar().finally(() => {
-            if(signInFlowOptions.type === SignInFlowType.firstUserSignIn) {
-              import('./pageIm').then((m) => {
-                m.default.mount(signInFlowOptions, response);
-              });
-            } else if(signInFlowOptions.type === SignInFlowType.addUserSignIn) {
-              signInFlowOptions.onSucessLoginCallback(response);
-            }
+            // if(signInFlowOptions.type === SignInFlowType.firstUserSignIn) {
+            import('./pageIm').then((m) => {
+              m.default.mount(signInFlowOptions, response);
+            });
+            // } else if(signInFlowOptions.type === SignInFlowType.addUserSignIn) {
+            // signInFlowOptions.onSucessLoginCallback(response);
+            // }
           });
 
           break;

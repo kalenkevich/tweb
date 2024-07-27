@@ -16,6 +16,7 @@ enum SessionStateMigrationType {
 export interface SessionState {
   dc: DcId,
   user_auth: UserAuth,
+  current_user_id: string;
   state_id: number,
   dc1_auth_key: string,
   dc2_auth_key: string,
@@ -42,6 +43,7 @@ export interface SessionState {
 const STATE_KEYS: Array<keyof SessionState> = [
   'dc',
   'user_auth',
+  'current_user_id',
   'state_id',
   'dc1_auth_key',
   'dc2_auth_key',
@@ -121,6 +123,8 @@ export class SessionStorage extends LocalStorageController<SessionState> {
       return;
     }
 
+    this.instance.set({'current_user_id': userId});
+
     const fullState = await this.instance.getState();
     await newStorage.set({
       ...fullState,
@@ -135,5 +139,10 @@ export class SessionStorage extends LocalStorageController<SessionState> {
     const currentStateStorage = new SessionStorage();
     const userFullState = await userStorage.getState();
     await currentStateStorage.set(userFullState);
+  }
+
+  static pruneCurrentState() {
+    const currentStorage = new SessionStorage();
+    return currentStorage.clear();
   }
 }

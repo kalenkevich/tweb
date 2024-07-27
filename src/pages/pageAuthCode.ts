@@ -54,14 +54,14 @@ const submitCode = (code: string, signInFlowOptions: SignInFlowOptions) => {
 
     switch(response._) {
       case 'auth.authorization':
-        if(signInFlowOptions.type === SignInFlowType.firstUserSignIn) {
-          await rootScope.managers.apiManager.setUser(response.user);
-          import('./pageIm').then((m) => {
-            m.default.mount(signInFlowOptions, response);
-          });
-        } else if(signInFlowOptions.type === SignInFlowType.addUserSignIn && signInFlowOptions.onSucessLoginCallback) {
-          signInFlowOptions.onSucessLoginCallback(response);
-        }
+        // if(signInFlowOptions.type === SignInFlowType.firstUserSignIn) {
+        await rootScope.managers.apiManager.setUser(response.user);
+        import('./pageIm').then((m) => {
+          m.default.mount(signInFlowOptions, response);
+        });
+        // } else if(signInFlowOptions.type === SignInFlowType.addUserSignIn && signInFlowOptions.onSucessLoginCallback) {
+        // signInFlowOptions.onSucessLoginCallback(response);
+        // }
         cleanup();
         break;
       case 'auth.authorizationSignUpRequired':

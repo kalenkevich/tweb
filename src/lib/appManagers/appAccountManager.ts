@@ -8,12 +8,12 @@ export default class AppUserAccountManager extends AppManager {
   private currentUserId: string | number;
 
   protected async after() {
-    this.rootScope.addEventListener('logging_out', this.logoutFromCurrentAccount);
-    this.rootScope.addEventListener('state_synchronized', async() => {
-      const user = this.appUsersManager.getSelf();
-      this.currentUserId = user.id;
-      await this.loadUsersFromState();
-    });
+    // this.rootScope.addEventListener('logging_out', this.logoutFromCurrentAccount);
+    // this.rootScope.addEventListener('state_synchronized', async() => {
+    //   const user = this.appUsersManager.getSelf();
+    //   this.currentUserId = user.id;
+    //   await this.loadUsersFromState();
+    // });
   }
 
   async addUserAccount(user: User.user) {

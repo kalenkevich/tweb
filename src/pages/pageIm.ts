@@ -17,7 +17,10 @@ import {SignInFlowOptions, SignInFlowType} from './signInFlow';
 import apiManagerProxy from '../lib/mtproto/mtprotoworker';
 
 const onFirstMount = (options: SignInFlowOptions, auth?: AuthAuthorization.authAuthorization) => {
-  if(options.type === SignInFlowType.firstUserSignIn) {
+  if([
+    SignInFlowType.addUserSignIn,
+    SignInFlowType.firstUserSignIn
+  ].includes(options.type)) {
     rootScope.managers.appStateManager.pushToState('authState', {_: 'authStateSignedIn'});
   }
 
@@ -42,10 +45,14 @@ const onFirstMount = (options: SignInFlowOptions, auth?: AuthAuthorization.authA
     if([SignInFlowType.firstUserSignIn, SignInFlowType.addUserSignIn].includes(options.type)) {
       userId = auth.user.id.toString();
     } else if(options.type === SignInFlowType.alreadySignedIn) {
-      userId = (await SessionStorage.getInstance().get('user_auth')).id.toString();
+      userId = (await SessionStorage.getInstance().get('current_user_id')).toString();
+      if(userId) {
+        userId = (await SessionStorage.getInstance().get('user_auth')).id.toString();
+      }
     } else if(options.type === SignInFlowType.switchUserSignIn) {
       userId = options.userId.toString();
     }
+    await SessionStorage.getInstance().set({'current_user_id': userId});
 
     if([
       SignInFlowType.alreadySignedIn,
@@ -68,21 +75,25 @@ const onFirstMount = (options: SignInFlowOptions, auth?: AuthAuthorization.authA
 
     if(options.type === SignInFlowType.firstUserSignIn) {
       await rootScope.managers.appStoragesManager.loadStorages(userId);
-    } else if(options.type === SignInFlowType.switchUserSignIn) {
+    } else if([
+      SignInFlowType.addUserSignIn,
+      SignInFlowType.switchUserSignIn
+    ].includes(options.type)) {
       const user = await SharedUsersStateStorage.getInstance().get(userId);
+      SessionStorage.setUserInstance(userId);
       await rootScope.managers.apiManager.setUser(user);
       await rootScope.managers.apiManager.setUserAuth(userId);
-      const stateResult = await apiManagerProxy.sendState().then(([stateResult]) => stateResult);
-      I18n.setTimeFormat(stateResult.state.settings.timeFormat);
-      rootScope.managers.rootScope.getPremium().then((isPremium) => {
-        rootScope.premium = isPremium;
-      });
       await SessionStorage.setUserStateAsCurrent(userId);
-      SessionStorage.resetInstance();
-      await rootScope.managers.appStoragesManager.reloadStorages(userId);
-
-      document.getElementById('page-chats').innerHTML = '';
+      window.location.reload();
+      // await rootScope.managers.appStoragesManager.reloadStorages(userId);
+      // const stateResult = await apiManagerProxy.sendState().then(([stateResult]) => stateResult);
+      // I18n.setTimeFormat(stateResult.state.settings.timeFormat);
+      // rootScope.managers.rootScope.getPremium().then((isPremium) => {
+      //   rootScope.premium = isPremium;
+      // });
     }
+
+    page.unmount();
 
     await Promise.all([
       rootScope.managers.appUsersManager.init(),

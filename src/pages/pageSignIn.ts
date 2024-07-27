@@ -170,14 +170,14 @@ const onFirstMount = async(signInFlowOptions: SignInFlowOptions) => {
       if(code._ === 'auth.sentCodeSuccess') {
         const {authorization} = code;
         if(authorization._ === 'auth.authorization') {
-          if(signInFlowOptions.type === SignInFlowType.firstUserSignIn) {
-            await rootScope.managers.apiManager.setUser(authorization.user);
-            import('./pageIm').then((m) => {
-              m.default.mount(signInFlowOptions, authorization);
-            });
-          } else if(signInFlowOptions.type === SignInFlowType.addUserSignIn && signInFlowOptions.onSucessLoginCallback) {
-            signInFlowOptions.onSucessLoginCallback(authorization);
-          }
+          // if(signInFlowOptions.type === SignInFlowType.firstUserSignIn) {
+          await rootScope.managers.apiManager.setUser(authorization.user);
+          import('./pageIm').then((m) => {
+            m.default.mount(signInFlowOptions, authorization);
+          });
+          // } else if(signInFlowOptions.type === SignInFlowType.addUserSignIn && signInFlowOptions.onSucessLoginCallback) {
+          // signInFlowOptions.onSucessLoginCallback(authorization);
+          // }
         }
       }
 

@@ -239,6 +239,10 @@ export class AppImManager extends EventListenerBase<{
     this.selectTab(APP_TABS.CHATLIST);
 
     idleController.addEventListener('change', (idle) => {
+      if(rootScope.userSessionPaused) {
+        return;
+      }
+
       this.offline = idle;
       this.updateStatus();
       if(idle) {
@@ -1762,6 +1766,10 @@ export class AppImManager extends EventListenerBase<{
   }
 
   private setSettings = () => {
+    if(rootScope.userSessionPaused) {
+      return;
+    }
+
     const {messagesTextSize} = rootScope.settings;
 
     this.customEmojiSize = makeMediaSize(messagesTextSize + 4, messagesTextSize + 4);

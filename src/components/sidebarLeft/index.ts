@@ -78,6 +78,7 @@ import {AvatarNew} from '../avatarNew';
 import {AccountLimitReachedPopup} from '../popups/accountLimitReached';
 import {SignInFlowType, SignInFlowOptions} from '../../pages/signInFlow';
 import {SharedUsersStateStorage} from '../../lib/storages/sharedUsersState';
+import {StateStorage} from '../../lib/storages/state';
 
 export const LEFT_COLUMN_ACTIVE_CLASSNAME = 'is-left-column-shown';
 const MAX_ACCOUNTS_FOR_NON_PREMIUM_USER = 3;
@@ -746,7 +747,7 @@ export class AppSidebarLeft extends SidebarSlider {
     result.push({
       icon: 'plus',
       text: 'AddAccount',
-      onClick: () => this.startAddUserAccountFlow()
+      onClick: () => this.startAddUserAccountFlow(currentUser)
     })
 
     return result;
@@ -769,20 +770,11 @@ export class AppSidebarLeft extends SidebarSlider {
     return btnMenuFooter;
   }
 
-  private async startAddUserAccountFlow() {
+  private async startAddUserAccountFlow(currentUser: User.user) {
     const canAddAccount = await rootScope.managers.appUserAccountManager.canAddAccount();
 
     if(canAddAccount) {
-      let newUserAccount;
-      try {
-        newUserAccount = await this.loginIntoAccount();
-      } catch(e) {
-        return;
-      }
-
-      await rootScope.managers.appUserAccountManager.addUserAccount(newUserAccount);
-      await rootScope.managers.appUserAccountManager.switchToAccount(newUserAccount.id);
-      // dumpUserSessionData(newUserAccount.id);
+      this.loginIntoAccount(currentUser);
     } else {
       try {
         await new Promise<void>((resolve, reject) => {
@@ -802,12 +794,21 @@ export class AppSidebarLeft extends SidebarSlider {
     }
   }
 
-  private loginIntoAccount(): Promise<User.user> {
+  private loginIntoAccount(currentUser: User.user): Promise<User.user> {
     return new Promise(async(resolve, reject) => {
+      rootScope.userSessionPaused = true;
+      await SessionStorage.pruneCurrentState();
+      SessionStorage.resetInstance();
+      // await rootScope.managers.apiManager.reset();
+
       const signInFlowOptions: SignInFlowOptions = {
         type: SignInFlowType.addUserSignIn,
-        onClose: () => {
-          rootScope.managers.apiManager.setUser();
+        onClose: async() => {
+          rootScope.userSessionPaused = false;
+          await SessionStorage.setUserStateAsCurrent(currentUser.id.toString());
+          // await StateStorage.setUserInstance(currentUser.id.toString());
+          await rootScope.managers.apiManager.restore();
+          await rootScope.managers.apiManager.setUser(currentUser);
           Promise.all([
             import('../../pages/pageSignQR').then(module => module.default.unmount()),
             import('../../pages/pageSignIn').then(module => module.default.unmount()),
@@ -821,8 +822,6 @@ export class AppSidebarLeft extends SidebarSlider {
         },
         onSucessLoginCallback: (auth) => resolve(auth.user as User.user)
       };
-
-      SessionStorage.resetInstance();
 
       (await import('../../pages/pageSignQR')).default.mount(signInFlowOptions);
     });

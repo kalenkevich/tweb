@@ -257,7 +257,7 @@ export class ApiManager extends ApiManagerMethods {
 
     this.rootScope.dispatchEvent('user_auth', userAuth);
 
-    if(!userAuth.dcID) {
+    if(!userAuth.dcID || userAuth.dcID === 'undefined') {
       const baseDcId = await this.getBaseDcId();
       userAuth.dcID = baseDcId;
     }
@@ -284,7 +284,17 @@ export class ApiManager extends ApiManagerMethods {
     });
   }
 
-  public async logOut() {
+  public async reset() {
+    // this.baseDcId = undefined;
+    // await toggleStorages(false, false);
+  }
+
+  public async restore() {
+    this.baseDcId = await SessionStorage.getInstance().get('dc');
+    await toggleStorages(true, false);
+  }
+
+  public async logOut(details?: any) {
     if(this.loggingOut) {
       return;
     }
@@ -308,12 +318,11 @@ export class ApiManager extends ApiManagerMethods {
     }
 
     const clear = async() => {
-      debugger;
       this.baseDcId = undefined;
       // this.telegramMeNotify(false);
       await toggleStorages(false, true);
       IDB.closeDatabases();
-      this.rootScope.dispatchEvent('logging_out');
+      this.rootScope.dispatchEvent('logging_out', details);
     };
 
     setTimeout(clear, 1e3);
@@ -545,8 +554,7 @@ export class ApiManager extends ApiManagerMethods {
 
       if((error.code === 401 && error.type === 'SESSION_REVOKED') ||
         (error.code === 406 && error.type === 'AUTH_KEY_DUPLICATED')) {
-        debugger;
-        this.logOut();
+        this.logOut(error);
       }
 
       if(options.ignoreErrors) {
@@ -563,7 +571,7 @@ export class ApiManager extends ApiManagerMethods {
         setTimeout(() => {
           if(!error.handled) {
             if(error.code === 401) {
-              this.logOut();
+              // this.logOut(error);
             } else {
               // ErrorService.show({error: error}); // WARNING
             }
@@ -605,7 +613,6 @@ export class ApiManager extends ApiManagerMethods {
 
         if(error.code === 401 && this.baseDcId === dcId) {
           if(error.type !== 'SESSION_PASSWORD_NEEDED') {
-            debugger;
             SessionStorage.getInstance().delete('dc')
             SessionStorage.getInstance().delete('user_auth'); // ! возможно тут вообще не нужно это делать, но нужно проверить случай с USER_DEACTIVATED (https://core.telegram.org/api/errors)
             // this.telegramMeNotify(false);

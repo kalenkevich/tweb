@@ -96,12 +96,12 @@ const onFirstMount = (signInFlowOptions: SignInFlowOptions): Promise<any> => {
       switch(response._) {
         case 'auth.authorization':
           clearInterval(getStateInterval);
-          if(signInFlowOptions.type === SignInFlowType.firstUserSignIn) {
-            await rootScope.managers.apiManager.setUser(response.user);
-            import('./pageIm').then((m) => m.default.mount(signInFlowOptions, response));
-          } else if(signInFlowOptions.type === SignInFlowType.addUserSignIn && signInFlowOptions.onSucessLoginCallback) {
-            signInFlowOptions.onSucessLoginCallback(response);
-          }
+          // if(signInFlowOptions.type === SignInFlowType.firstUserSignIn) {
+          await rootScope.managers.apiManager.setUser(response.user);
+          import('./pageIm').then((m) => m.default.mount(signInFlowOptions, response));
+          // } else if(signInFlowOptions.type === SignInFlowType.addUserSignIn && signInFlowOptions.onSucessLoginCallback) {
+          // signInFlowOptions.onSucessLoginCallback(response);
+          // }
 
           if(monkey) monkey.remove();
           break;

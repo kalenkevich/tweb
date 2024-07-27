@@ -2081,6 +2081,10 @@ export class AppDialogsManager {
     });
 
     rootScope.addEventListener('folder_unread', async(folder) => {
+      if(rootScope.userSessionPaused) {
+        return;
+      }
+
       if(folder.id < 0) {
         const dialogElement = this.xd.getDialogElement(folder.id);
         if(!dialogElement) {
