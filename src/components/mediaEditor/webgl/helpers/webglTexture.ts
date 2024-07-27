@@ -207,7 +207,7 @@ export function createWebGlTexture(gl: CompatibleWebGLRenderingContext, options:
     gl.pixelStorei(gl.UNPACK_ALIGNMENT, options.alignment);
   }
 
-  if(options.source !== undefined) {
+  if(options.source) {
     gl.texImage2D(
       gl.TEXTURE_2D,
       level,
@@ -216,7 +216,7 @@ export function createWebGlTexture(gl: CompatibleWebGLRenderingContext, options:
       options.type || gl.UNSIGNED_BYTE,
       options.source.data
     );
-  } else if(options.pixels !== undefined) {
+  } else if(options.pixels) {
     gl.texImage2D(
       gl.TEXTURE_2D,
       level,

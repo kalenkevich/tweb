@@ -140,12 +140,6 @@ export function Draggable(props: DraggableProps) {
     el.style.display = 'block';
     el.style.cursor = 'grab';
     el.style.transform = `translateX(${translationX}px) translateY(${translationY}px) rotateZ(${rotation()}deg) scaleX(${scale()[0]}) scaleY(${scale()[1]})`;
-
-    if(mode() === DraggableMode.move) {
-      elRef().style.transformOrigin = 'top left';
-    } else {
-      elRef().style.transformOrigin = 'center';
-    }
   };
 
   const dragHandler = (pageX: number, pageY: number, emitChangeEvent: boolean) => {
@@ -268,11 +262,6 @@ export function Draggable(props: DraggableProps) {
 
   const setCurrentMode = (mode: DraggableMode) => {
     _setCurrentMode(mode);
-    if(mode === DraggableMode.move) {
-      elRef().style.transformOrigin = 'top left';
-    } else {
-      elRef().style.transformOrigin = 'center';
-    }
   }
 
   const onElementClick = (e: Event) => {

@@ -183,7 +183,7 @@ export function adjustObject(
       obj.origin[0] + DRAGABLE_OBJECT_PADDING_TOP + DRAGABLE_OBJECT_PADDING_BOTTOM,
       obj.origin[1] + DRAGABLE_OBJECT_PADDING_LEFT + DRAGABLE_OBJECT_PADDING_RIGHT
     ] : obj.origin,
-    scale: [1, 1] as [number, number]
+    scale: obj.type === ObjectLayerType.text ? [scaleX, scaleY] : [1, 1] as [number, number]
   }
 }
 

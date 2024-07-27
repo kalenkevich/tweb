@@ -146,13 +146,13 @@ export class ImageEditorManager {
         if(!isFirstFrame) {
           this.compiler.clear();
         }
-        for(const textureWithBackground of stickerTexturesWithBackground) {
-          this.compiler.renderTexture(textureWithBackground.texture, textureWithBackground.x, textureWithBackground.y);
+        for(const textureObj of stickerTexturesWithBackground) {
+          this.compiler.renderTexture(textureObj.texture, textureObj.x, textureObj.y);
         }
 
         const data = this.compiler.getRenderedData(0, 0, this.shadowCanvas.width, this.shadowCanvas.height, true);
-        const palette = quantize(data, 256, {format: 'rgba4444', clearAlpha: false});
-        const index = applyPalette(data, palette, 'rgba4444');
+        const palette = quantize(data, 256);
+        const index = applyPalette(data, palette);
         gif.writeFrame(index, 0, 0, this.shadowCanvas.width, this.shadowCanvas.height, {
           first: isFirstFrame,
           palette,

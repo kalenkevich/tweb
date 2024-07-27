@@ -351,8 +351,8 @@ export class BackgroundImageProgram extends BaseWebglProgram {
       // flipY: true,
       wrapS: gl.CLAMP_TO_EDGE,
       wrapT: gl.CLAMP_TO_EDGE,
-      minFilter: gl.LINEAR,
-      magFilter: gl.LINEAR,
+      minFilter: gl.NEAREST,
+      magFilter: gl.NEAREST,
       format: gl.RGBA,
       internalFormat: gl.RGBA
     });
@@ -420,7 +420,7 @@ export class BackgroundImageProgram extends BaseWebglProgram {
       textureIndex: this.framebufferTexture?.index,
       width,
       height,
-      pixels: null,
+      pixels: new Uint8Array(width * height * 4),
       minFilter: gl.LINEAR,
       magFilter: gl.LINEAR,
       wrapS: gl.CLAMP_TO_EDGE,

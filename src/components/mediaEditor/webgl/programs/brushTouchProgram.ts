@@ -267,7 +267,7 @@ export class BrushTouchProgram extends BaseWebglProgram {
       textureIndex: this.framebufferTexture?.index,
       width,
       height,
-      pixels: null,
+      pixels: new Uint8Array(width * height * 4),
       minFilter: gl.LINEAR,
       magFilter: gl.LINEAR,
       wrapS: gl.CLAMP_TO_EDGE,
