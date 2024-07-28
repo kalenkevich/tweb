@@ -165,7 +165,7 @@ const BrushTouchProgramShaders = {
 
         fragColor = texture(u_background_image, texcoord);
       } else if (v_style == BRUSH_STYLE_NEON) {
-        float d = pow(radius / distance, 0.2);
+        float d = pow(radius / distance, 0.8);
 
         fragColor = vec4(d * v_border_color.rgb, 0.5);
       } else {

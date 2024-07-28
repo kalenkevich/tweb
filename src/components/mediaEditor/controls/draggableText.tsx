@@ -126,13 +126,13 @@ export function DraggableText(props: DraggableTextProps) {
 
   const updateOrigin = () => {
     const l = layer();
+    const newWidth = draggableRef().offsetWidth;
+    const newHeight = draggableRef().offsetHeight;
     const center = [
       l.translation[0] - l.origin[0],
       l.translation[1] - l.origin[1]
     ];
-    const width = draggableRef().offsetWidth;
-    const height = draggableRef().offsetHeight;
-    const origin = [-width / 2, -height / 2] as [number, number];
+    const origin = [-newWidth / 2, -newHeight / 2] as [number, number];
     const translation = [
       center[0] + origin[0],
       center[1] + origin[1]

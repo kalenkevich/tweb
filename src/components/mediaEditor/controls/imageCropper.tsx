@@ -325,14 +325,24 @@ export function ImageCropperComponent(props: ImageCropperProps) {
     if(newHeight > props.surface.element.offsetHeight) {
       newHeight = props.surface.element.offsetHeight;
     }
-    const origin = [-newWidth / 2, -newHeight / 2] as [number, number];
+    const t = translation();
+    const o = origin();
+    const center = [
+      t[0] - o[0],
+      t[1] - o[1]
+    ];
+    const newTranslation = [
+      center[0] + o[0],
+      center[1] + o[1]
+    ] as [number, number];
+    const newOrigin = [-newWidth / 2, -newHeight / 2] as [number, number];
 
     batch(() => {
       setDirtyState(true);
       setImageCropper(currentCropper =>
         getImageCropper(
-          translation()[0] + origin[0],
-          translation()[1] + origin[1],
+          newTranslation[0] + newOrigin[0],
+          newTranslation[1] + newOrigin[1],
           newWidth,
           newHeight,
           props.surface.element.offsetWidth,
@@ -341,7 +351,8 @@ export function ImageCropperComponent(props: ImageCropperProps) {
         )
       );
       setScale([1, 1]);
-      setOrigin(origin);
+      setTranslation(newTranslation);
+      setOrigin(newOrigin);
     });
   }
 

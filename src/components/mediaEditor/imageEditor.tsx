@@ -56,6 +56,7 @@ export function createImageState(source: ImageSource): ImageState {
     layers: [],
     source,
     texture,
+    origin: [-source.width/2, -source.height/2],
     resultWidth: source.width,
     resultHeight: source.height,
     originalWidth: source.width,
@@ -168,6 +169,7 @@ export function ImageEditor(props: MediaEditorProps) {
 
         return imageEditorManager().pushState({
           ...state,
+          origin: [-event.width / 2, -event.height / 2],
           aspectRatio: ImageAspectRatio.original
         }, {render: false});
       }
