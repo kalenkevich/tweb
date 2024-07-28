@@ -45,9 +45,9 @@ const onFirstMount = (options: SignInFlowOptions, auth?: AuthAuthorization.authA
     if([SignInFlowType.firstUserSignIn, SignInFlowType.addUserSignIn].includes(options.type)) {
       userId = auth.user.id.toString();
     } else if(options.type === SignInFlowType.alreadySignedIn) {
-      userId = (await SessionStorage.getInstance().get('current_user_id')).toString();
-      if(userId) {
-        userId = (await SessionStorage.getInstance().get('user_auth')).id.toString();
+      userId = (await SessionStorage.getInstance().get('current_user_id'));
+      if(!userId) {
+        userId = (await SessionStorage.getInstance().get('user_auth'))?.id.toString();
       }
     } else if(options.type === SignInFlowType.switchUserSignIn) {
       userId = options.userId.toString();

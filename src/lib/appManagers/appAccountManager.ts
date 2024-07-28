@@ -26,38 +26,38 @@ export default class AppUserAccountManager extends AppManager {
   }
 
   async switchToAccount(userId: string | number) {
-    const user = this.getUser(userId);
-    if(!user || user.id === this.currentUserId) {
-      return;
-    }
+    // const user = this.getUser(userId);
+    // if(!user || user.id === this.currentUserId) {
+    //   return;
+    // }
 
-    // await this.rebaseSessionStateToUser(userId);
-    await this.apiManager.setUser(user);
-    // await reloadState();
-    this.rootScope.premium = this.rootScope.getPremium();
-    const currentUser = this.appUsersManager.getSelf();
-    this.currentUserId = currentUser.id;
+    // // await this.rebaseSessionStateToUser(userId);
+    // await this.apiManager.setUser(user);
+    // // await reloadState();
+    // this.rootScope.premium = this.rootScope.getPremium();
+    // const currentUser = this.appUsersManager.getSelf();
+    // this.currentUserId = currentUser.id;
 
     // change i18n if needed
-    (await import('../../pages/pageIm')).default.mount();
+    // (await import('../../pages/pageIm')).default.mount();
   }
 
   async logoutFromCurrentAccount() {
-    return this.logoutFromAccount(this.currentUserId);
+    // return this.logoutFromAccount(this.currentUserId);
   }
 
   async logoutFromAccount(userId: string | number) {
     // await this.removeUserAccount(userId);
-    if(userId !== this.currentUserId) {
-      return;
-    }
+    // if(userId !== this.currentUserId) {
+    //   return;
+    // }
 
-    const otherAccounts = Object.values(this.userAccountsMap);
-    if(otherAccounts.length === 0) {
-      return;
-    }
+    // const otherAccounts = Object.values(this.userAccountsMap);
+    // if(otherAccounts.length === 0) {
+    //   return;
+    // }
 
-    return this.switchToAccount(otherAccounts[0].id);
+    // return this.switchToAccount(otherAccounts[0].id);
   }
 
   getCurrentUser(): User.user {
