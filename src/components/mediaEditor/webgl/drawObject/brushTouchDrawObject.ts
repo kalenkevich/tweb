@@ -37,12 +37,12 @@ export function toBrushTouchDrawObject(touches: BrushTouch[]): BrushTouchDrawObj
       x, y, VERTEX_QUAD_POSITION.BOTTOM_RIGHT
     );
     propertiesBuffer.push(
-      diameter, touch.style, touch.borderWidth,
-      diameter, touch.style, touch.borderWidth,
-      diameter, touch.style, touch.borderWidth,
-      diameter, touch.style, touch.borderWidth,
-      diameter, touch.style, touch.borderWidth,
-      diameter, touch.style, touch.borderWidth
+      diameter, touch.style, touch.borderWidth * ratio,
+      diameter, touch.style, touch.borderWidth * ratio,
+      diameter, touch.style, touch.borderWidth * ratio,
+      diameter, touch.style, touch.borderWidth * ratio,
+      diameter, touch.style, touch.borderWidth * ratio,
+      diameter, touch.style, touch.borderWidth * ratio
     );
     colorBuffer.push(
       ...colorRgba,
@@ -60,30 +60,15 @@ export function toBrushTouchDrawObject(touches: BrushTouch[]): BrushTouchDrawObj
       ...borderColorRgba,
       ...borderColorRgba
     );
-    // backgroundImageTextcoordBuffer.push(
-    //   0, 0, // 1
-    //   1, 0, // 2
-    //   0, 1, // 3
-    //   0, 1, // 3
-    //   1, 0, // 2
-    //   1, 1  // 4
-    // );
-    const radius = (diameter / 2);
-    // backgroundImageTextcoordBuffer.push(
-    //   x - radius, y + radius, // 3
-    //   x + radius, y + radius, // 4
-    //   x + radius, y - radius, // 2
-    //   x - radius, y - radius, // 1
-    //   x + radius, y - radius, // 2
-    //   x - radius, y + radius  // 3
-    // );
+    const quadSize = diameter + touch.borderWidth * ratio;
+    const quadSizeHalf = (quadSize / 2);
     backgroundImageTextcoordBuffer.push(
-      x + radius, y + radius, // 4
-      x - radius, y + radius, // 3
-      x + radius, y - radius, // 2
-      x + radius, y - radius, // 2
-      x - radius, y + radius, // 3
-      x - radius, y - radius  // 1
+      x + quadSizeHalf, y + quadSizeHalf, // 4
+      x - quadSizeHalf, y + quadSizeHalf, // 3
+      x + quadSizeHalf, y - quadSizeHalf, // 2
+      x + quadSizeHalf, y - quadSizeHalf, // 2
+      x - quadSizeHalf, y + quadSizeHalf, // 3
+      x - quadSizeHalf, y - quadSizeHalf  // 1
     );
     numElements += 6;
   }

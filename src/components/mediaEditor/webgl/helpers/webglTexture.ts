@@ -233,8 +233,8 @@ export function createWebGlTexture(gl: CompatibleWebGLRenderingContext, options:
       gl.TEXTURE_2D,
       level,
       options.internalFormat || gl.RGBA,
-      0,
-      0,
+      options.width,
+      options.height,
       0, // border
       options.format || gl.RGBA,
       options.type || gl.UNSIGNED_BYTE,

@@ -49,19 +49,20 @@ const BrushTouchProgramShaders = {
       float style = a_properties[1];
       float border_width = a_properties[2];
       float radius = diameter / 2.0;
+      float quadHalf = radius + border_width;
 
       if (vertexQuadPosition == VERTEX_QUAD_POSITION_TOP_LEFT) {
-        centerX -= radius;
-        centerY += radius;
+        centerX -= quadHalf;
+        centerY += quadHalf;
       } else if (vertexQuadPosition == VERTEX_QUAD_POSITION_TOP_RIGHT) {
-        centerX += radius;
-        centerY += radius;
+        centerX += quadHalf;
+        centerY += quadHalf;
       } else if (vertexQuadPosition == VERTEX_QUAD_POSITION_BOTTOM_LEFT) {
-        centerX -= radius;
-        centerY -= radius;
+        centerX -= quadHalf;
+        centerY -= quadHalf;
       } else if (vertexQuadPosition == VERTEX_QUAD_POSITION_BOTTOM_RIGHT) {
-        centerX += radius;
-        centerY -= radius;
+        centerX += quadHalf;
+        centerY -= quadHalf;
       }
       
       vec2 coords = (u_matrix * vec3(centerX, centerY, 1)).xy;
@@ -104,57 +105,30 @@ const BrushTouchProgramShaders = {
 
     out vec4 fragColor;
 
-    vec4 blur(vec4 color, vec2 texcoord, float blur) {
-      vec2 onePixel = vec2(1.0, 1.0) / u_background_image_size;
-      vec4 colorSum =
-        texture(u_background_image, texcoord + vec2(-7.0*onePixel.x, -7.0*onePixel.y))*0.0044299121055113265 +
-        texture(u_background_image, texcoord + vec2(-6.0*onePixel.x, -6.0*onePixel.y))*0.00895781211794 +
-        texture(u_background_image, texcoord + vec2(-5.0*onePixel.x, -5.0*onePixel.y))*0.0215963866053 +
-        texture(u_background_image, texcoord + vec2(-4.0*onePixel.x, -4.0*onePixel.y))*0.0443683338718 +
-        texture(u_background_image, texcoord + vec2(-3.0*onePixel.x, -3.0*onePixel.y))*0.0776744219933 +
-        texture(u_background_image, texcoord + vec2(-2.0*onePixel.x, -2.0*onePixel.y))*0.115876621105 +
-        texture(u_background_image, texcoord + vec2(-1.0*onePixel.x, -1.0*onePixel.y))*0.147308056121 +
-        texture(u_background_image, texcoord                                         )*0.159576912161 +
-        texture(u_background_image, texcoord + vec2( 1.0*onePixel.x,  1.0*onePixel.y))*0.147308056121 +
-        texture(u_background_image, texcoord + vec2( 2.0*onePixel.x,  2.0*onePixel.y))*0.115876621105 +
-        texture(u_background_image, texcoord + vec2( 3.0*onePixel.x,  3.0*onePixel.y))*0.0776744219933 +
-        texture(u_background_image, texcoord + vec2( 4.0*onePixel.x,  4.0*onePixel.y))*0.0443683338718 +
-        texture(u_background_image, texcoord + vec2( 5.0*onePixel.x,  5.0*onePixel.y))*0.0215963866053 +
-        texture(u_background_image, texcoord + vec2( 6.0*onePixel.x,  6.0*onePixel.y))*0.00895781211794 +
-        texture(u_background_image, texcoord + vec2( 7.0*onePixel.x,  7.0*onePixel.y))*0.0044299121055113265;
-
-      return mix(color, colorSum, blur);
-    }
-
     float random(vec2 co){
       return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453);
     }
 
-    vec4 blur2(vec4 input_color, vec2 texcoord, vec2 delta) {
-      float total = 0.0;
-      float offset = random(vec2(0.0, 1.0));
-      vec4 color = input_color;
+    // 2D Noise based on Morgan McGuire @morgan3d
+    // https://www.shadertoy.com/view/4dS3Wd
+    float noise (vec2 st) {
+      vec2 i = floor(st);
+      vec2 f = fract(st);
 
-      for (float t = -50.0; t <= 50.0; t++) {
-          float percent = (t + offset - 0.5) / 50.0;
-          float weight = 1.0 - abs(percent);
-          vec4 og = texture(u_background_image, texcoord);
-          vec4 samp = texture(u_background_image, texcoord + delta * percent);
+      // Four corners in 2D of a tile
+      float a = random(i);
+      float b = random(i + vec2(1.0, 0.0));
+      float c = random(i + vec2(0.0, 1.0));
+      float d = random(i + vec2(1.0, 1.0));
 
-          if(samp.a == 1.0) {
-            samp.rgb = og.rgb;
-          } else {
-            samp.rgb *= samp.a;
-          }
+      // Smooth Interpolation
 
-          color += samp * weight;
-          total += weight;
-      }
+      // Cubic Hermine Curve.  Same as SmoothStep()
+      vec2 u = f*f*(3.0-2.0*f);
+      // u = smoothstep(0.,1.,f);
 
-      vec4 result = color / total;
-      result.rgb /= result.a + 0.00001;
-
-      return result;
+      // Mix 4 coorners percentages
+      return mix(a, b, u.x) + (c - a)* u.y * (1.0 - u.x) + (d - b) * u.x * u.y;
     }
 
     void main() {
@@ -173,18 +147,27 @@ const BrushTouchProgramShaders = {
       dist.y *= scaleY;
       float distance = length(dist);
       float radius = v_radius / u_width;
+      float borderWidth = v_border_width / u_width;
 
       if(distance > radius) {
-        discard;
+        if(v_style == BRUSH_STYLE_NEON) {
+          if(distance > radius + borderWidth) {
+            discard;
+          }
+        } else {
+          discard;
+        }
       }
 
       if(v_style == BRUSH_STYLE_BLUR) {
-        vec2 texcoord = vec2(v_background_image_textcoord.x, 1.0 - v_background_image_textcoord.y);
-        vec4 color = texture(u_background_image, texcoord);
-        fragColor = blur(color, texcoord, 1.0);
-        fragColor[3] = smoothstep(0.0, radius, distance);
-        // vec4 color = blur2(vec4(0), texcoord, vec2(v_radius / u_width, v_radius / u_height));
-        // fragColor = blur2(color, texcoord, vec2(0.0, v_radius / u_height));
+        vec4 color = vec4(1.0) * noise(vec2(current_point * 500.0));
+        vec2 texcoord = current_point + 1.0 * color.xy * 0.1;                   
+
+        fragColor = texture(u_background_image, texcoord);
+      } else if (v_style == BRUSH_STYLE_NEON) {
+        float d = pow(radius / distance, 0.2);
+
+        fragColor = vec4(d * v_border_color.rgb, 0.5);
       } else {
         fragColor = v_color;
       }
@@ -267,9 +250,9 @@ export class BrushTouchProgram extends BaseWebglProgram {
       textureIndex: this.framebufferTexture?.index,
       width,
       height,
-      pixels: new Uint8Array(width * height * 4),
-      minFilter: gl.LINEAR,
-      magFilter: gl.LINEAR,
+      pixels: null,
+      minFilter: gl.NEAREST,
+      magFilter: gl.NEAREST,
       wrapS: gl.CLAMP_TO_EDGE,
       wrapT: gl.CLAMP_TO_EDGE
     });

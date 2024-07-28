@@ -13,6 +13,7 @@ export interface SuperStickerProps {
   animate: boolean;
 }
 export function SuperSticker(props: SuperStickerProps) {
+  const [animated, setAnimated] = createSignal(props.animate);
   const [elRef, setElRef] = createSignal<HTMLDivElement>();
 
   onMount(() => {
@@ -25,15 +26,17 @@ export function SuperSticker(props: SuperStickerProps) {
   }));
 
   createEffect(on(() => props.animate, (animate) => {
-    if(animate) {
+    if(animate && !animated()) {
       props.stickerRenderer.observeAnimated(elRef());
     } else {
       props.stickerRenderer.unobserveAnimated(elRef());
     }
+
+    setAnimated(animate);
   }));
 
   onCleanup(() => {
-    if(props.animate) {
+    if(animated()) {
       props.stickerRenderer.unobserveAnimated(elRef());
     }
   });
@@ -47,7 +50,7 @@ export function SuperSticker(props: SuperStickerProps) {
     const doc = await rootScope.managers.appDocsManager.getDoc(props.stickerId);
     renderer.renderSticker(doc, el, undefined, undefined, props.width * window.devicePixelRatio, props.height * window.devicePixelRatio);
 
-    if(props.animate) {
+    if(animated()) {
       renderer.observeAnimated(el);
     }
   };
